@@ -812,5 +812,15 @@
     "note": "auto: boots=0 hello=false frames=0",
     "date": "2026-09-27",
     "reporter": "device-24459cf5"
+  },
+  {
+    "name": "UIFlow2.0 Cardputer-Adv",
+    "env": "launcherhub",
+    "firmware_sha256": "a3961c8eda7358771c8e06c9160648e87ada973d23c6f71c9939b76fa973bed9",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-09-27",
+    "reporter": "device-24459cf5"
   }
 ]
