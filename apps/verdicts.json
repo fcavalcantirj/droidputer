@@ -801,5 +801,16 @@
     "note": "auto: linked, 860 frames in 20 s",
     "date": "2026-09-25",
     "reporter": "device-4e0fced1"
+  },
+  {
+    "name": "bluetooth-keyboard-mouse-emulator",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "99b94b9a89396d14b3c598b14cb60b69e49df00f73390cd76a23f63b806644d8",
+    "shim_commit": "5d7970a",
+    "board": "unknown",
+    "result": "broken",
+    "note": "auto: boots=0 hello=false frames=0",
+    "date": "2026-09-27",
+    "reporter": "device-24459cf5"
   }
 ]
