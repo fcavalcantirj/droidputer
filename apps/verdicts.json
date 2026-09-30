@@ -833,5 +833,15 @@
     "note": "auto: linked, 12 frames in 20 s",
     "date": "2026-09-30",
     "reporter": "device-eff68c0f"
+  },
+  {
+    "name": "Arcade games for Cardputer ADV",
+    "env": "launcherhub",
+    "firmware_sha256": "47907d8396a4633b812cce01f75d916f01992b1fdc16edbfed45b66fa372f971",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-09-30",
+    "reporter": "device-eff68c0f"
   }
 ]
