@@ -822,5 +822,16 @@
     "note": "",
     "date": "2026-09-27",
     "reporter": "device-24459cf5"
+  },
+  {
+    "name": "tiny-journal",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "51e10837ab9478b929a243597cd12cfa1be8ff593aa46decd64fa350c2bb5c13",
+    "shim_commit": "5d7970a",
+    "board": "cardputer-adv",
+    "result": "works",
+    "note": "auto: linked, 12 frames in 20 s",
+    "date": "2026-09-30",
+    "reporter": "device-eff68c0f"
   }
 ]
