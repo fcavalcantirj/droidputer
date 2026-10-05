@@ -865,5 +865,15 @@
     "note": "auto: linked, 296 frames in 20 s",
     "date": "2026-09-30",
     "reporter": "device-eff68c0f"
+  },
+  {
+    "name": "M5Launcher Cardputer & ADV",
+    "env": "launcherhub",
+    "firmware_sha256": "7f3c23cfac3f0898459efce031f5d43c536b05f2b1739a99608b187c1469656a",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-10-05",
+    "reporter": "device-231e6e3c"
   }
 ]
