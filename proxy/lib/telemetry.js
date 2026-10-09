@@ -5,7 +5,10 @@
 // never delay a build answer by more than TRACK_TIMEOUT_MS or turn it into an error.
 
 const DEVICE_RE = /^device-[0-9a-f]{8}$/;
-export const TRACK_TIMEOUT_MS = 1500;
+// 1.5 s lost events (2026-10-09: a ready build's build_result never arrived while the polls took ~1.6 s): PostHog's
+// ingestion from Vercel can be that slow, and a function that returns first is frozen with the send in flight.
+// It runs at most twice per build (dispatch + outcome), so waiting longer costs nothing a user notices.
+export const TRACK_TIMEOUT_MS = 4000;
 
 /** @param {import("./http.js").ProxyRequest} request @returns {string | null} */
 export function deviceOf(request) {
