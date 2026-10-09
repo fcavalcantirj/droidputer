@@ -171,7 +171,7 @@ board_build.psram = false
 {extra_board}{src_filter}lib_deps =
 {lib_deps}
 lib_ldf_mode = {ldf_mode}
-{lib_extra_dirs}build_unflags = -std=gnu++11
+{lib_extra}build_unflags = -std=gnu++11
 build_flags =
 {build_flags}
 monitor_speed = 115200
@@ -362,9 +362,13 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
     cp, target = preflight(slug, name, src, env_src)
     info = {"name": name, "repo": slug, "src": str(src), "upstream_commit": upstream_commit(src)}
     lib_deps, flags, extra_board, src_dir, extra_lib_dirs, src_filter, ldf_mode = [], [], [], None, [], "", "deep+"
+    sketch_dir: Path | None = None
     if cp:
         env = target
         info["env_src"] = env
+        plat = pio_get(cp, env, "platform") or ""
+        if "pioarduino" in plat or re.search(r"espressif32\s*@\s*[\^~]?([7-9]|[1-9]\d)\.", plat):
+            info["upstream_core3"] = True   # arduino-esp32 3.x APIs; the shim builds on 2.0.17
         src_dir = cp.get("platformio", "src_dir", fallback="src")
         for dep in multiline(pio_get(cp, env, "lib_deps") or ""):
             if not SHIM_LIBS.search(dep):
@@ -374,6 +378,14 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
             if not f or STD_FLAG.match(f) and f in ("-std=gnu++11", "-std=gnu++14", "-std=c++11", "-std=c++14"):
                 continue
             flags.append(anchor_flag(f, src, app))
+        # The upstream env's own source selection and ignores: MeshCore compiles ../examples/companion_radio and leaves
+        # its nRF52 helpers out; oui-spy excludes raw/ (the DNSServer error). Paths stay relative to src_dir, as upstream.
+        bsf = pio_get(cp, env, "build_src_filter") or pio_get(cp, env, "src_filter")
+        if bsf:
+            src_filter = "build_src_filter =\n" + "\n".join(f"    {x}" for x in multiline(bsf)) + "\n"
+        ignore = pio_get(cp, env, "lib_ignore")
+        if ignore and multiline(ignore):
+            src_filter += "lib_ignore =\n" + "\n".join(f"    {x}" for x in multiline(ignore)) + "\n"
         for key in ("board_build.partitions", "board_build.embed_files", "board_build.embed_txtfiles"):
             v = pio_get(cp, env, key)
             if v:
@@ -400,19 +412,34 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
         if unknown:
             info["unresolved_includes"] = unknown
         if (src / "libraries").is_dir():   # sketch-local library folder, Arduino-IDE style
-            extra_lib_dirs.append(anchored(src / "libraries", app))
+            extra_lib_dirs.append(src / "libraries")
         # The Arduino IDE compiles the sketch folder's top-level files plus src/** -- not every
         # subfolder (miniacid ships an SDL desktop port next to the sketch).
         src_filter = "build_src_filter = +<*.ino> +<*.c> +<*.cpp> +<*.h> +<*.hpp> +<src/>\n"
         # Several .ino with their own setup() in one folder are separate firmwares, not tabs of one sketch.
         setups = [s for s in target.parent.glob("*.ino") if re.search(r"\bvoid\s+setup\s*\(", s.read_text(errors="replace"))]
         if len(setups) > 1:
-            src_filter = f"build_src_filter = +<{target.name}> +<*.c> +<*.cpp> +<*.h> +<*.hpp> +<src/>\n"
+            # PlatformIO merges EVERY .ino of src_dir into one translation unit, build_src_filter or not
+            # (Evil-M5Core2's Cardputer build still compiled the M5Dial sketch's #include). So the build
+            # gets its own folder: the chosen sketch plus links to the folder's other files, no other .ino.
+            alone = app / "_sketch"
+            shutil.rmtree(alone, ignore_errors=True)
+            alone.mkdir(parents=True)
+            for entry in target.parent.iterdir():
+                if entry.suffix == ".ino" and entry != target:
+                    continue
+                (alone / entry.name).symlink_to(entry.resolve())
+            sketch_dir = alone
             info["sketch"] = target.name
+            lib_deps, unknown = infer_ino_deps(alone, src)   # this sketch's includes only
+            info["inferred_deps"] = lib_deps
+            info.pop("unresolved_includes", None)
+            if unknown:
+                info["unresolved_includes"] = unknown
         # Plain deep: deep+ evaluates #if guards with the S3 config and then drops FS for the
         # framework's SD_MMC library, which audio libraries include unconditionally (WebRadio).
         ldf_mode = "deep"
-    src_dir_abs = src / src_dir
+    src_dir_abs = sketch_dir or src / src_dir
     if not src_dir_abs.exists():
         fail("src-dir-missing", f"{slug}: src_dir {src_dir} does not exist in the repo")
     if cp:
@@ -441,17 +468,30 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
         flags.append("-I include")
     flags.append("-Wall")
     flags.append("-I ../../shim/lib/DroidputterShim/src")
+    # The app's own vendored libraries (lib/, an Arduino-IDE libraries/), searched on demand like upstream does (MeshCore
+    # keeps ed25519 in lib/ next to an nRF52 library it never includes on the S3). They go through _vendored/, a folder of
+    # links that leaves out any vendored M5GFX/M5Cardputer/M5Unified: given lib/ itself, PlatformIO compiled
+    # Game-Station's unpatched lib/M5Cardputer instead of the shim's (no mirror, no phone keyboard). Until 2026-10-09
+    # lib_extra_dirs sat in [platformio], which PlatformIO 6 ignores, so no app's own lib/ was ever searched.
+    vendored_dir = app / "_vendored"
+    shutil.rmtree(vendored_dir, ignore_errors=True)
+    for d in ([src / "lib"] if (src / "lib").is_dir() else []) + extra_lib_dirs:
+        for lib in sorted(x for x in d.iterdir() if x.is_dir() and not x.name.startswith(".")):
+            if SHIM_LIBS.search(lib.name):
+                info.setdefault("vendored_shim_libs_skipped", []).append(lib.name)
+                continue
+            vendored_dir.mkdir(parents=True, exist_ok=True)
+            link = vendored_dir / lib.name
+            if not link.exists():
+                link.symlink_to(lib.resolve())
+    lib_extra = "lib_extra_dirs = _vendored\n" if vendored_dir.is_dir() else ""
     lib_deps = [M5UNIFIED] + lib_deps + ["symlink://../../shim/lib/DroidputterShim"]
-    # The app's own lib/ (MeshCore keeps ed25519 there) and an Arduino-IDE libraries/ folder. Until 2026-10-09 this sat
-    # in [platformio], where PlatformIO 6 ignores it; the shim comes in through lib_deps (symlink://), not from here.
-    lib_extra = ([f"    {anchored(src / 'lib', app)}"] if (src / "lib").is_dir() else []) + [f"    {d}" for d in extra_lib_dirs]
 
     app.mkdir(parents=True, exist_ok=True)
     ini = ENV_TEMPLATE.format(
         slug=slug, name=name, env_src=info["env_src"], src_dir=anchored(src_dir_abs, app),
-        lib_extra_dirs=("lib_extra_dirs =\n" + "\n".join(lib_extra) + "\n") if lib_extra else "",
         extra_board="".join(x + "\n" for x in extra_board),
-        src_filter=src_filter, ldf_mode=ldf_mode,
+        src_filter=src_filter, ldf_mode=ldf_mode, lib_extra=lib_extra,
         lib_deps="\n".join(f"    {d}" for d in lib_deps),
         build_flags="\n".join(f"    {f}" for f in flags),
     )
@@ -561,6 +601,8 @@ def main() -> int:
             info["partition_retry"] = "max_app_8MB.csv"
             info.pop("failed", None); info.pop("reason", None)
             info.update(build(REPO_ROOT / info["app"], a.upload, a.env))
+    if not info.get("ok", True) and info.get("upstream_core3") and info.get("failed") in ("compile-error", "link-error", "missing-header"):
+        info["reason"] = info.get("reason", "") + " (the app targets arduino-esp32 3.x; the shim builds on 2.0.17)"
     print(json.dumps(info))
     return 0 if info.get("ok", True) else 1
 
