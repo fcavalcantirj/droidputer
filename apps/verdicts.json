@@ -875,5 +875,15 @@
     "note": "",
     "date": "2026-10-05",
     "reporter": "device-231e6e3c"
+  },
+  {
+    "name": "Bruce for Cardputer & ADV",
+    "env": "launcherhub",
+    "firmware_sha256": "e0a06966e601fecdb78470168b423690392f5ca14502a703588d4d14d0722033",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-10-09",
+    "reporter": "device-1d7a1634"
   }
 ]
