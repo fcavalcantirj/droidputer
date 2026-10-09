@@ -60,6 +60,8 @@ INCLUDE_TO_DEP = {
     "MFRC522.h": "miguelbalboa/MFRC522@^1.4", "DHT.h": "adafruit/DHT sensor library@^1.4",
     "OneWire.h": "paulstoffregen/OneWire@^2.3", "DallasTemperature.h": "milesburton/DallasTemperature@^4",
     "LinkedList.h": "ivanseidel/LinkedList@^1.3", "JPEGDecoder.h": "bodmer/JPEGDecoder@^2.0",
+    "IniFile.h": "stevemarple/IniFile@^1.3.0", "ESPping.h": "dvarrel/ESPping@^1.0.5", "libssh_esp32.h": "ewpa/LibSSH-ESP32@5.9.0",
+    "AudioFileSourceID3.h": "earlephilhower/ESP8266Audio@^1.9.7", "AudioOutput.h": "earlephilhower/ESP8266Audio@^1.9.7",
     # M5Stack's TinyGPSPlus fork (2025-01-02 master): its MultipleSatellite wrapper sends the Cap LoRa GNSS init
     # handshake (FlockCameraDetector); it replaces mikalhart's TinyGPSPlus, never sits beside it.
     "MultipleSatellite.h": "https://github.com/m5stack/TinyGPSPlus.git#254a10041ac38d17d98dab24c0ae4d2a8d19a677",
@@ -449,7 +451,14 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
         # include scan runs for PlatformIO repos too and adds registry deps whose package is not declared yet.
         inferred, unknown = infer_ino_deps(src_dir_abs, src)
         declared = {re.split(r"[@=]", d, 1)[0].strip().lower() for d in lib_deps}
-        added = [d for d in inferred if re.split(r"[@=]", d, 1)[0].strip().lower() not in declared]
+        declared_text = " ".join(lib_deps).lower()
+        provider = {dep: hdr for hdr, dep in INCLUDE_TO_DEP.items() if dep}
+        # oui-spy declares mathieucarbou's ESPAsyncWebServer; adding the esphome fork for the same header linked two
+        # copies (multiple definition of AsyncWebSocket::canHandle). The header's stem in a declared dep = provided.
+        def already(d: str) -> bool:
+            stem = Path(provider.get(d, "")).stem.lower()
+            return re.split(r"[@=]", d, 1)[0].strip().lower() in declared or bool(stem) and stem in declared_text
+        added = [d for d in inferred if not already(d)]
         if added:
             lib_deps += added
             info["inferred_deps"] = added
@@ -577,6 +586,14 @@ def main() -> int:
             for d in (REPO_ROOT / info["app"] / ".pio" / "libdeps").glob("*/NimBLE-Arduino*"):
                 subprocess.run(["rm", "-rf", str(d)])
             info["nimble_retry"] = alt
+            info.pop("failed", None); info.pop("reason", None)
+            info.update(build(REPO_ROOT / info["app"], a.upload, a.env))
+        # Apps that put `using namespace std;` before Arduino.h break under C++17: Arduino.h's `long map(...)` parses
+        # as a deduction guide for std::map (Game-Station). They were written for the core's default gnu++11.
+        if not info["ok"] and "deduction guide" in info.get("reason", ""):
+            ini = REPO_ROOT / info["app"] / "platformio.ini"
+            ini.write_text(ini.read_text().replace("    -std=gnu++17\n", "    -std=gnu++14\n", 1).replace("build_unflags = -std=gnu++11", "build_unflags = -std=gnu++11 -std=gnu++17", 1))
+            info["cxx14_retry"] = True
             info.pop("failed", None); info.pop("reason", None)
             info.update(build(REPO_ROOT / info["app"], a.upload, a.env))
         # Wi-Fi deauthers override the framework's ieee80211_raw_frame_sanity_check (saturn); the Arduino-IDE recipe for
