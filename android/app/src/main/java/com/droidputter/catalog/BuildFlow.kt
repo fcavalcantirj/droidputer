@@ -4,6 +4,7 @@ import android.util.Log
 import com.droidputter.core.catalog.BuildProxy
 import com.droidputter.core.catalog.BuildStatus
 import com.droidputter.core.catalog.CatalogEntry
+import com.droidputter.telemetry.Telemetry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -62,6 +63,13 @@ class BuildFlow(
             try {
                 val accepted = client.requestBuild(slug, ref, displayName, env = env)
                 Log.d(TAG, "build $slug env=$env accepted: request ${accepted.requestId} cached=${accepted.cached} run=${accepted.runId} env=${accepted.env}")
+                Telemetry.capture("build_requested", mapOf("repo" to slug, "env" to env, "cached" to accepted.cached))
+                val finished = { result: String, st: BuildStatus? ->
+                    Telemetry.capture("build_finished", mapOf(
+                        "repo" to slug, "env" to env, "result" to result, "cached" to accepted.cached,
+                        "failure_class" to st?.failureClass, "seconds" to (System.currentTimeMillis() - t0) / 1000,
+                    ))
+                }
                 update { copy(requestId = accepted.requestId, message = if (accepted.cached) "the proxy already has this build, fetching its parts" else "queued") }
                 var consecutiveFailures = 0
                 while (true) {
@@ -81,11 +89,13 @@ class BuildFlow(
                         myBuilds.add(entry)
                         update { copy(status = status, runUrl = status.runUrl, done = true, readyEntry = entry, message = "Ready: flash it from the Droidputter builds tab") }
                         onReady(entry)
+                        finished("ready", status)
                         return@launch
                     }
                     update { copy(status = status, runUrl = status.runUrl, message = BuildProxy.statusLine(status, elapsed), done = status.terminal, failed = status.terminal) }
-                    if (status.terminal) return@launch
+                    if (status.terminal) { finished(status.status, status); return@launch }
                     if (elapsed > MAX_POLL_MS) {
+                        finished("timeout", status)
                         update { copy(done = true, failed = true, message = "gave up after ${BuildProxy.formatElapsed(elapsed)}: still ${status.status}; build again later (a finished build comes back cached)") }
                         return@launch
                     }
@@ -95,6 +105,7 @@ class BuildFlow(
                 throw e
             } catch (e: Exception) {
                 Log.w(TAG, "build flow $slug failed: ${e.message}")
+                Telemetry.capture("build_finished", mapOf("repo" to slug, "env" to env, "result" to "error", "error" to e.message?.take(160)))
                 update { copy(done = true, failed = true, message = e.message ?: e.toString()) }
             }
         }

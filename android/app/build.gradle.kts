@@ -61,6 +61,10 @@ android {
         // USB reader buffer for A/B runs: `-PusbReadBuffer=0` keeps the library default (the endpoint's 64 B max
         // packet, one USB request per packet); the default here is the 16 KB measured on stellar-map 2026-09-05.
         buildConfigField("int", "USB_READ_BUFFER", "${project.findProperty("usbReadBuffer") ?: "16384"}")
+        // PostHog project token (public by design: it can only SEND events). -PposthogKey= overrides it, -PposthogKey=off
+        // builds an app that never initialises analytics. Nothing is sent before the user opts in (Telemetry.kt).
+        buildConfigField("String", "POSTHOG_KEY", "\"${project.findProperty("posthogKey") ?: "phc_yLh8FABHN8WdBR4JxmSRhFS5qUMFcAuHt335g6ZF8RWJ"}\"")
+        buildConfigField("String", "POSTHOG_HOST", "\"${project.findProperty("posthogHost") ?: "https://us.i.posthog.com"}\"")
     }
 
     signingConfigs {
@@ -127,4 +131,6 @@ dependencies {
 
     implementation("com.github.mik3y:usb-serial-for-android:3.8.0")
     implementation("androidx.core:core-ktx:1.13.1")
+    // Usage + crash analytics (hosted PostHog Cloud, free tier; opt-in, see Telemetry.kt). 3.71.1 = 2026-09-25.
+    implementation("com.posthog:posthog-android:3.71.1")
 }

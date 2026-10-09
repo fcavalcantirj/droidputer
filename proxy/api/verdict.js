@@ -5,6 +5,7 @@
 
 import { error, githubOf, json, vercel } from "../lib/http.js";
 import { validateVerdict } from "../lib/validate.js";
+import { deviceOf, track } from "../lib/telemetry.js";
 import { VERDICT_BODY_LIMIT, clientIp, submitVerdict, takeRateSlot } from "../lib/verdicts.js";
 
 /**
@@ -21,6 +22,7 @@ export async function handle(request, ctx) {
   }
   const rec = validateVerdict(request.body, { today: new Date(now()).toISOString().slice(0, 10) });
   const r = await submitVerdict(githubOf(ctx), rec);
+  if (r.status === 201) await track(ctx, "verdict_filed", { app: rec.name, env: rec.env, result: rec.result, board: rec.board }, deviceOf(request));
   return json(r.status, r.body);
 }
 

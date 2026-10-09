@@ -36,6 +36,8 @@ fun ConnectionScreen(
     onResendHelloAck: () -> Unit,
     onToggleGps: () -> Unit,
     onProbeRom: () -> Unit = {},
+    analyticsOn: Boolean = false,
+    onToggleAnalytics: () -> Unit = {},
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -73,6 +75,10 @@ fun ConnectionScreen(
         Text("satellites in use: ${gpsStatus.satellitesInUse}")
 
         HorizontalDivider()
+        Text("Usage + crash reports", style = MaterialTheme.typography.titleMedium)
+        Text(if (analyticsOn) "on: anonymous usage + crash reports go to PostHog" else "off: nothing is sent")
+
+        HorizontalDivider()
         Button(onClick = onReconnect, modifier = Modifier.fillMaxWidth()) {
             Text("Reconnect")
         }
@@ -84,6 +90,9 @@ fun ConnectionScreen(
         }
         OutlinedButton(onClick = onProbeRom, modifier = Modifier.fillMaxWidth()) {
             Text("Probe ROM bootloader")
+        }
+        OutlinedButton(onClick = onToggleAnalytics, modifier = Modifier.fillMaxWidth()) {
+            Text(if (analyticsOn) "Stop usage + crash reports" else "Send anonymous usage + crash reports")
         }
         OutlinedButton(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
             Text("Back")

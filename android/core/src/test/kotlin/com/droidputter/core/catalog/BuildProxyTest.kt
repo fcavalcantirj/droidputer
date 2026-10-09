@@ -246,6 +246,9 @@ class BuildProxyTest {
         assertEquals("failed (see run)", BuildProxy.statusLine(BuildProxy.parseStatus(STATUS_FAILED), 1))
         assertEquals("failed (see run: cancelled) -- runner lost", BuildProxy.statusLine(BuildStatus("r", BuildStatus.STATUS_FAILED, conclusion = "cancelled", error = "runner lost"), 1))
         assertEquals("unknown request: the proxy has no record of it (build again)", BuildProxy.statusLine(BuildProxy.parseStatus(STATUS_UNKNOWN), 1))
+        val why = BuildProxy.parseStatus("""{"request_id":"r","status":"failed","conclusion":"failure","failure_class":"unsupported-graphics","reason":"x draws with TFT_eSPI, which the shim cannot mirror yet"}""")
+        assertEquals("unsupported-graphics", why.failureClass)
+        assertEquals("failed: x draws with TFT_eSPI, which the shim cannot mirror yet", BuildProxy.statusLine(why, 1))
         assertEquals("uploading… (0:10 elapsed)", BuildProxy.statusLine(BuildStatus("r", "uploading"), 10_000))
     }
 

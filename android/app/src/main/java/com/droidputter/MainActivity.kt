@@ -55,6 +55,7 @@ import com.droidputter.catalog.CatalogScreen
 import com.droidputter.catalog.LauncherHubRepository
 import com.droidputter.catalog.MyBuildsRepository
 import com.droidputter.catalog.VerdictRepository
+import com.droidputter.telemetry.Telemetry
 import com.droidputter.core.catalog.BuildProxy
 import com.droidputter.core.catalog.Verdict
 import com.droidputter.core.catalog.assetDirName
@@ -171,6 +172,13 @@ class MainActivity : ComponentActivity() {
     @Volatile private var rxBytes = 0L
     @Volatile private var obsResets = 0
     @Volatile private var obsPanics = 0
+    // Analytics (Telemetry.kt): the first-launch opt-in dialog, and the per-link facts a mirror_session event reports.
+    private var analyticsAsk: Boolean by mutableStateOf(false)
+    private var analyticsOn: Boolean by mutableStateOf(false)
+    private var linkedAtMs = 0L
+    private var linkFramesAtStart = 0L
+    private var linkApp: String? = null
+    private var lastPanicEventMs = 0L
     @Volatile private var lastPanicLine: String? = null
     // sha256 of the firmware part actually flashed from this phone, per entry (assetDirName): LauncherHub
     // entries carry no hash in the catalog until the bytes are downloaded, so verdicts fall back to this.
@@ -215,8 +223,32 @@ class MainActivity : ComponentActivity() {
         ) {
             requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
+        Telemetry.init(this, verdictRepository.reporter)
+        proxyClient.deviceId = { if (Telemetry.consent == true) verdictRepository.reporter else null }
+        analyticsAsk = Telemetry.consent == null
+        analyticsOn = Telemetry.consent == true
         setContent {
             MaterialTheme {
+                if (analyticsAsk && consentPromptFor == null) {
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = {},
+                        title = { Text("Help improve Droidputter?") },
+                        text = {
+                            Text(
+                                "Send anonymous usage and crash reports: which apps get built, flashed and mirrored, whether builds " +
+                                    "fail and why, and app crashes. They carry this phone's anonymous id (${verdictRepository.reporter}), " +
+                                    "the app version and the phone model. Never your location, accounts, keystrokes or screen. " +
+                                    "Turn it off any time on the Connection screen.",
+                            )
+                        },
+                        confirmButton = {
+                            Button(onClick = { analyticsAsk = false; analyticsOn = true; Telemetry.answer(this@MainActivity, true) }) { Text("Send") }
+                        },
+                        dismissButton = {
+                            androidx.compose.material3.TextButton(onClick = { analyticsAsk = false; analyticsOn = false; Telemetry.answer(this@MainActivity, false) }) { Text("No thanks") }
+                        },
+                    )
+                }
                 consentPromptFor?.let { (pending, label) ->
                     androidx.compose.material3.AlertDialog(
                         onDismissRequest = { consentPromptFor = null },
@@ -260,6 +292,8 @@ class MainActivity : ComponentActivity() {
                             onResendHelloAck = ::sendHelloAckNow,
                             onToggleGps = ::toggleGpsFeed,
                             onProbeRom = ::probeRomBootloader,
+                            analyticsOn = analyticsOn,
+                            onToggleAnalytics = { analyticsOn = !analyticsOn; Telemetry.answer(this@MainActivity, analyticsOn) },
                             onClose = { showConnectionScreen = false },
                             modifier = Modifier.windowInsetsPadding(chromeInsets).padding(horizontal = edgeGuard),
                         )
@@ -309,6 +343,7 @@ class MainActivity : ComponentActivity() {
                                 Button(
                                     onClick = {
                                         showCatalogScreen = true
+                                        Telemetry.capture("catalog_open")
                                         // live community verdicts (falls back to the cached/seed copy offline), then the
                                         // verdicts stored on this phone that never reached the repo (offline tap, proxy
                                         // down, or a tap from before the one-tap POST existed) go out, oldest first.
@@ -380,7 +415,14 @@ class MainActivity : ComponentActivity() {
                 transport = opened
                 opened.onEspLine = { line ->
                     if (com.droidputter.core.link.PanicSniffer.isReset(line)) obsResets++
-                    if (com.droidputter.core.link.PanicSniffer.isPanic(line)) { obsPanics++; lastPanicLine = line }
+                    if (com.droidputter.core.link.PanicSniffer.isPanic(line)) {
+                        obsPanics++; lastPanicLine = line
+                        val now = System.currentTimeMillis()
+                        if (now - lastPanicEventMs > 60_000) {
+                            lastPanicEventMs = now
+                            Telemetry.capture("esp_panic", mapOf("app" to linkApp, "board" to boardName, "line" to line.take(160)))
+                        }
+                    }
                 }
                 // A phone opening the port after the ESP's boot-time HELLO already drained its
                 // TX ring never sees one otherwise (the ESP only resends HELLO on HELLO_ACK/PING_IN,
@@ -424,6 +466,10 @@ class MainActivity : ComponentActivity() {
                                 if (message is DpMessage.Hello) {
                                     boardName = message.board.ifBlank { "unknown" }
                                     obsHello = true
+                                    if (linkApp == null) {
+                                        linkApp = message.app.ifBlank { "unknown" }
+                                        Telemetry.capture("link_up", mapOf("app" to linkApp, "board" to boardName, "proto" to message.proto))
+                                    }
                                     linkManager.onHelloReceived()
                                 }
                                 if (message is DpMessage.Rect || message is DpMessage.RectRle || message is DpMessage.Fill) { obsFrames++; rxFrames++ }
@@ -470,7 +516,21 @@ class MainActivity : ComponentActivity() {
                 }
             },
             onStatus = { status ->
+                val was = connectionStatus.state
                 connectionStatus = status
+                if (was == LinkState.DETACHED && status.state != LinkState.DETACHED) {
+                    Telemetry.capture("usb_attached", mapOf("usb_device" to status.deviceName))
+                }
+                if (status.state == LinkState.LINKED && was != LinkState.LINKED) {
+                    linkedAtMs = System.currentTimeMillis(); linkFramesAtStart = rxFrames
+                }
+                if (was == LinkState.LINKED && status.state != LinkState.LINKED) {
+                    Telemetry.capture("mirror_session", mapOf(
+                        "app" to linkApp, "board" to boardName,
+                        "seconds" to (System.currentTimeMillis() - linkedAtMs) / 1000, "frames" to rxFrames - linkFramesAtStart,
+                    ))
+                    linkApp = null
+                }
                 // The foreground service is what keeps the link alive once the screen turns
                 // off -- start it only while actually Linked, so it never lingers after a
                 // detach/error and the OS doesn't see an idle foreground service.
@@ -549,8 +609,13 @@ class MainActivity : ComponentActivity() {
         flashing = true
         flashStatus = "starting"
         lifecycleScope.launch {
+            val startedAt = System.currentTimeMillis()
             val result = phoneFlasher.flash(entry)
             flashing = false
+            Telemetry.capture("flash_finished", mapOf(
+                "app" to entry.name, "env" to entry.env, "source" to entry.source, "result" to if (result.isSuccess) "ok" else "failed",
+                "error" to result.exceptionOrNull()?.message?.take(160), "seconds" to (System.currentTimeMillis() - startedAt) / 1000,
+            ))
             // success = the sha256 of the firmware part that was written; verdicts for hash-less entries use it
             result.onSuccess { sha -> flashedSha256[entry.assetDirName] = sha; flashStatus = "done: ${entry.name} flashed and verified"; observeAfterFlash(entry) }
         }
@@ -649,7 +714,10 @@ class MainActivity : ComponentActivity() {
         flashStatus = "$label saved; sending…"
         lifecycleScope.launch {
             verdictRepository.submit(v)
-                .onSuccess { flashStatus = "$label sent (#${it.issueNumber}) — thank you" }
+                .onSuccess {
+                    flashStatus = "$label sent (#${it.issueNumber}) — thank you"
+                    Telemetry.capture("verdict_sent", mapOf("app" to v.name, "env" to v.env, "result" to v.result, "auto" to v.note.startsWith("auto:")))
+                }
                 .onFailure { flashStatus = "$label not sent: ${it.message} -- tap Works/Broken to resend" }
         }
     }

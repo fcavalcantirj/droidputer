@@ -68,6 +68,10 @@ data class BuildStatus(
     val error: String? = null,
     /** The PlatformIO env of this build (contract v1.1); absent from a v1 proxy = the ADV env. */
     val env: String? = null,
+    /** Why a failed build failed (build-app.yml failure.json, 2026-10-09): a class such as dram-overflow or
+     *  unsupported-graphics, and one human line. Absent from older proxies and from runs before that date. */
+    @SerialName("failure_class") val failureClass: String? = null,
+    val reason: String? = null,
 ) {
     /** A build the phone can flash: status ready AND at least one part to download. */
     val ready: Boolean get() = status == STATUS_READY && parts.isNotEmpty()
@@ -224,6 +228,7 @@ object BuildProxy {
         status.status == BuildStatus.STATUS_BUILDING -> "building… (run ${status.runId ?: "?"}, ${formatElapsed(elapsedMillis)} elapsed)"
         status.ready -> "ready"
         status.status == BuildStatus.STATUS_READY -> "failed (the build finished with no parts)"
+        status.status == BuildStatus.STATUS_FAILED && !status.reason.isNullOrBlank() -> "failed: ${status.reason}"
         status.status == BuildStatus.STATUS_FAILED ->
             "failed (see run" + (status.conclusion?.takeIf { it.isNotBlank() && it != "failure" }?.let { ": $it" } ?: "") + ")" +
                 (status.error?.takeIf { it.isNotBlank() }?.let { " -- $it" } ?: "")

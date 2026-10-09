@@ -28,6 +28,9 @@ class BuildProxyClient(private val baseUrl: String = BuildProxy.DEFAULT_BASE_URL
 
     private class Reply(val code: Int, val body: String)
 
+    /** This phone's anonymous id for the proxy's usage events, or null: set only while the user opted in to analytics (Telemetry). */
+    @Volatile var deviceId: (() -> String?)? = null
+
     /** `POST /api/build`; 202 = started, 200 = the proxy already had it (`cached`). */
     suspend fun requestBuild(slug: String, ref: String? = null, name: String? = null, env: String? = null): BuildAccepted = withContext(Dispatchers.IO) {
         val reply = exchange("POST", BuildProxy.buildUrl(baseUrl), BuildProxy.encodeRequest(BuildRequest(slug, ref, name, env)))
@@ -99,6 +102,7 @@ class BuildProxyClient(private val baseUrl: String = BuildProxy.DEFAULT_BASE_URL
                 instanceFollowRedirects = true
                 setRequestProperty("Accept", "application/json")
                 setRequestProperty("User-Agent", USER_AGENT)
+                deviceId?.invoke()?.let { setRequestProperty("X-Droidputter-Device", it) }
                 if (body != null) {
                     doOutput = true
                     setRequestProperty("Content-Type", "application/json")

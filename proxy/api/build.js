@@ -7,6 +7,7 @@
 import { createBuild, listBuilds } from "../lib/builds.js";
 import { error, githubOf, json, vercel } from "../lib/http.js";
 import { validateBuildRequest } from "../lib/validate.js";
+import { deviceOf, track } from "../lib/telemetry.js";
 
 /**
  * @param {import("../lib/http.js").ProxyRequest} request
@@ -17,6 +18,11 @@ export async function handle(request, ctx) {
     const input = validateBuildRequest(request.body);
     const gh = githubOf(ctx);
     const r = await createBuild(gh, input, { now: ctx.now });
+    const b = /** @type {Record<string, any>} */ (r.body);
+    const event = r.status === 429 ? "build_throttled"
+      : r.status === 202 ? (b.run_id ? "build_joined" : "build_dispatched")
+      : b.failure_class ? "build_failed_cached" : "build_cache_hit";
+    await track(ctx, event, { repo: input.repo, env: input.env, failure_class: b.failure_class, shim: b.shim_commit }, deviceOf(request));
     return json(r.status, r.body, r.status === 429 ? { "Retry-After": "60" } : {});
   }
   if (request.method === "GET") {

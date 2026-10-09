@@ -8,6 +8,8 @@
  * @property {string} workflow  WORKFLOW     -- workflow file name (default build-app.yml)
  * @property {string} baseUrl   BASE_URL     -- public origin of this proxy for part URLs ("" = derive from the request Host)
  * @property {string} apiBase   GITHUB_API   -- GitHub REST origin (tests point it at a fake)
+ * @property {string} posthogKey  POSTHOG_KEY  -- PostHog project token for usage events (public by design; "" = off)
+ * @property {string} posthogHost POSTHOG_HOST -- PostHog ingestion origin (default the US cloud)
  */
 
 /**
@@ -24,5 +26,7 @@ export function loadConfig(env = process.env) {
     workflow: env.WORKFLOW || "build-app.yml",
     baseUrl: (env.BASE_URL || "").replace(/\/+$/, ""),
     apiBase: (env.GITHUB_API || "https://api.github.com").replace(/\/+$/, ""),
+    posthogKey: env.POSTHOG_KEY || "",
+    posthogHost: (env.POSTHOG_HOST || "https://us.i.posthog.com").replace(/\/+$/, ""),
   };
 }
