@@ -1,7 +1,7 @@
 ---
 slug: droidputer-next
 date: 2026-10-09
-status: open
+status: approved
 round: 0
 author_session: 2026-10-09 Claude Code session in ~/dev/droidputter (context ~87%) that shipped v0.0.7, fixed the Play crashes, built droidputer.vercel.app and planned what follows
 ---
