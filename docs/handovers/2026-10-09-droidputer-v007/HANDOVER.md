@@ -1,7 +1,7 @@
 ---
 slug: droidputer-v007
 date: 2026-10-09
-status: open
+status: superseded
 round: 0
 author_session: 2026-10-09 Claude Code session in ~/dev/droidputter that dissected the 174 failed proxy builds, added PostHog analytics, built droidputer.vercel.app and renamed the repo
 ---
@@ -265,3 +265,21 @@ Write the AGP variant-API asset wiring (checklist 1) on a new branch off `main`,
 - PostHog: https://us.posthog.com project 655499 (query API `https://us.posthog.com/api/projects/655499/query/`).
 - Play Console: crashes under Android vitals → Crashes and ANRs (Felipe has access).
 - Memory: `~/.claude/projects/-Users-fcavalcanti-dev-droidputter/memory/project-droidputter-build-fix-analytics-2026-10-09.md`.
+
+## SUPERSEDED (2026-10-09 ~19:00, by the author session -- executed instead of handed over)
+Done and verified; a builder must NOT redo these:
+- 0. Both Play crashes fixed (main 251ecce): typed CopyAssetFiles + addGeneratedSourceDirectory; check-assets.sh in
+  android.yml/release.yml (fails on the published v0.0.6 APK/AAB, passes now); demo replay guarded; USB open
+  retried 3x with backoff and shown on the Connection screen. [TEST] release APK on the emulator: Replay fixture
+  renders, 0 FATAL. Crash B on real hardware: [UNVERIFIED] until a phone + ESP session.
+- 1. Prebuilt hand-off (main 365bea7): LauncherHub.matchRepo + tests; verified on the emulator through the real proxy
+  (BruceDevices/firmware -> "Flash the working prebuilt: Bruce for Cardputer & ADV" -> LauncherHub detail 1.16.1).
+- 2. Compat retry: tried on fix/compat-retry, NOT merged -- no build turned green. Evil-M5Core2's real blocker is
+  PlatformIO's .ino prototype generator misparsing JavaScript inside raw strings; Game-Station relies on headers its
+  vendored M5Cardputer pulled in (forcing Wire.h brings Arduino's binary macros into emulator code); Bus-Pirate,
+  nemo, cardputer-ai need arduino-esp32 3.x.
+- 3. Site: "How people used it so far" live (main b2137c3). Live traffic still waits for Felipe's token.
+- 4. v0.0.7 tagged on 365bea7 and released (droidputer-v0.0.7.apk/.aab, versionCode 7, same signing key as v0.0.6).
+- 5. StickS3 proof done (see "Hardware session").
+Still open: Felipe uploads droidputer-v0.0.7.aab to Play (privacy URL https://droidputer.vercel.app/privacy);
+acceptance on Felipe's phone + an ESP; the GitHub traffic token; M4 TFT_eSPI spike.
