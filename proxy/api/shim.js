@@ -4,7 +4,7 @@
 //
 // What this is: a Vercel project (proxy/) of five Node 22 functions, zero framework, one dependency
 // (fflate). The phone POSTs /api/build {repo, ref?, name?, env?}; the proxy dispatches
-// .github/workflows/build-app.yml on fcavalcantirj/droidputter@main (workflow_dispatch inputs repo, name,
+// .github/workflows/build-app.yml on fcavalcantirj/droidputer@main (workflow_dispatch inputs repo, name,
 // ref, env, request_id, shim), polls the run by its run-name ("build <repo>@<ref|HEAD> env=<env> shim=<shim>
 // req=<id>") and streams the parts (bootloader.bin 0x0, partitions.bin 0x8000, boot_app0.bin 0xe000,
 // firmware.bin 0x10000) straight out of the run's <name>-<env> artifact zip (never the <name>-<env>-elf one).
@@ -17,13 +17,13 @@
 //
 // Environment variables (Vercel project settings -> Environment Variables, Production + Preview):
 //   GITHUB_TOKEN  required. Fine-grained personal access token scoped to the ONE repository
-//                 fcavalcantirj/droidputter with permissions
+//                 fcavalcantirj/droidputer with permissions
 //                   Actions:  Read and write   (dispatch the workflow, list runs, download artifacts)
 //                   Contents: Read             (latest commit touching shim/ = shim_commit)
 //                   Issues:   Read and write   (POST /api/verdict files the issue; without it GitHub answers
 //                                               403/404 and the proxy 502 "proxy token lacks Issues: write")
 //                 (Metadata: Read is implied.) Rotate by replacing the variable and redeploying.
-//   GITHUB_REPO   default "fcavalcantirj/droidputter" -- the repo hosting the workflow.
+//   GITHUB_REPO   default "fcavalcantirj/droidputer" -- the repo hosting the workflow.
 //   WORKFLOW      default "build-app.yml".
 //   BASE_URL      optional, e.g. https://droidputter-proxy.vercel.app -- the origin written into
 //                 parts[].url; when unset the request's x-forwarded-host is used.

@@ -1,8 +1,8 @@
 # GitHub Release on a version tag (v*): runs the same :core tests + kover gate + static gate as android.yml, builds
 # the R8-minified release APK and AAB signed with the project's RELEASE key (decoded from the RELEASE_KEYSTORE_B64
 # secret into a temp file; RELEASE_KEYSTORE_PASSWORD / RELEASE_KEY_ALIAS / RELEASE_KEY_PASSWORD unlock it), verifies
-# the signature with apksigner and refuses a debug-key fallback, then publishes droidputter-<tag>.apk,
-# droidputter-<tag>.aab and SHA256SUMS on a GitHub Release whose notes are the annotated tag's message.
+# the signature with apksigner and refuses a debug-key fallback, then publishes droidputer-<tag>.apk,
+# droidputer-<tag>.aab and SHA256SUMS on a GitHub Release whose notes are the annotated tag's message.
 # Tags are created ONLY by Felipe (`git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z`); nothing here creates a
 # tag, bumps versionCode/versionName, or touches Google Play. Losing the keystore = no in-place updates for users.
 name: release
@@ -64,12 +64,12 @@ jobs:
       - name: Name the assets and write SHA256SUMS
         run: |
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk "dist/droidputter-${GITHUB_REF_NAME}.apk"
-          cp android/app/build/outputs/bundle/release/app-release.aab "dist/droidputter-${GITHUB_REF_NAME}.aab"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/droidputer-${GITHUB_REF_NAME}.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "dist/droidputer-${GITHUB_REF_NAME}.aab"
           # R8 mapping: upload to Play Console (App bundle explorer > deobfuscation) so crash traces are readable
-          cp android/app/build/outputs/mapping/release/mapping.txt "dist/droidputter-${GITHUB_REF_NAME}-mapping.txt"
+          cp android/app/build/outputs/mapping/release/mapping.txt "dist/droidputer-${GITHUB_REF_NAME}-mapping.txt"
           cd dist
-          sha256sum "droidputter-${GITHUB_REF_NAME}.apk" "droidputter-${GITHUB_REF_NAME}.aab" > SHA256SUMS
+          sha256sum "droidputer-${GITHUB_REF_NAME}.apk" "droidputer-${GITHUB_REF_NAME}.aab" > SHA256SUMS
           cat SHA256SUMS
 
       - name: Verify the APK signature (release key, never the debug key)
@@ -80,7 +80,7 @@ jobs:
             BT="$(ls -d "$SDK"/build-tools/*/ | sort -V | tail -n 1)"
             echo "build-tools 35.0.0 absent, using $BT"
           fi
-          APK="dist/droidputter-${GITHUB_REF_NAME}.apk"
+          APK="dist/droidputer-${GITHUB_REF_NAME}.apk"
           "$BT/apksigner" verify --print-certs --verbose "$APK" | tee dist/apksigner.txt
           if grep -q 'CN=Android Debug' dist/apksigner.txt; then
             echo "::error::$APK is signed with a debug key (release signing config was not applied); refusing to publish"
@@ -91,17 +91,17 @@ jobs:
         run: |
           git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > dist/RELEASE_NOTES.md
           if [ ! -s dist/RELEASE_NOTES.md ]; then
-            echo "Droidputter ${GITHUB_REF_NAME}" > dist/RELEASE_NOTES.md
+            echo "Droidputer ${GITHUB_REF_NAME}" > dist/RELEASE_NOTES.md
           fi
           cat >> dist/RELEASE_NOTES.md <<EOF
 
           ---
           **Assets**
-          - \`droidputter-${GITHUB_REF_NAME}.apk\` — the app; install this one
-          - \`droidputter-${GITHUB_REF_NAME}.aab\` — Android App Bundle (not needed to install)
+          - \`droidputer-${GITHUB_REF_NAME}.apk\` — the app; install this one
+          - \`droidputer-${GITHUB_REF_NAME}.aab\` — Android App Bundle (not needed to install)
           - \`SHA256SUMS\` — checksums of both
 
-          **Install**: \`adb install droidputter-${GITHUB_REF_NAME}.apk\`, or open the APK on the phone (Android 8+). USB-OTG required: plug the ESP32-S3 in with an OTG cable and grant the USB permission once.
+          **Install**: \`adb install droidputer-${GITHUB_REF_NAME}.apk\`, or open the APK on the phone (Android 8+). USB-OTG required: plug the ESP32-S3 in with an OTG cable and grant the USB permission once.
           EOF
           cat dist/RELEASE_NOTES.md
 
@@ -112,11 +112,11 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" \
             --verify-tag \
-            --title "Droidputter $GITHUB_REF_NAME" \
+            --title "Droidputer $GITHUB_REF_NAME" \
             --notes-file dist/RELEASE_NOTES.md \
-            "dist/droidputter-${GITHUB_REF_NAME}.apk" \
-            "dist/droidputter-${GITHUB_REF_NAME}.aab" \
-            "dist/droidputter-${GITHUB_REF_NAME}-mapping.txt" \
+            "dist/droidputer-${GITHUB_REF_NAME}.apk" \
+            "dist/droidputer-${GITHUB_REF_NAME}.aab" \
+            "dist/droidputer-${GITHUB_REF_NAME}-mapping.txt" \
             dist/SHA256SUMS
 
       # Google Play, internal testing track. Runs only once PLAY_SERVICE_ACCOUNT_JSON exists (a Google Cloud
@@ -130,7 +130,7 @@ jobs:
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.droidputter
-          releaseFiles: dist/droidputter-${{ github.ref_name }}.aab
-          mappingFile: dist/droidputter-${{ github.ref_name }}-mapping.txt
+          releaseFiles: dist/droidputer-${{ github.ref_name }}.aab
+          mappingFile: dist/droidputer-${{ github.ref_name }}-mapping.txt
           track: internal
           status: completed

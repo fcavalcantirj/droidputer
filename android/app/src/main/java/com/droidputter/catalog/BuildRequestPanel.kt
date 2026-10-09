@@ -53,8 +53,8 @@ fun BuildRequestPanel(
             )
         }
         Text(
-            "The build proxy checks out $slug, rebuilds it against the Droidputter shim on GitHub Actions for " +
-                "${BuildProxy.targetLabel(target)} and hands the parts back; flash them from the Droidputter builds tab.",
+            "The build proxy checks out $slug, rebuilds it against the Droidputer shim on GitHub Actions for " +
+                "${BuildProxy.targetLabel(target)} and hands the parts back; flash them from the Droidputer builds tab.",
             style = MaterialTheme.typography.bodySmall,
         )
         if (busyElsewhere) Text("Another build (${state!!.displayName}) is in flight; one at a time.", style = MaterialTheme.typography.bodySmall)

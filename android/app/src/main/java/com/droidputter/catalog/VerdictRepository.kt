@@ -154,7 +154,7 @@ class VerdictRepository(private val context: Context, private val proxy: BuildPr
     } + ", kept on this phone"
 
     companion object {
-        const val REPO = "fcavalcantirj/droidputter"
+        const val REPO = "fcavalcantirj/droidputer"
         const val REMOTE_URL = "https://raw.githubusercontent.com/$REPO/main/apps/verdicts.json"
         private const val SEED_ASSET = "catalog/verdicts.json"
         private const val TAG = "Droidputter"

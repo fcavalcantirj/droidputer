@@ -96,7 +96,7 @@ fun CatalogScreen(
             // Two plain buttons instead of a Material TabRow: Felipe (2026-09-05) found the tab strip "SOOOO HARD
             // to navigate ... clicks only change tab on few places". A Button's whole 52 dp box is the hit target.
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SourceButton("Droidputter builds (${myBuilds.size + entries.size})", selected = tab == 0, modifier = Modifier.weight(1f)) { tab = 0 }
+                SourceButton("Droidputer builds (${myBuilds.size + entries.size})", selected = tab == 0, modifier = Modifier.weight(1f)) { tab = 0 }
                 SourceButton("LauncherHub (${hubEntries.size})", selected = tab == 1, modifier = Modifier.weight(1f)) { tab = 1 }
             }
             OutlinedTextField(
@@ -239,13 +239,13 @@ private fun CatalogDetail(
         if (!entry.mirror) {
             Text(
                 "Prebuilt binary: the phone flashes it and the app runs on the Cardputer's own screen and keys. " +
-                    "No phone mirror, phone keyboard or phone GPS -- those need a shim rebuild (Droidputter builds tab).",
+                    "No phone mirror, phone keyboard or phone GPS -- those need a shim rebuild (Droidputer builds tab).",
                 style = MaterialTheme.typography.bodySmall,
             )
             if (entry.parts.size == 1 && entry.parts[0].offset == LauncherHub.OFFSET_APP) {
                 Text(
                     "App-only image (flashed at 0x10000): keeps the board's current bootloader and partition table; " +
-                        "any Droidputter or Arduino 8 MB build leaves a compatible one.",
+                        "any Droidputer or Arduino 8 MB build leaves a compatible one.",
                     style = MaterialTheme.typography.bodySmall,
                 )
             }

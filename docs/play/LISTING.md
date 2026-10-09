@@ -4,14 +4,14 @@ Everything the Play Console asks for, ready to paste. Assets are in `docs/play/a
 
 ## Store listing
 
-- **App name (30):** Droidputter
+- **App name (30):** Droidputer
 - **Short description (80):** Run Cardputer apps on your phone through an ESP32-S3 plugged in over USB.
 - **Full description:**
 
 Plug an ESP32-S3 into your phone with a USB-OTG cable and the phone becomes the Cardputer: the ESP32
 runs the app, your phone is its screen, keyboard, GPS and flasher.
 
-Droidputter rebuilds open-source Cardputer apps on demand. Pick an app from the catalog or paste any
+Droidputer rebuilds open-source Cardputer apps on demand. Pick an app from the catalog or paste any
 GitHub repository, choose the target (a bare ESP32-S3 with no display, or a Cardputer ADV), and the build
 runs in the cloud in a couple of minutes. Then flash it from the phone, no computer involved, and the app
 appears on your screen the moment the board reboots.
@@ -25,11 +25,11 @@ Features:
 - Optional community verdicts: which apps work on which boards
 
 Requires: a phone with USB host (OTG) support and an ESP32-S3 board (M5Stack Cardputer ADV, StickS3, or
-any ESP32-S3 devkit on its native USB port). Open source, MIT: https://github.com/fcavalcantirj/droidputter
+any ESP32-S3 devkit on its native USB port). Open source, MIT: https://github.com/fcavalcantirj/droidputer
 
 - **App category:** Tools. **Tags:** developer tools, hardware.
-- **Contact email:** (yours). **Website:** https://github.com/fcavalcantirj/droidputter
-- **Privacy policy URL:** https://fcavalcantirj.github.io/droidputter/PRIVACY.html (GitHub Pages from `docs/`)
+- **Contact email:** (yours). **Website:** https://droidputer.vercel.app (source: https://github.com/fcavalcantirj/droidputer)
+- **Privacy policy URL:** https://droidputer.vercel.app/privacy (static page generated from `docs/PRIVACY.md`; it moved off GitHub Pages because a repository rename does not redirect Pages URLs)
 - **Graphics:** `assets/icon-512.png`, `assets/feature-1024x500.jpg`, the six `assets/screenshot-*.png`
   (2712x1356, 2:1). Promo video: your YouTube upload of the devkit clip.
 
@@ -66,13 +66,13 @@ any ESP32-S3 devkit on its native USB port). Open source, MIT: https://github.co
 
 ## Release checklist (you, in the console)
 
-1. Create the app: Droidputter, English (US), app, free.
+1. Create the app: Droidputer, English (US), app, free.
 2. Setup > App access, Ads, Content rating, Target audience, News, COVID, Data safety, Government,
    Financial features, Health: answers above.
 3. Setup > App signing: use Play App Signing; upload key = our release keystore (the AAB is already
    signed with it; Play generates the app signing key).
 4. Store listing: texts + graphics above.
-5. Testing > Internal testing: upload `droidputter-vX.Y.Z.aab` from the GitHub Release, add testers
+5. Testing > Internal testing: upload `droidputer-vX.Y.Z.aab` (named `droidputter-…` up to v0.0.6) from the GitHub Release, add testers
    (emails), roll out. Install the internal-test link on your phone (uninstall the sideloaded APK first:
    Play's signing key differs from the sideload one).
 6. Testing > Closed testing: same AAB, 12+ testers, 14 days; then Publishing overview > Apply for

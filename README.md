@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="docs/img/icon.png" alt="Droidputter" width="112">
+<img src="docs/img/icon.png" alt="Droidputer" width="112">
 
-<h1>Droidputter</h1>
+<h1>Droidputer</h1>
 
 <p><strong>Plug an ESP32-S3 into an Android phone. The phone becomes the Cardputer.</strong></p>
 
@@ -15,13 +15,13 @@ The ESP32-S3 runs the app; the phone adds screen, keys, location and a flasher. 
 <a href="#ways-to-flash">Ways to flash</a> ·
 <a href="#under-the-hood">Under the hood</a> ·
 <a href="#tested-boards-and-phones">Tested boards</a> ·
-<a href="https://github.com/fcavalcantirj/droidputter/releases">Releases</a>
+<a href="https://github.com/fcavalcantirj/droidputer/releases">Releases</a>
 </p>
 
 <p>
-<a href="https://github.com/fcavalcantirj/droidputter/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/fcavalcantirj/droidputter?label=release&color=F3A712"></a>
-<a href="https://github.com/fcavalcantirj/droidputter/actions/workflows/android.yml"><img alt="Android CI" src="https://github.com/fcavalcantirj/droidputter/actions/workflows/android.yml/badge.svg"></a>
-<a href="https://github.com/fcavalcantirj/droidputter/actions/workflows/release.yml"><img alt="Release build" src="https://github.com/fcavalcantirj/droidputter/actions/workflows/release.yml/badge.svg"></a>
+<a href="https://github.com/fcavalcantirj/droidputer/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/fcavalcantirj/droidputer?label=release&color=F3A712"></a>
+<a href="https://github.com/fcavalcantirj/droidputer/actions/workflows/android.yml"><img alt="Android CI" src="https://github.com/fcavalcantirj/droidputer/actions/workflows/android.yml/badge.svg"></a>
+<a href="https://github.com/fcavalcantirj/droidputer/actions/workflows/release.yml"><img alt="Release build" src="https://github.com/fcavalcantirj/droidputer/actions/workflows/release.yml/badge.svg"></a>
 <img alt="Platform: Android 8+" src="https://img.shields.io/badge/platform-Android%208%2B-3DDC84">
 <img alt="Hardware: ESP32-S3" src="https://img.shields.io/badge/hardware-ESP32--S3-E7352C">
 <img alt="Toolchain: arduino-esp32 2.0.17" src="https://img.shields.io/badge/arduino--esp32-2.0.17-00979D">
@@ -65,14 +65,14 @@ own TFT shows the same frames next to the phone.
 
 ## How to use
 
-1. Install the release APK from https://github.com/fcavalcantirj/droidputter/releases
+1. Install the release APK from https://github.com/fcavalcantirj/droidputer/releases
    (`adb install droidputter-<tag>.apk`, e.g. `droidputter-v0.0.6.apk`, or open the file on the
    phone). Android 8+ with USB-OTG host support.
 2. Plug an ESP32-S3 into the phone's USB-C port with an OTG cable, into the board's native USB port.
    Use a known-good data cable: one cable gave "no Type-C partner" (2026-09-02).
-3. Answer "Allow Droidputter to access USB JTAG/serial debug unit?" once. The top-right button shows
+3. Answer "Allow Droidputer to access USB JTAG/serial debug unit?" once. The top-right button shows
    the link state (DETACHED, LINKED, ...) and opens the Connection screen.
-4. Tap **Catalog** (top left). Two sources: **Droidputter builds** (your own proxy builds first,
+4. Tap **Catalog** (top left). Two sources: **Droidputer builds** (your own proxy builds first,
    then the `apps/` recipes) and **LauncherHub** (prebuilt M5Burner bins, flash only).
 5. Under **Build for**, pick the target: **bare ESP32-S3** (the phone is the only screen; the
    default) or **Cardputer ADV** (the board's own TFT is teed to the phone).
@@ -80,7 +80,7 @@ own TFT shows the same frames next to the phone.
    GitHub repo", or a LauncherHub prebuilt (no build step: skip to 8).
 7. Tap **Build mirror version (~2-4 min)** (**Rebuild with the current shim** on one of your own
    builds). The status line goes "asking the build proxy…" then "queued (0:05 elapsed)" then
-   "building… (run <id>, 1:23 elapsed)" then "Ready: flash it from the Droidputter builds tab".
+   "building… (run <id>, 1:23 elapsed)" then "Ready: flash it from the Droidputer builds tab".
    Measured 2 min 4 s warm, 4 min 8 s cold (2026-09-04). A build the proxy already has (same repo,
    ref, target and shim, under 24 h) answers "the proxy already has this build, fetching its parts"
    at once (3 s on 2026-09-16).
@@ -126,7 +126,7 @@ own TFT shows the same frames next to the phone.
   software CDC) ignores the phone's DTR/RTS reset; the status line says "no ROM bootloader yet -- if
   the board stays quiet, hold its BOOT button and replug it now (waiting 90 s)". Hold BOOT while
   plugging it back in: the ROM enumerates as "USB JTAG/serial debug unit" and the flash continues.
-  Once a Droidputter build is on the board, the phone resets it alone (2026-09-05, StickS3).
+  Once a Droidputer build is on the board, the phone resets it alone (2026-09-05, StickS3).
 - **The UART/COM port of a devkit never works.** The shim only speaks over the S3's native
   USB-Serial/JTAG; a CH9102 or CH343 bridge shows up as "USB Single Serial" and never carries the
   link (2026-09-05, 2026-09-16), and any other UART bridge (CP210x, ...) is no different. Use the
@@ -174,7 +174,7 @@ virtual env) and to a bare ESP32-S3-N16R8 devkit (2026-09-16, with the proxy's 2
 **(b) In-app, LauncherHub / M5Burner prebuilt.** You need the phone and network once: the ~3 MB feed
 from `api.launcherhub.net` is cached and refreshed at most daily (606 entries on 2026-09-16). Every
 Cardputer/StampS3 entry on the S3 chip with an install format is listed: `merged` images flash at
-0x0, `app` images at 0x10000 (that keeps the board's bootloader and partition table; any Droidputter
+0x0, `app` images at 0x10000 (that keeps the board's bootloader and partition table; any Droidputer
 or Arduino 8 MB build leaves a compatible one). Flash-only: the bin carries no shim, so no phone
 mirror, keyboard or GPS; the app runs on the Cardputer's own screen and keys. The hash is computed
 after download; the verdict is yours ("Works or Broken?"): the phone only flags a crash loop (a
@@ -251,7 +251,7 @@ never forwards DTR/RTS to the reset logic, so neither the phone flasher nor espt
 ROM. Hold BOOT while plugging the board in; the ROM enumerates as "USB JTAG/serial debug unit". The
 phone waits 90 s for exactly that re-enumeration and then continues the flash; otherwise it ends
 with "FAILED: ROM bootloader did not come back on USB (hold BOOT while plugging the board in, then
-Flash again)". Once a Droidputter build (arduino HWCDC) is on the board, every later flash resets it
+Flash again)". Once a Droidputer build (arduino HWCDC) is on the board, every later flash resets it
 from the phone alone (2026-09-05, StickS3; 2026-09-16, StickS3 and the bare devkit, whose previous
 firmware was also an arduino HWCDC build). Mirror: n/a.
 
@@ -388,7 +388,7 @@ where it would read its GPS UART (`apps/gps-demo`).
 ### Build on demand
 
 ```
- phone                        proxy (Vercel, Node 22)             GitHub fcavalcantirj/droidputter
+ phone                        proxy (Vercel, Node 22)             GitHub fcavalcantirj/droidputer
 ┌─────────────────────┐       ┌───────────────────────────┐       ┌────────────────────────────────┐
 │ Catalog: "Build     │       │ POST /api/build           │       │ workflow_dispatch build-app.yml│
 │  mirror version" or │──────▶│  {repo, ref, name, env}   │──────▶│  run-name: build <repo>@<ref>  │
@@ -428,7 +428,7 @@ where it would read its GPS UART (`apps/gps-demo`).
 Nothing is pre-built or hosted. The phone POSTs `{repo, ref?, name?, env?}` to `/api/build`
 (`proxy/api/build.js`, validated by `proxy/lib/validate.js`; the name defaults to the repo's tail
 lowercased). The proxy is five Vercel functions holding one fine-grained token scoped to
-`fcavalcantirj/droidputter` (Actions read/write, Contents read, Issues read/write; `proxy/api/
+`fcavalcantirj/droidputer` (Actions read/write, Contents read, Issues read/write; `proxy/api/
 shim.js`). A build's identity is `repo@ref` + `env` + the shim commit, the short sha of the newest
 commit on `main` touching `shim/` or `tools/overlay.py` (`SHIM_PATHS`, `proxy/lib/github.js`,
 cached 60 s), so editing the overlay template invalidates every cached build. A successful run
@@ -552,7 +552,7 @@ See `apps/pense-bem/` (a private app, unmodified) and `apps/m5-example/`
 ## Tested boards and phones
 
 Every row is a hardware result from the journal (`progress.txt`), with the date it was last seen working. "Flash from phone" = the
-Droidputter app wrote and md5-verified the parts itself over USB-OTG; "link" = the shim's HELLO arrived and frames flowed to
+Droidputer app wrote and md5-verified the parts itself over USB-OTG; "link" = the shim's HELLO arrived and frames flowed to
 the phone's screen. Build env = the PlatformIO env the proxy builds (`m5cardputer` = the board's own TFT is teed to the phone,
 `m5cardputer-virtual` = no display driver at all, the phone is the only screen).
 
@@ -595,7 +595,7 @@ Roadmap: [SPEC.md](./SPEC.md).
 
 ## Credits and license
 
-Droidputter is MIT licensed (see [LICENSE](./LICENSE)). It stands on:
+Droidputer is MIT licensed (see [LICENSE](./LICENSE)). It stands on:
 
 - [M5GFX](https://github.com/m5stack/M5GFX) / [LovyanGFX](https://github.com/lovyan03/LovyanGFX) and
   [M5Cardputer](https://github.com/m5stack/M5Cardputer) / [M5Unified](https://github.com/m5stack/M5Unified)
@@ -609,4 +609,4 @@ Droidputter is MIT licensed (see [LICENSE](./LICENSE)). It stands on:
   and the other repos named in [apps/catalog.json](./apps/catalog.json). Each keeps its own license; the
   catalog flags the ones that declare none.
 
-Cardputer, StickS3 and M5Burner are M5Stack names; Droidputter is an independent community project.
+Cardputer, StickS3 and M5Burner are M5Stack names; Droidputer is an independent community project.

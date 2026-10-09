@@ -80,7 +80,7 @@ describe("POST /api/verdict", () => {
     assert.deepEqual(Object.keys(issue), ["title", "body", "labels"]);
     assert.equal(issue.title, TITLE);
     assert.deepEqual(issue.labels, ["verdict"]);
-    assert.ok(issue.body.startsWith("Reported from the Droidputter app via the build proxy.\n\n```json\n"));
+    assert.ok(issue.body.startsWith("Reported from the Droidputer app via the build proxy.\n\n```json\n"));
     assert.ok(issue.body.endsWith("\n```\n"));
     const block = BLOCK_RE.exec(issue.body);
     assert.ok(block, "fold_verdict.py's ```json block regex must match");

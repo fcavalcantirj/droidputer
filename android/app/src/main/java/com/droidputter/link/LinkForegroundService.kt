@@ -48,7 +48,7 @@ class LinkForegroundService : Service() {
             PendingIntent.FLAG_IMMUTABLE,
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Droidputter")
+            .setContentTitle("Droidputer")
             .setContentText(subtitle)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentIntent(openApp)
@@ -62,7 +62,7 @@ class LinkForegroundService : Service() {
         val manager = getSystemService(NotificationManager::class.java)
         if (manager.getNotificationChannel(CHANNEL_ID) != null) return
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Droidputter link", NotificationManager.IMPORTANCE_LOW),
+            NotificationChannel(CHANNEL_ID, "Droidputer link", NotificationManager.IMPORTANCE_LOW),
         )
     }
 

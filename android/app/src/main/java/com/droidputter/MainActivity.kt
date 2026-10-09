@@ -232,7 +232,7 @@ class MainActivity : ComponentActivity() {
                 if (analyticsAsk && consentPromptFor == null) {
                     androidx.compose.material3.AlertDialog(
                         onDismissRequest = {},
-                        title = { Text("Help improve Droidputter?") },
+                        title = { Text("Help improve Droidputer?") },
                         text = {
                             Text(
                                 "Send anonymous usage and crash reports: which apps get built, flashed and mirrored, whether builds " +
@@ -255,7 +255,7 @@ class MainActivity : ComponentActivity() {
                         title = { Text("Share your verdicts?") },
                         text = {
                             Text(
-                                "Works / Broken reports are published as public GitHub issues in the Droidputter repo so " +
+                                "Works / Broken reports are published as public GitHub issues in the Droidputer repo so " +
                                     "everyone sees which apps run. A report carries the app name, the firmware hash, the board, " +
                                     "the result and this phone's anonymous id (${verdictRepository.reporter}). No account, no " +
                                     "location, nothing else. You can keep verdicts on this phone instead.",

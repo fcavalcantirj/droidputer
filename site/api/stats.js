@@ -6,59 +6,64 @@
 
 import { readFile } from "node:fs/promises";
 
-const REPO = "fcavalcantirj/droidputter";
+const REPO = "fcavalcantirj/droidputer";
 const PH_HOST = (process.env.POSTHOG_API_HOST || "https://us.posthog.com").replace(/\/+$/, "");
 const PH_PROJECT = process.env.POSTHOG_PROJECT_ID || "";
 const PH_KEY = process.env.POSTHOG_PERSONAL_KEY || "";
-const TIMEOUT_MS = 9000;
+const TIMEOUT_MS = 25000;
 
 const BUILD_REQUEST_EVENTS = "('build_dispatched','build_cache_hit','build_joined','build_failed_cached')";
+// A phone = one app install = PostHog's per-install distinct_id on events the Android SDK sent (the proxy and manual
+// checks carry no $lib). Emulators are left out: they cannot host the USB link, and they were our own test runs.
+// "All time" = since analytics went live; an unbounded scan hits PostHog's execution limit even on tiny data.
+const SINCE = "timestamp > toDateTime('2026-10-09 00:00:00')";
+const APP = "(properties.$lib = 'posthog-android' AND NOT (coalesce(properties.$device_model, '') LIKE 'sdk_gphone%'))";
 
 // Every query is aggregate-only; `device` is the anonymous per-install id (opt-in), never returned.
-const QUERIES = {
+export const QUERIES = {
   daily: `
     SELECT toDate(timestamp) AS day,
-      uniqIf(properties.device, notEmpty(coalesce(properties.device, ''))) AS devices,
+      uniqIf(distinct_id, ${APP}) AS devices,
       countIf(event IN ${BUILD_REQUEST_EVENTS}) AS build_requests,
-      countIf(event = 'flash_finished' AND properties.result = 'ok') AS flashes,
-      countIf(event = 'link_up') AS links,
-      round(sumIf(toFloat(properties.seconds), event = 'mirror_session') / 60, 1) AS mirror_minutes
+      countIf(event = 'flash_finished' AND properties.result = 'ok' AND ${APP}) AS flashes,
+      countIf(event = 'link_up' AND ${APP}) AS links,
+      round(sumIf(toFloat(properties.seconds), event = 'mirror_session' AND ${APP}) / 60, 1) AS mirror_minutes
     FROM events WHERE timestamp > now() - INTERVAL 30 DAY
     GROUP BY day ORDER BY day`,
   funnel: `
-    SELECT event, uniq(properties.device) AS devices, count() AS events
+    SELECT event, uniq(distinct_id) AS devices, count() AS events
     FROM events
-    WHERE timestamp > now() - INTERVAL 30 DAY AND notEmpty(coalesce(properties.device, ''))
+    WHERE timestamp > now() - INTERVAL 30 DAY AND ${APP}
       AND event IN ('Application Opened','catalog_open','build_requested','usb_attached','flash_finished','link_up','verdict_sent')
     GROUP BY event`,
   apps: `
     SELECT properties.app AS app,
-      uniq(properties.device) AS devices,
+      uniq(distinct_id) AS devices,
       countIf(event = 'flash_finished' AND properties.result = 'ok') AS flashes,
       countIf(event = 'link_up') AS links,
       round(sumIf(toFloat(properties.seconds), event = 'mirror_session') / 60, 1) AS mirror_minutes
     FROM events
-    WHERE timestamp > now() - INTERVAL 30 DAY AND event IN ('flash_finished','link_up','mirror_session') AND notEmpty(coalesce(properties.app, ''))
+    WHERE timestamp > now() - INTERVAL 30 DAY AND event IN ('flash_finished','link_up','mirror_session') AND notEmpty(coalesce(properties.app, '')) AND ${APP}
     GROUP BY app ORDER BY devices DESC, links DESC LIMIT 15`,
   builds: `
     SELECT 'result' AS kind, concat(toString(properties.result), '|', coalesce(toString(properties.failure_class), '')) AS k, uniq(properties.run_id) AS n
-    FROM events WHERE event = 'build_result' GROUP BY k
+    FROM events WHERE event = 'build_result' AND ${SINCE} GROUP BY k
     UNION ALL
     SELECT 'repo' AS kind, toString(properties.repo) AS k, count() AS n
-    FROM events WHERE event IN ${BUILD_REQUEST_EVENTS} GROUP BY k ORDER BY n DESC LIMIT 40`,
+    FROM events WHERE event IN ${BUILD_REQUEST_EVENTS} AND ${SINCE} GROUP BY k ORDER BY n DESC LIMIT 40`,
   health: `
     SELECT event, coalesce(toString(properties.app), '') AS app, count() AS n
-    FROM events WHERE timestamp > now() - INTERVAL 30 DAY AND event IN ('$exception', 'esp_panic')
+    FROM events WHERE timestamp > now() - INTERVAL 30 DAY AND event IN ('$exception', 'esp_panic') AND ${APP}
     GROUP BY event, app ORDER BY n DESC LIMIT 20`,
   totals: `
-    SELECT uniqIf(properties.device, notEmpty(coalesce(properties.device, ''))) AS devices_all_time,
-      uniqIf(properties.device, notEmpty(coalesce(properties.device, '')) AND timestamp > now() - INTERVAL 7 DAY) AS devices_7d,
-      uniqIf(properties.device, notEmpty(coalesce(properties.device, '')) AND timestamp > now() - INTERVAL 1 DAY) AS devices_24h,
+    SELECT uniqIf(distinct_id, ${APP}) AS devices_all_time,
+      uniqIf(distinct_id, ${APP} AND timestamp > now() - INTERVAL 7 DAY) AS devices_7d,
+      uniqIf(distinct_id, ${APP} AND timestamp > now() - INTERVAL 1 DAY) AS devices_24h,
       countIf(event IN ${BUILD_REQUEST_EVENTS}) AS build_requests,
-      countIf(event = 'flash_finished' AND properties.result = 'ok') AS flashes,
-      round(sumIf(toFloat(properties.seconds), event = 'mirror_session') / 60, 1) AS mirror_minutes,
+      countIf(event = 'flash_finished' AND properties.result = 'ok' AND ${APP}) AS flashes,
+      round(sumIf(toFloat(properties.seconds), event = 'mirror_session' AND ${APP}) / 60, 1) AS mirror_minutes,
       min(timestamp) AS first_event
-    FROM events`,
+    FROM events WHERE ${SINCE}`,
 };
 
 async function fetchJson(url, init = {}) {
@@ -145,7 +150,7 @@ export default async function handler(req, res) {
   const [ph, gh, history, replay] = await Promise.all([posthog(), github(), local("history.json"), local("replay.json")]);
   const body = { generated_at: new Date().toISOString(), posthog: ph, github: gh, history, replay };
   res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+  res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=600");
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.status(200).send(JSON.stringify(body));
 }

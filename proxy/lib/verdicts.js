@@ -18,7 +18,7 @@ export function issueTitle(rec) {
 
 /** @param {import("./validate.js").VerdictRecord} rec keys already in verdicts.json order (validateVerdict) */
 export function issueBody(rec) {
-  return `Reported from the Droidputter app via the build proxy.\n\n\`\`\`json\n${JSON.stringify(rec, null, 2)}\n\`\`\`\n`;
+  return `Reported from the Droidputer app via the build proxy.\n\n\`\`\`json\n${JSON.stringify(rec, null, 2)}\n\`\`\`\n`;
 }
 
 /**

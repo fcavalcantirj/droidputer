@@ -87,7 +87,7 @@ class BuildFlow(
                         // The env of record: the proxy's answer when it names one (v1.1), else what was asked for.
                         val entry = BuildProxy.toCatalogEntry(status, slug, displayName, license, description, shimCommit = status.shimCommit ?: accepted.shimCommit, env = status.env ?: accepted.env ?: env)
                         myBuilds.add(entry)
-                        update { copy(status = status, runUrl = status.runUrl, done = true, readyEntry = entry, message = "Ready: flash it from the Droidputter builds tab") }
+                        update { copy(status = status, runUrl = status.runUrl, done = true, readyEntry = entry, message = "Ready: flash it from the Droidputer builds tab") }
                         onReady(entry)
                         finished("ready", status)
                         return@launch
