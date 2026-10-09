@@ -138,6 +138,26 @@ object LauncherHub {
         return if (parts == entry.parts) entry else entry.copy(parts = parts)
     }
 
+    private val GITHUB_SLUG = Regex("""github\.com[/:]([\w.-]+)/([\w.-]+?)(?:\.git)?/?(?:[#?].*)?$""", RegexOption.IGNORE_CASE)
+    private val BARE_SLUG = Regex("""^([\w.-]+)/([\w.-]+?)(?:\.git)?$""")
+
+    /** `owner/repo`, lower-cased, of a GitHub URL (https, ssh, `.git`, trailing slash) or a bare slug; null otherwise. */
+    fun githubSlug(s: String): String? {
+        val t = s.trim()
+        val m = GITHUB_SLUG.find(t) ?: BARE_SLUG.find(t) ?: return null
+        return "${m.groupValues[1]}/${m.groupValues[2]}".lowercase()
+    }
+
+    /**
+     * The LauncherHub prebuilt whose source repo IS [slug] (exact owner/repo, any URL form; case-insensitive), the
+     * most downloaded when several match ([parseFeed] order). The proxy refuses repos it can never mirror (TFT_eSPI,
+     * ESP-IDF, MicroPython); 18 of the 20 refused so far have such a prebuilt (measured 2026-10-09).
+     */
+    fun matchRepo(entries: List<CatalogEntry>, slug: String): CatalogEntry? {
+        val want = githubSlug(slug) ?: return null
+        return entries.firstOrNull { it.source == CatalogEntry.SOURCE_LAUNCHERHUB && githubSlug(it.sourceRepo) == want }
+    }
+
     /** The feed fid an entry came from (read back from [CatalogEntry.sourceRef]); null for other sources. */
     fun fidOf(entry: CatalogEntry): String? = entry.sourceRef
         ?.takeIf { entry.source == CatalogEntry.SOURCE_LAUNCHERHUB }

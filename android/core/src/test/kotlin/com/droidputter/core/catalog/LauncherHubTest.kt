@@ -40,6 +40,38 @@ class LauncherHubTest {
     private val entries = LauncherHub.parseFeed(feed)
     private fun named(name: String) = entries.first { it.name == name }
 
+    // The proxy refuses repos it can never mirror; the app then offers the LauncherHub prebuilt of the SAME repo.
+    @Test
+    fun `githubSlug normalises every github url form and rejects the rest`() {
+        for (s in listOf("https://github.com/BruceDevices/firmware", "https://github.com/BruceDevices/firmware.git",
+                         "https://github.com/BruceDevices/firmware/", "git@github.com:BruceDevices/firmware.git",
+                         "http://GITHUB.com/brucedevices/Firmware#readme", "BruceDevices/firmware", " brucedevices/firmware.git ")) {
+            assertEquals("brucedevices/firmware", LauncherHub.githubSlug(s), s)
+        }
+        assertNull(LauncherHub.githubSlug(""))
+        assertNull(LauncherHub.githubSlug("https://gitlab.com/a/b/c"))
+        assertNull(LauncherHub.githubSlug("not a repo"))
+    }
+
+    @Test
+    fun `matchRepo finds the prebuilt of exactly that repo, most downloaded first, LauncherHub entries only`() {
+        val v = version("1.0", "2026-01-01T00:00:00Z")
+        val hub = LauncherHub.parseFeed(
+            "[" + listOf(
+                row(fid = "a", name = "Bruce small", download = 10, versions = v, extra = ""","github":"https://github.com/BruceDevices/firmware.git""""),
+                row(fid = "b", name = "Bruce big", download = 900, versions = v, extra = ""","github":"https://github.com/brucedevices/firmware/""""),
+                row(fid = "c", name = "Marauder", download = 50, versions = v, extra = ""","github":"https://github.com/justcallmekoko/ESP32Marauder""""),
+                row(fid = "d", name = "No source", download = 5, versions = v),
+            ).joinToString(",") + "]",
+        )
+        assertEquals("Bruce big", LauncherHub.matchRepo(hub, "BruceDevices/firmware")?.name)
+        assertEquals("Marauder", LauncherHub.matchRepo(hub, "https://github.com/JustCallMeKoko/esp32marauder")?.name)
+        assertNull(LauncherHub.matchRepo(hub, "bmorcelli/Bruce"))            // the old repo name: no exact match, no guess
+        assertNull(LauncherHub.matchRepo(hub, "not a slug"))
+        val recipe = hub.first().copy(source = CatalogEntry.SOURCE_DROIDPUTTER, name = "recipe")
+        assertEquals("Bruce big", LauncherHub.matchRepo(listOf(recipe) + hub, "BruceDevices/firmware")?.name)
+    }
+
     @Test
     fun `default filters keep cardputer and stamps3 on s3 that have a flashable version`() {
         assertEquals(

@@ -31,6 +31,8 @@ data class BuildRequestState(
     val failed: Boolean = false,
     /** The catalog entry saved on ready, so the detail can jump to it. */
     val readyEntry: CatalogEntry? = null,
+    /** A refused build's working alternative: the LauncherHub prebuilt of the same repo (no phone mirror). */
+    val prebuilt: CatalogEntry? = null,
 ) {
     val inFlight: Boolean get() = !done
 }
@@ -48,6 +50,8 @@ class BuildFlow(
     private val myBuilds: MyBuildsRepository,
     private val onState: (BuildRequestState?) -> Unit,
     private val onReady: (CatalogEntry) -> Unit,
+    /** The LauncherHub prebuilt of a repo slug, if the feed has one (LauncherHub.matchRepo over the loaded feed). */
+    private val findPrebuilt: (String) -> CatalogEntry? = { null },
 ) {
     private var job: Job? = null
     private var last: BuildRequestState? = null
@@ -93,7 +97,15 @@ class BuildFlow(
                         return@launch
                     }
                     update { copy(status = status, runUrl = status.runUrl, message = BuildProxy.statusLine(status, elapsed), done = status.terminal, failed = status.terminal) }
-                    if (status.terminal) { finished(status.status, status); return@launch }
+                    if (status.terminal) {
+                        finished(status.status, status)
+                        // Refused on purpose (it can never be a shim build): hand over the prebuilt that does run.
+                        if (status.failureClass in REFUSALS) findPrebuilt(slug)?.let { p ->
+                            update { copy(prebuilt = p) }
+                            Telemetry.capture("prebuilt_offered", mapOf("repo" to slug, "failure_class" to status.failureClass, "prebuilt" to p.name))
+                        }
+                        return@launch
+                    }
                     if (elapsed > MAX_POLL_MS) {
                         finished("timeout", status)
                         update { copy(done = true, failed = true, message = "gave up after ${BuildProxy.formatElapsed(elapsed)}: still ${status.status}; build again later (a finished build comes back cached)") }
@@ -130,6 +142,8 @@ class BuildFlow(
 
     private companion object {
         const val TAG = "Droidputter"
+        /** Proxy failure classes that mean "never a shim build" (tools/overlay.py preflight), not a broken build. */
+        val REFUSALS = setOf("unsupported-graphics", "not-arduino", "library-repo")
         const val MAX_POLL_MS = 20L * 60 * 1000   // a GitHub runner queue can stall; 20 min is beyond any healthy 2-4 min build
         const val MAX_CONSECUTIVE_FAILURES = 3
     }

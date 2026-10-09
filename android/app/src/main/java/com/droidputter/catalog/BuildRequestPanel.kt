@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.droidputter.core.catalog.BuildProxy
+import com.droidputter.core.catalog.CatalogEntry
 import kotlinx.coroutines.delay
 
 /**
@@ -38,6 +39,7 @@ fun BuildRequestPanel(
     onOpenUrl: (String) -> Unit,
     target: String = BuildProxy.ENV,
     onTarget: (String) -> Unit = {},
+    onOpenPrebuilt: (CatalogEntry) -> Unit = {},
 ) {
     val busyElsewhere = state?.inFlight == true && state.slug != slug
     val mine = state?.takeIf { it.slug == slug }
@@ -58,7 +60,7 @@ fun BuildRequestPanel(
             style = MaterialTheme.typography.bodySmall,
         )
         if (busyElsewhere) Text("Another build (${state!!.displayName}) is in flight; one at a time.", style = MaterialTheme.typography.bodySmall)
-        if (mine != null) BuildStatusLine(mine, onOpenUrl)
+        if (mine != null) BuildStatusLine(mine, onOpenUrl, onOpenPrebuilt)
     }
 }
 
@@ -70,6 +72,7 @@ fun BuildAnyRepoRow(
     onOpenUrl: (String) -> Unit,
     target: String = BuildProxy.ENV,
     onTarget: (String) -> Unit = {},
+    onOpenPrebuilt: (CatalogEntry) -> Unit = {},
 ) {
     var text by remember { mutableStateOf("") }
     val slug = BuildProxy.repoSlug(text)
@@ -97,7 +100,7 @@ fun BuildAnyRepoRow(
                 Text(if (state?.inFlight == true) "Building…" else "Build")
             }
         }
-        if (state != null) BuildStatusLine(state, onOpenUrl)
+        if (state != null) BuildStatusLine(state, onOpenUrl, onOpenPrebuilt)
     }
 }
 
@@ -123,7 +126,7 @@ fun TargetSelector(target: String, onTarget: (String) -> Unit, enabled: Boolean 
 
 /** One live line for a request: the status text with a ticking elapsed time, and the run link when there is one. */
 @Composable
-private fun BuildStatusLine(state: BuildRequestState, onOpenUrl: (String) -> Unit) {
+private fun BuildStatusLine(state: BuildRequestState, onOpenUrl: (String) -> Unit, onOpenPrebuilt: (CatalogEntry) -> Unit = {}) {
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(state.requestId, state.inFlight) {
         while (state.inFlight) {
@@ -143,6 +146,11 @@ private fun BuildStatusLine(state: BuildRequestState, onOpenUrl: (String) -> Uni
         )
         state.runUrl?.let { url ->
             TextButton(onClick = { onOpenUrl(url) }) { Text(if (state.failed) "failed run" else "run") }
+        }
+    }
+    state.prebuilt?.let { p ->
+        Button(onClick = { onOpenPrebuilt(p) }, modifier = Modifier.fillMaxWidth()) {
+            Text("Flash the working prebuilt: ${p.name} (its own screen, no phone mirror)")
         }
     }
 }

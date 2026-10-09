@@ -73,6 +73,12 @@ fun CatalogScreen(
     var selected: CatalogEntry? by remember { mutableStateOf(null) }
     var tab by remember { mutableIntStateOf(0) }
     var query by remember { mutableStateOf("") }
+    // A refused build's working prebuilt: open its LauncherHub detail (where Flash is), counted once per tap.
+    val openPrebuilt: (CatalogEntry) -> Unit = { p ->
+        tab = 1
+        selected = p
+        com.droidputter.telemetry.Telemetry.capture("prebuilt_opened", mapOf("prebuilt" to p.name, "repo" to p.sourceRepo))
+    }
     val current = selected
     // System back: detail -> list -> mirror. Without this the gesture finishes the activity
     // (and drops the link); with 11 entries the list also pushed the Back button off-screen.
@@ -80,7 +86,7 @@ fun CatalogScreen(
     // A build that just became ready: open its detail on the Droidputter tab, once.
     LaunchedEffect(navigateTo) {
         if (navigateTo != null) {
-            tab = 0
+            tab = if (navigateTo.source == CatalogEntry.SOURCE_LAUNCHERHUB) 1 else 0
             selected = navigateTo
             onNavigated()
         }
@@ -116,7 +122,7 @@ fun CatalogScreen(
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
-                if (tab == 0) item { BuildAnyRepoRow(state = buildState, onBuild = { slug -> onBuild(slug, null) }, onOpenUrl = onOpenUrl, target = buildTarget, onTarget = onBuildTarget) }
+                if (tab == 0) item { BuildAnyRepoRow(state = buildState, onBuild = { slug -> onBuild(slug, null) }, onOpenUrl = onOpenUrl, target = buildTarget, onTarget = onBuildTarget, onOpenPrebuilt = openPrebuilt) }
                 if (shown.isEmpty()) {
                     item {
                         Text(
@@ -157,6 +163,7 @@ fun CatalogScreen(
                 onBuildTarget = onBuildTarget,
                 onBuild = { slug -> onBuild(slug, current) },
                 onOpenUrl = onOpenUrl,
+                onOpenPrebuilt = openPrebuilt,
             )
         }
     }
@@ -208,6 +215,7 @@ private fun CatalogDetail(
     onOpenUrl: (String) -> Unit = {},
     buildTarget: String = BuildProxy.ENV,
     onBuildTarget: (String) -> Unit = {},
+    onOpenPrebuilt: (CatalogEntry) -> Unit = {},
 ) {
     // Scrollable: in landscape the parts list pushes the buttons below the fold, where
     // neither the D-pad nor a swipe could reach them (2026-09-03 14:11 on the Poco).
@@ -305,6 +313,7 @@ private fun CatalogDetail(
                 onOpenUrl = onOpenUrl,
                 target = buildTarget,
                 onTarget = onBuildTarget,
+                onOpenPrebuilt = onOpenPrebuilt,
             )
         }
         OutlinedButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) {

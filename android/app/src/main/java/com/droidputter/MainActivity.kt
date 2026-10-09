@@ -156,6 +156,7 @@ class MainActivity : ComponentActivity() {
             myBuilds = myBuildsRepository,
             onState = { s -> buildState = s },
             onReady = { entry -> buildsVersion++; catalogNavigateTo = entry },
+            findPrebuilt = { slug -> com.droidputter.core.catalog.LauncherHub.matchRepo(hubRepository.entries, slug) },
         )
     }
     private var promptVerdictFor: CatalogEntry? by mutableStateOf(null)
