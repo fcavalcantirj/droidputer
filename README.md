@@ -66,7 +66,7 @@ own TFT shows the same frames next to the phone.
 ## How to use
 
 1. Install the release APK from https://github.com/fcavalcantirj/droidputer/releases
-   (`adb install droidputter-<tag>.apk`, e.g. `droidputter-v0.0.6.apk`, or open the file on the
+   (`adb install droidputer-<tag>.apk`, e.g. `droidputer-v0.0.7.apk` (named `droidputter-…` up to v0.0.6), or open the file on the
    phone). Android 8+ with USB-OTG host support.
 2. Plug an ESP32-S3 into the phone's USB-C port with an OTG cable, into the board's native USB port.
    Use a known-good data cable: one cable gave "no Type-C partner" (2026-09-02).
