@@ -58,13 +58,34 @@ object Telemetry {
                 captureDeepLinks = false
                 sessionReplay = false
                 personProfiles = PersonProfiles.NEVER
-                errorTrackingConfig.autoCapture = true      // uncaught exceptions -> $exception (R8 mapping uploaded at release)
+                // Off on purpose: the SDK's own crash handler obeys the PROJECT setting "exception autocapture", which
+                // PostHog ships disabled (remote config autocaptureExceptions=false, measured 2026-10-09), so crashes were
+                // silently dropped. installCrashHandler() below does what that handler does, unconditionally.
+                errorTrackingConfig.autoCapture = false
                 debug = BuildConfig.DEBUG                   // logcat tag PostHog: what is queued and sent (debug builds only)
             }
             PostHogAndroid.setup(app, config)
             PostHog.register("device", device)
+            installCrashHandler()
             started = true
         }.onFailure { Log.w(TAG, "analytics not started: ${it.message}") }
+    }
+
+    /**
+     * Uncaught exception -> `$exception` (the SDK's own path: captureException, flush, then the previous handler so
+     * Android still shows its crash dialog and kills the process). Respects a later opt-out: no capture without consent.
+     */
+    private fun installCrashHandler() {
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+            if (consent == true) {
+                runCatching {
+                    PostHog.captureException(error, mapOf("thread" to thread.name, "fatal" to true))
+                    PostHog.flush()
+                }
+            }
+            previous?.uncaughtException(thread, error)
+        }
     }
 
     /** One event, only when the user said yes. Null values are dropped; never throws into the caller. */
