@@ -150,15 +150,29 @@ footer { margin-top: 64px; color: var(--muted); font-size: 13px; display: flex; 
     </div>
   </header>
 
-  <section id="now">
-    <h2>Right now</h2>
-    <p class="sub">Phones that opted in to anonymous usage reports, plus every build the proxy has seen.</p>
-    <div class="kpis" id="kpis"></div>
+
+  <section id="sofar">
+    <h2>How people used it so far</h2>
+    <p class="sub">Real records from before in-app analytics existed: every build the phones asked the proxy for since 2026-09-04, every public verdict, every APK download and GitHub's own visitor counts. Each card names its source.</p>
+    <div class="kpis" id="kpis2"></div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h3>Builds requested per day</h3><p class="note">GitHub Actions build runs + the proxy's live counter</p><div id="buildsDaily"></div></div>
+      <div class="card"><h3>What people asked to build</h3><p class="note">requests per app since 2026-09-04 · hover for how many built</p><div id="topApps"></div></div>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h3>Which hardware</h3><p class="note">target of each build request</p><div id="boards"></div></div>
+      <div class="card"><h3>Phones voting over time</h3><p class="note">distinct anonymous phones with a public verdict, cumulative</p><div id="voters"></div></div>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h3>APK downloads per release</h3><p class="note">GitHub Releases, live</p><div id="downloads"></div></div>
+      <div class="card"><h3>Where visitors come from</h3><p class="note" id="trafficNote"></p><div id="referrers"></div></div>
+    </div>
   </section>
 
   <section id="how">
-    <h2>How people use it</h2>
-    <p class="sub">Last 30 days, distinct phones at each step. Where the bars shrink is where people get stuck.</p>
+    <h2>How people use it, live</h2>
+    <p class="sub">Opt-in reports from the app (version 0.0.7 and later), last 30 days, distinct phones at each step. Where the bars shrink is where people get stuck.</p>
+    <div class="kpis" id="kpis" style="margin-bottom:16px"></div>
     <div class="grid2">
       <div class="card"><h3>From opening the app to a verdict</h3><p class="note">distinct phones per step</p><div id="funnel"></div></div>
       <div class="card"><h3>What they run</h3><p class="note">apps flashed or mirrored, by phones · hover for minutes on screen</p><div id="apps"></div></div>
@@ -395,6 +409,17 @@ function tablesFrom(d) {
     const c = {}; d.history.runs.forEach((r) => { c[r.class] = (c[r.class] || 0) + 1; });
     out.push({ title: "build history before 2026-10-09, by outcome", cols: ["outcome", "runs"], rows: Object.entries(c).sort((a, b) => b[1] - a[1]) });
   }
+  if (d.history) {
+    const rc = {}; d.history.runs.forEach((r) => { rc[r.repo] = (rc[r.repo] || 0) + 1; });
+    out.push({ title: "build requests per app, 2026-09-04..10-08", cols: ["repo", "requests"], rows: Object.entries(rc).sort((a, b) => b[1] - a[1]) });
+    const dc = {}; d.history.runs.forEach((r) => { dc[r.date] = (dc[r.date] || 0) + 1; });
+    out.push({ title: "build requests per day, 2026-09-04..10-08", cols: ["day", "requests"], rows: Object.entries(dc).sort() });
+  }
+  if (gh.verdicts && gh.verdicts.timeline) out.push({ title: "verdicts per day", cols: ["day", "verdicts", "new_phones", "phones_cumulative"], rows: gh.verdicts.timeline.map((r) => [r.day, r.verdicts, r.new_phones, r.phones_cumulative]) });
+  if (d.traffic) {
+    out.push({ title: `GitHub visitors per day (snapshot ${d.traffic.taken.slice(0, 10)})`, cols: ["day", "views", "uniques"], rows: d.traffic.views.daily.map((r) => [r.day, r.count, r.uniques]) });
+    out.push({ title: "GitHub referrers (14 days)", cols: ["referrer", "visits", "uniques"], rows: d.traffic.referrers.map((r) => [r.referrer, r.count, r.uniques]) });
+  }
   if (d.replay) out.push({ title: "replay on the fix", cols: ["repo", "env", "before", "after", "class"], rows: d.replay.pairs.map((p) => [p.repo, p.env, p.before, p.after, p.class || ""]) });
   return out;
 }
@@ -409,13 +434,14 @@ function render(d) {
   // live badge + screen
   $("live").classList.toggle("stale", !connected);
   $("liveText").textContent = connected ? "live · refreshes every minute" : "analytics connecting — GitHub numbers are live";
+  const appsAsked = new Set(hist.map((r) => r.repo)); (connected && ph.builds ? ph.builds.filter((r) => r.kind === "repo") : []).forEach((r) => appsAsked.add(r.k));
   drawScreen([
-    ["PHONES 7D", connected ? fmt(tot.devices_7d) : "--"],
-    ["MIRROR MIN", connected ? fmt(Math.round(Number(tot.mirror_minutes) || 0)) : "--"],
-    ["FLASHES", connected ? fmt(tot.flashes) : "--"],
-    ["APK DOWNLOADS", fmt(apk)],
-    ["VERDICTS", gh.verdicts ? fmt(gh.verdicts.total) : "--"],
     ["BUILDS SINCE SEP 4", fmt(hist.length + (Number(tot.build_requests) || 0))],
+    ["APPS ASKED FOR", fmt(appsAsked.size)],
+    ["PHONES VOTED", gh.verdicts ? fmt(gh.verdicts.reporters) : "--"],
+    ["APK DOWNLOADS", fmt(apk)],
+    ["VISITORS 14D", d.traffic ? fmt(d.traffic.views.uniques) : "--"],
+    ["LIVE PHONES 7D", connected ? fmt(tot.devices_7d) : "--"],
   ], connected);
   $("screenAge").textContent = "updated " + new Date(d.generated_at).toISOString().slice(11, 19) + " UTC";
 
@@ -466,6 +492,47 @@ function render(d) {
     { color: () => css("--critical"), tip: (r) => `${fmt(r.value)} in 30 days`, empty: connected ? "none in 30 days" : "waiting for analytics" });
 
   if (gh.verdicts) { $("verdictNote").textContent = `${gh.verdicts.total} verdicts from ${gh.verdicts.reporters} phones, live from apps/verdicts.json`; verdictBars($("verdicts"), gh.verdicts.by_app.slice(0, 14)); }
+
+  // so far: real records from before in-app analytics
+  const liveRepos = connected && ph.builds ? ph.builds.filter((r) => r.kind === "repo") : [];
+  const liveReq = liveRepos.reduce((s, r) => s + Number(r.n), 0);
+  const repoCount = new Map();
+  hist.forEach((r) => { const c = repoCount.get(r.repo) || { label: r.repo, value: 0, built: 0 }; c.value++; if (r.result === "built") c.built++; repoCount.set(r.repo, c); });
+  liveRepos.forEach((r) => { const c = repoCount.get(r.k) || { label: r.k, value: 0, built: 0 }; c.value += Number(r.n); repoCount.set(r.k, c); });
+  const tr = d.traffic;
+  const kp2 = [
+    [fmt(hist.length + liveReq), "builds requested", "since 2026-09-04"],
+    [fmt(repoCount.size), "different apps asked for", "GitHub repos"],
+    [gh.verdicts ? fmt(gh.verdicts.reporters) : "—", "phones that voted", "works / broken, public"],
+    [tr ? fmt(tr.views.uniques) : "—", "visitors, 14 days", tr ? `${fmt(tr.views.count)} page views on GitHub` : ""],
+  ];
+  $("kpis2").replaceChildren(...kp2.map(([v, l, s]) => { const k = document.createElement("div"); k.className = "kpi"; const a = document.createElement("div"); a.className = "v"; a.textContent = v; const b = document.createElement("div"); b.className = "l"; b.textContent = l; const c = document.createElement("div"); c.className = "s"; c.textContent = s; k.append(a, b, c); return k; }));
+
+  const perDay = new Map();
+  hist.forEach((r) => perDay.set(r.date, (perDay.get(r.date) || 0) + 1));
+  if (connected && ph.daily) ph.daily.forEach((r) => { if (String(r.day) > "2026-10-08") perDay.set(String(r.day), (perDay.get(String(r.day)) || 0) + Number(r.build_requests)); });
+  const days = [], end = new Date(d.generated_at.slice(0, 10) + "T00:00:00Z");
+  for (let x = new Date("2026-09-04T00:00:00Z"); x <= end; x = new Date(x.getTime() + 864e5)) { const k = x.toISOString().slice(0, 10); days.push({ d: k, v: perDay.get(k) || 0 }); }
+  line($("buildsDaily"), days, { name: "builds requested" });
+
+  barsH($("topApps"), [...repoCount.values()].sort((a, b) => b.value - a.value).slice(0, 12).map((r) => { const n = r.label.split("/")[1] || r.label; return { ...r, label: /^(firmware|app|code|src)$/i.test(n) ? r.label : n, full: r.label }; }),
+    { tip: (r) => `${fmt(r.value)} requests · ${fmt(r.built)} built before the fix · ${r.full}` });
+
+  const envs = {}; hist.forEach((r) => { envs[r.env] = (envs[r.env] || 0) + 1; });
+  barsH($("boards"), [["m5cardputer-virtual", "bare ESP32-S3 + phone"], ["m5cardputer", "Cardputer ADV"]].filter(([k]) => envs[k]).map(([k, label]) => ({ label, value: envs[k] })),
+    { tip: (r) => `${fmt(r.value)} build requests · ${r.label === "Cardputer ADV" ? "its own screen, mirrored to the phone" : "no screen of its own: the phone is the display"}` });
+
+  if (gh.verdicts && gh.verdicts.timeline) {
+    const tl = gh.verdicts.timeline, byDay = new Map(tl.map((x) => [x.day, x])), pts = [];
+    let cum = 0;
+    for (let x = new Date(tl[0].day + "T00:00:00Z"); x <= end; x = new Date(x.getTime() + 864e5)) { const k = x.toISOString().slice(0, 10); if (byDay.has(k)) cum = byDay.get(k).phones_cumulative; pts.push({ d: k, v: cum }); }
+    line($("voters"), pts, { name: "phones that voted" });
+  }
+  barsH($("downloads"), gh.releases ? [...gh.releases].reverse().map((r) => ({ label: r.tag, value: r.apk_downloads, pub: r.published })) : [], { tip: (r) => `${fmt(r.value)} APK downloads · released ${r.pub}` });
+  if (tr) {
+    $("trafficNote").textContent = `unique visitors per source, GitHub traffic snapshot ${tr.taken.slice(0, 10)} (GitHub keeps 14 days)`;
+    barsH($("referrers"), tr.referrers.map((r) => ({ label: r.referrer === "com.reddit.frontpage" ? "Reddit app" : r.referrer, value: r.uniques, n: r.count })), { tip: (r) => `${fmt(r.value)} visitors · ${fmt(r.n)} visits` });
+  }
 
   // tables
   const holder = $("tables"); holder.replaceChildren();

@@ -1,0 +1,179 @@
+{
+ "source": "GitHub traffic API (14-day window), snapshot taken 2026-10-09 with the owner's token; GitHub keeps no older traffic",
+ "taken": "2026-10-09T17:34Z",
+ "views": {
+  "count": 213,
+  "uniques": 90,
+  "daily": [
+   {
+    "day": "2026-09-25",
+    "count": 19,
+    "uniques": 6
+   },
+   {
+    "day": "2026-09-26",
+    "count": 14,
+    "uniques": 10
+   },
+   {
+    "day": "2026-09-27",
+    "count": 15,
+    "uniques": 8
+   },
+   {
+    "day": "2026-09-28",
+    "count": 3,
+    "uniques": 3
+   },
+   {
+    "day": "2026-09-29",
+    "count": 12,
+    "uniques": 7
+   },
+   {
+    "day": "2026-09-30",
+    "count": 39,
+    "uniques": 13
+   },
+   {
+    "day": "2026-10-01",
+    "count": 11,
+    "uniques": 8
+   },
+   {
+    "day": "2026-10-02",
+    "count": 10,
+    "uniques": 5
+   },
+   {
+    "day": "2026-10-03",
+    "count": 14,
+    "uniques": 5
+   },
+   {
+    "day": "2026-10-04",
+    "count": 7,
+    "uniques": 4
+   },
+   {
+    "day": "2026-10-05",
+    "count": 20,
+    "uniques": 8
+   },
+   {
+    "day": "2026-10-06",
+    "count": 18,
+    "uniques": 13
+   },
+   {
+    "day": "2026-10-07",
+    "count": 9,
+    "uniques": 9
+   },
+   {
+    "day": "2026-10-08",
+    "count": 22,
+    "uniques": 7
+   }
+  ]
+ },
+ "clones": {
+  "count": 415,
+  "uniques": 112,
+  "note": "clones include the build runners checking the repo out"
+ },
+ "referrers": [
+  {
+   "referrer": "github.com",
+   "count": 38,
+   "uniques": 20
+  },
+  {
+   "referrer": "Google",
+   "count": 23,
+   "uniques": 19
+  },
+  {
+   "referrer": "reddit.com",
+   "count": 11,
+   "uniques": 10
+  },
+  {
+   "referrer": "com.reddit.frontpage",
+   "count": 8,
+   "uniques": 8
+  },
+  {
+   "referrer": "DuckDuckGo",
+   "count": 8,
+   "uniques": 2
+  },
+  {
+   "referrer": "yandex.ru",
+   "count": 5,
+   "uniques": 4
+  },
+  {
+   "referrer": "Bing",
+   "count": 2,
+   "uniques": 2
+  },
+  {
+   "referrer": "news.ycombinator.com",
+   "count": 2,
+   "uniques": 1
+  },
+  {
+   "referrer": "kagi.com",
+   "count": 1,
+   "uniques": 1
+  },
+  {
+   "referrer": "vuink.com",
+   "count": 1,
+   "uniques": 1
+  }
+ ],
+ "paths": [
+  {
+   "path": "/fcavalcantirj/droidputter",
+   "count": 125,
+   "uniques": 82
+  },
+  {
+   "path": "/fcavalcantirj/droidputter/releases",
+   "count": 14,
+   "uniques": 12
+  },
+  {
+   "path": "/fcavalcantirj/droidputter/actions/runs/37296280627",
+   "count": 9,
+   "uniques": 1
+  },
+  {
+   "path": "/fcavalcantirj/droidputter/issues",
+   "count": 5,
+   "uniques": 4
+  },
+  {
+   "path": "/fcavalcantirj/droidputter/actions/runs/37854481321",
+   "count": 4,
+   "uniques": 1
+  },
+  {
+   "path": "/fcavalcantirj/droidputter/actions/runs/36747373950",
+   "count": 3,
+   "uniques": 1
+  },
+  {
+   "path": "/fcavalcantirj/droidputter/releases/tag/v0.0.6",
+   "count": 2,
+   "uniques": 2
+  },
+  {
+   "path": "/fcavalcantirj/droidputter/tree/main",
+   "count": 2,
+   "uniques": 2
+  }
+ ]
+}

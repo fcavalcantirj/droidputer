@@ -127,10 +127,20 @@ async function github() {
       if (x.result === "works") a.works++; else a.broken++;
       byApp.set(x.name, a);
     }
+    // Day by day: verdicts filed and phones voting for the first time (reporter = anonymous per-install id).
+    const seen = new Set(), days = new Map();
+    for (const x of [...v].sort((a, b) => String(a.date).localeCompare(String(b.date)))) {
+      const d = days.get(x.date) || { day: x.date, verdicts: 0, new_phones: 0 };
+      d.verdicts++;
+      if (x.reporter && !seen.has(x.reporter)) { seen.add(x.reporter); d.new_phones++; }
+      days.set(x.date, d);
+    }
+    let cum = 0;
     out.verdicts = {
       total: v.length,
       reporters: new Set(v.map((x) => x.reporter).filter(Boolean)).size,
       by_app: [...byApp.values()].sort((a, b) => b.works + b.broken - (a.works + a.broken)),
+      timeline: [...days.values()].map((d) => ({ ...d, phones_cumulative: (cum += d.new_phones) })),
     };
   } catch (e) {
     out.verdicts = null; out.verdicts_error = String(e.message || e).slice(0, 160);
@@ -147,8 +157,8 @@ async function local(name) {
 }
 
 export default async function handler(req, res) {
-  const [ph, gh, history, replay] = await Promise.all([posthog(), github(), local("history.json"), local("replay.json")]);
-  const body = { generated_at: new Date().toISOString(), posthog: ph, github: gh, history, replay };
+  const [ph, gh, history, replay, traffic] = await Promise.all([posthog(), github(), local("history.json"), local("replay.json"), local("traffic.json")]);
+  const body = { generated_at: new Date().toISOString(), posthog: ph, github: gh, history, replay, traffic };
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=600");
   res.setHeader("Access-Control-Allow-Origin", "*");
