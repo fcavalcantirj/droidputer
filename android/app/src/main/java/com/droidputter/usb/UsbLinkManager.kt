@@ -29,6 +29,8 @@ data class LinkStatus(
     val permissionGranted: Boolean?,
     val missedPings: Int,
     val availableDevices: List<String>,
+    /** The last failure to open the ESP's port ("... (retry 2/3)"), null once a port opened. */
+    val lastError: String? = null,
 )
 
 /**
@@ -59,6 +61,9 @@ class UsbLinkManager(
     private var started = false
     private var deviceName: String? = null
     private var permissionGranted: Boolean? = null
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var openFailures = 0
+    private var lastError: String? = null
 
     /** A raw USB session (the phone-side flasher) owns the device: the link path stands down and
      *  every attach / permission result is handed to the client as an opened connection instead. */
@@ -152,6 +157,7 @@ class UsbLinkManager(
         started = false
         runCatching { context.unregisterReceiver(permissionReceiver) }
         runCatching { context.unregisterReceiver(attachReceiver) }
+        handler.removeCallbacksAndMessages(null)
         closeTransport()
     }
 
@@ -187,11 +193,43 @@ class UsbLinkManager(
     private fun open(device: UsbDevice) {
         val driver = prober.probeDevice(device) ?: defaultProber.probeDevice(device) ?: return
         val connection = usbManager.openDevice(driver.device) ?: return
-        val opened = UsbDpTransport(driver.ports[0], connection)
+        val opened = try {
+            UsbDpTransport(driver.ports[0], connection)
+        } catch (e: java.io.IOException) {
+            runCatching { connection.close() }
+            openFailed(e)
+            return
+        }
+        openFailures = 0
+        lastError = null
         transport = opened
         deviceName = device.productName ?: device.deviceName
         dispatch(LinkEvent.Opened)
         onTransportOpened(opened)
+        emitStatus()
+    }
+
+    /**
+     * Opening the port failed (v0.0.6 crashed here). Bounded retries with backoff, each one re-probing because the
+     * ESP may have re-enumerated as a new UsbDevice; after the last one, wait for the next attach intent or a
+     * manual Reconnect. Reported once per failure streak as a non-fatal, never as a crash.
+     */
+    private fun openFailed(e: java.io.IOException) {
+        openFailures++
+        val msg = e.message ?: e.javaClass.simpleName
+        android.util.Log.w("Droidputter", "usb open failed ($openFailures/${OPEN_RETRY_MS.size}): $msg")
+        if (openFailures == 1) com.droidputter.telemetry.Telemetry.exception(e, mapOf("where" to "usb_open"))
+        if (openFailures <= OPEN_RETRY_MS.size) {
+            lastError = "could not open the ESP's USB port: $msg (retry $openFailures/${OPEN_RETRY_MS.size})"
+            handler.postDelayed({
+                if (started && transport == null && rawClient == null) {
+                    findDevice()?.device?.takeIf { usbManager.hasPermission(it) }?.let { open(it) }
+                }
+            }, OPEN_RETRY_MS[openFailures - 1])
+        } else {
+            lastError = "could not open the ESP's USB port: $msg -- replug it or tap Reconnect"
+            openFailures = 0
+        }
         emitStatus()
     }
 
@@ -224,10 +262,13 @@ class UsbLinkManager(
 
     private fun emitStatus() {
         val devices = usbManager.deviceList.values.map { it.productName ?: it.deviceName }
-        onStatus(LinkStatus(stateMachine.state, deviceName, permissionGranted, stateMachine.missedPings, devices))
+        onStatus(LinkStatus(stateMachine.state, deviceName, permissionGranted, stateMachine.missedPings, devices, lastError))
     }
 }
 
 private inline fun <reified T> Intent.getParcelableExtraCompat(name: String): T? =
     @Suppress("DEPRECATION")
     getParcelableExtra(name)
+
+/** Backoff before each retry of a failed port open (UsbLinkManager.openFailed). */
+private val OPEN_RETRY_MS = longArrayOf(500, 1_000, 2_000)

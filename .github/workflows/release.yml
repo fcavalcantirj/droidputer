@@ -59,6 +59,8 @@ jobs:
           echo "versionName=$V versionCode=$CODE"
           ./gradlew --no-daemon -PversionName="$V" -PversionCode="$CODE" :core:test :core:koverVerify :app:assembleRelease :app:bundleRelease
           bash gates.sh
+          # the AAB is what Play installs: both must carry the runtime assets (v0.0.6 shipped none)
+          bash check-assets.sh app/build/outputs/apk/release/app-release.apk app/build/outputs/bundle/release/app-release.aab
           ls -la app/build/outputs/apk/release/app-release.apk app/build/outputs/bundle/release/app-release.aab
 
       - name: Name the assets and write SHA256SUMS

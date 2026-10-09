@@ -39,6 +39,8 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon :core:test :core:koverVerify :app:assembleDebug :app:assembleRelease
           bash gates.sh
+          # v0.0.1..v0.0.6 shipped without assets ("Replay fixture" crashed on Play): never again
+          bash check-assets.sh app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/release/app-release.apk
           ls -la app/build/outputs/apk/debug/app-debug.apk
           ls -la app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4

@@ -841,12 +841,21 @@ class MainActivity : ComponentActivity() {
     private fun startDemoReplay() {
         demoJob?.cancel()
         demoJob = lifecycleScope.launch {
-            val basePath = withContext(Dispatchers.IO) { copyDemoFixtureToCache() }
-            val framer = Framer()
-            FixtureTransport(basePath).incoming.collect { bytes ->
-                framer.feed(bytes).forEach { frame ->
-                    decodeDpMessage(frame)?.let { screenController.onMessage(it) }
+            // Never a crash (v0.0.6: FileNotFoundException here for 10 Play users, the APK shipped without assets).
+            try {
+                val basePath = withContext(Dispatchers.IO) { copyDemoFixtureToCache() }
+                val framer = Framer()
+                FixtureTransport(basePath).incoming.collect { bytes ->
+                    framer.feed(bytes).forEach { frame ->
+                        decodeDpMessage(frame)?.let { screenController.onMessage(it) }
+                    }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "demo replay failed: ${e.message}")
+                flashStatus = "demo replay unavailable in this build: ${e.message ?: e.javaClass.simpleName}"
+                Telemetry.exception(e, mapOf("where" to "demo_replay"))
             }
         }
     }

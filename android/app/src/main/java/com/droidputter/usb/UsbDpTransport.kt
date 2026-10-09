@@ -32,9 +32,18 @@ class UsbDpTransport(
 
     init {
         port.open(connection)
-        port.setParameters(BAUD_RATE, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
-        port.setDTR(true)
-        port.setRTS(true)
+        // A step after open() failing (the ESP re-enumerating right after a reset/flash) must not leave the
+        // interface claimed; the caller (UsbLinkManager.open) handles the IOException -- uncaught, it was a
+        // Play production crash in v0.0.6 (UsbDpTransport.<init> java.io.IOException, 2026-10-09).
+        try {
+            port.setParameters(BAUD_RATE, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
+            port.setDTR(true)
+            port.setRTS(true)
+        } catch (e: java.io.IOException) {
+            runCatching { port.close() }
+            ioExecutor.shutdown()
+            throw e
+        }
     }
 
     override fun write(bytes: ByteArray) {

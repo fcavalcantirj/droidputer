@@ -52,6 +52,7 @@ fun ConnectionScreen(
         Text("Device: ${status.deviceName ?: "none"}")
         Text("Permission: ${permissionLabel(status.permissionGranted)}")
         Text("Missed pings: ${status.missedPings}")
+        status.lastError?.let { Text("Last error: $it", color = MaterialTheme.colorScheme.error) }
 
         HorizontalDivider()
         Text("STATS", style = MaterialTheme.typography.titleMedium)

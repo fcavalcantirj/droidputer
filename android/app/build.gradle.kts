@@ -9,12 +9,39 @@ plugins {
 // android/ (the repo .gitignore blankets *.bin except fixtures/**/*.bin).
 val demoFixtureSrc = rootProject.projectDir.parentFile.resolve("fixtures/pense-bem")
 
-val copyDemoFixture by tasks.registering(Copy::class) {
-    from(demoFixtureSrc) {
-        include("boot.bin", "boot.jsonl")
-        into("fixtures/pense-bem")
+/**
+ * Copies a fixed set of repo files into `<outputDir>/<into>/` for the APK's assets. A typed task with a
+ * DirectoryProperty output, wired through the AGP variant API below (`addGeneratedSourceDirectory`), so the
+ * dependency is explicit. The previous `assets.srcDir(copyTask.map { it.destinationDir })` created none:
+ * the copy tasks never ran and v0.0.1..v0.0.6 shipped WITHOUT assets -- "Replay fixture" crashed with
+ * FileNotFoundException for 10 Play users (2026-10-09) and the catalog/verdicts offline seed was missing.
+ */
+abstract class CopyAssetFiles : DefaultTask() {
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract val sources: ConfigurableFileCollection
+
+    @get:Input
+    abstract val into: Property<String>
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val root = outputDir.get().asFile
+        root.deleteRecursively()   // exactly these files, nothing stale (bins once bundled before 2026-09-04)
+        val dest = root.resolve(into.get()).apply { mkdirs() }
+        sources.files.forEach { f ->
+            check(f.isFile) { "asset source missing: $f" }
+            f.copyTo(dest.resolve(f.name), overwrite = true)
+        }
     }
-    into(layout.buildDirectory.dir("generated/demoAssets"))
+}
+
+val demoFixtureAssets = tasks.register<CopyAssetFiles>("demoFixtureAssets") {
+    sources.from(demoFixtureSrc.resolve("boot.bin"), demoFixtureSrc.resolve("boot.jsonl"))
+    into.set("fixtures/pense-bem")
 }
 
 // Catalog screen: bundles apps/catalog.json (+ apps/verdicts.json) only as the offline SEED of the
@@ -25,12 +52,10 @@ val copyDemoFixture by tasks.registering(Copy::class) {
 val catalogJsonSrc = rootProject.projectDir.parentFile.resolve("apps/catalog.json")
 val verdictsJsonSrc = rootProject.projectDir.parentFile.resolve("apps/verdicts.json")
 
-// Sync, not Copy: the destination is an assets srcDir, so anything stale in it (the bundled bins of
-// builds before 2026-09-04) would still ship. Sync leaves exactly these two seed files.
-val copyCatalogManifest by tasks.registering(Sync::class) {
-    from(catalogJsonSrc) { into("catalog") }
-    if (verdictsJsonSrc.isFile) from(verdictsJsonSrc) { into("catalog") }
-    into(layout.buildDirectory.dir("generated/catalogAssets"))
+val catalogSeedAssets = tasks.register<CopyAssetFiles>("catalogSeedAssets") {
+    sources.from(catalogJsonSrc)
+    if (verdictsJsonSrc.isFile) sources.from(verdictsJsonSrc)
+    into.set("catalog")
 }
 
 // Release signing inputs (release.yml on a v* tag). All four come from the environment; none set = local dev build
@@ -100,15 +125,12 @@ android {
         compose = true
         buildConfig = true
     }
+}
 
-    sourceSets {
-        getByName("main") {
-            // Providers derived from the copy tasks, not plain directories: every consumer of the assets
-            // (mergeAssets, lintVital's model writer, ...) then depends on the copy tasks implicitly -- the
-            // release CI run of 2026-09-05 failed on "uses this output without declaring a dependency".
-            assets.srcDir(copyDemoFixture.map { it.destinationDir })
-            assets.srcDir(copyCatalogManifest.map { it.destinationDir })
-        }
+androidComponents {
+    onVariants { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(demoFixtureAssets, CopyAssetFiles::outputDir)
+        variant.sources.assets?.addGeneratedSourceDirectory(catalogSeedAssets, CopyAssetFiles::outputDir)
     }
 }
 
