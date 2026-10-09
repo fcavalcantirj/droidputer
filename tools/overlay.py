@@ -608,12 +608,13 @@ def main() -> int:
         # CI 2026-10-09: a blanket -include of Arduino.h/Wire.h through build_flags broke library units
         # ("needs Wire.h") and Arduino's B0..B11111111 binary macros collided with emulator code.
         forced: list[str] = []
+        first_failure = (info.get("failed"), info.get("reason"))
         for _ in range(3):
             m = re.search(r"'(Wire|function|vTaskDelay|xTaskCreate\w*|xSemaphore\w*|xQueue\w*)' (was not declared|does not name a type)", info.get("reason", "")) if not info["ok"] else None
             if not m:
                 break
             sym = m.group(1)
-            need = ["functional"] if sym == "function" else ["Wire.h"] if sym == "Wire" else \
+            need = ["${PROJECT_DIR}/../../shim/lib/DroidputterShim/src/dp_compat_function.h"] if sym == "function" else ["Wire.h"] if sym == "Wire" else \
                 ["freertos/FreeRTOS.h", "freertos/task.h", "freertos/semphr.h", "freertos/queue.h"]
             if all(h in forced for h in need):
                 break   # already forced and still failing: a real error, stop
@@ -627,6 +628,10 @@ def main() -> int:
             info["compat_retry"] = forced[:]
             info.pop("failed", None); info.pop("reason", None)
             info.update(build(REPO_ROOT / info["app"], a.upload, a.env))
+        if forced and not info["ok"]:
+            # A retry that did not help must not swap the real reason for an artifact of the forced header
+            # (Game-Station: forcing Wire.h pulled Arduino's binary macros into emulator code).
+            info["failed"], info["reason"] = first_failure
         # Wi-Fi deauthers override the framework's ieee80211_raw_frame_sanity_check (saturn); the Arduino-IDE recipe for
         # them is -zmuldefs, so the app's definition wins at link time.
         if not info["ok"] and "ieee80211_raw_frame_sanity_check" in info.get("reason", ""):
