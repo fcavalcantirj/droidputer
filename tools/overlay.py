@@ -602,16 +602,29 @@ def main() -> int:
             info["cxx14_retry"] = True
             info.pop("failed", None); info.pop("reason", None)
             info.update(build(REPO_ROOT / info["app"], a.upload, a.env))
-        # Symbols the 3.x core / the Arduino IDE make visible without an #include (Wire, std::function, FreeRTOS):
-        # one retry with dp_compat_core.h force-included. Builds that compile never get it.
-        if not info["ok"] and re.search(r"'(Wire|function|vTaskDelay|xTaskCreate\w*|xSemaphore\w*|xQueue\w*)' (was not declared|does not name a type)", info.get("reason", "")):
+        # Symbols the 3.x core / the Arduino IDE make visible without an #include. Up to 3 retries, each forcing ONLY
+        # the header the error names, into the app's own sources (build_src_flags, never library units: they only
+        # see their own dependencies' include paths), plus the Wire library when Wire is the missing name.
+        # CI 2026-10-09: a blanket -include of Arduino.h/Wire.h through build_flags broke library units
+        # ("needs Wire.h") and Arduino's B0..B11111111 binary macros collided with emulator code.
+        forced: list[str] = []
+        for _ in range(3):
+            m = re.search(r"'(Wire|function|vTaskDelay|xTaskCreate\w*|xSemaphore\w*|xQueue\w*)' (was not declared|does not name a type)", info.get("reason", "")) if not info["ok"] else None
+            if not m:
+                break
+            sym = m.group(1)
+            need = ["functional"] if sym == "function" else ["Wire.h"] if sym == "Wire" else \
+                ["freertos/FreeRTOS.h", "freertos/task.h", "freertos/semphr.h", "freertos/queue.h"]
+            if all(h in forced for h in need):
+                break   # already forced and still failing: a real error, stop
+            forced += [h for h in need if h not in forced]
             ini = REPO_ROOT / info["app"] / "platformio.ini"
-            text = ini.read_text().replace("build_flags =\n", "build_flags =\n    -include ${PROJECT_DIR}/../../shim/lib/DroidputterShim/src/dp_compat_core.h\n", 1)
-            # The library finder scans sources, not -include flags: name the framework's Wire library so its
-            # headers are on the path (CI 2026-10-09: "needs Wire.h" when only the header was forced in).
-            text = text.replace("lib_deps =\n", "lib_deps =\n    Wire\n", 1)
+            text = re.sub(r"^build_src_flags = .*\n", "", ini.read_text(), flags=re.M)
+            text = text.replace("monitor_speed = 115200\n", "build_src_flags = " + " ".join(f"-include {h}" for h in forced) + "\nmonitor_speed = 115200\n", 1)
+            if sym == "Wire" and not re.search(r"^\s+Wire\s*$", text, re.M):
+                text = text.replace("lib_deps =\n", "lib_deps =\n    Wire\n", 1)
             ini.write_text(text)
-            info["compat_retry"] = True
+            info["compat_retry"] = forced[:]
             info.pop("failed", None); info.pop("reason", None)
             info.update(build(REPO_ROOT / info["app"], a.upload, a.env))
         # Wi-Fi deauthers override the framework's ieee80211_raw_frame_sanity_check (saturn); the Arduino-IDE recipe for
