@@ -1,7 +1,7 @@
 {
  "date": "2026-10-09",
  "branch": "fix/build-failures",
- "note": "31 built, 28 clear answers, 13 still failing",
+ "note": "38 built, 28 clear answers, 6 still failing",
  "pairs": [
   {
    "repo": "0ct0sec/M5PORKCHOP",
@@ -52,8 +52,8 @@
    "env": "m5cardputer",
    "before": "failed",
    "after": "failed",
-   "class": "missing-header",
-   "reason": "needs M5Dial.h, which no known library provides",
+   "class": "compile-error",
+   "reason": "'function' does not name a type (app relies on headers the arduino-esp32 3.x core pulls in)",
    "ram": null,
    "outcome": "still failing",
    "run_id": "37955926152"
@@ -64,7 +64,7 @@
    "before": "failed",
    "after": "failed",
    "class": "missing-header",
-   "reason": "needs M5Dial.h, which no known library provides",
+   "reason": "not re-run after the sketch fix (the m5cardputer env now stops at 'function' does not name a type)",
    "ram": null,
    "outcome": "still failing",
    "run_id": "37955932754"
@@ -106,12 +106,13 @@
    "repo": "Devsur11/M5Gotchi",
    "env": "m5cardputer",
    "before": "failed",
-   "after": "failed",
-   "class": "link-error",
-   "reason": "link failed: undefined reference to _binary_fonts_big_vlw_end",
+   "after": "built",
+   "class": null,
+   "reason": null,
    "ram": null,
-   "outcome": "still failing",
-   "run_id": "37955952593"
+   "outcome": "built",
+   "run_id": "37955952593",
+   "fixed_by": "long-tail overlay fixes, 2026-10-09"
   },
   {
    "repo": "Mr-PauI/Gameboy-Enhanced-Firmware-m5stack-cardputer-",
@@ -139,23 +140,25 @@
    "repo": "Stachugit/MeshCore-Cardputer-ADV",
    "env": "m5cardputer",
    "before": "failed",
-   "after": "failed",
-   "class": "build-error",
-   "reason": "InvalidProjectConfError: Invalid '/home/runner/work/droidputter/droidputter/apps/meshcore-cardputer-adv/platformio.ini' (project configurati",
+   "after": "built",
+   "class": null,
+   "reason": null,
    "ram": null,
-   "outcome": "still failing",
-   "run_id": "37955965455"
+   "outcome": "built",
+   "run_id": "37955965455",
+   "fixed_by": "long-tail overlay fixes, 2026-10-09"
   },
   {
    "repo": "Stachugit/MeshCore-Cardputer-ADV",
    "env": "m5cardputer-virtual",
    "before": "failed",
-   "after": "failed",
-   "class": "build-error",
-   "reason": "InvalidProjectConfError: Invalid '/home/runner/work/droidputter/droidputter/apps/meshcore-cardputer-adv/platformio.ini' (project configurati",
+   "after": "built",
+   "class": null,
+   "reason": null,
    "ram": null,
-   "outcome": "still failing",
-   "run_id": "37955969215"
+   "outcome": "built",
+   "run_id": "37955969215",
+   "fixed_by": "long-tail overlay fixes, 2026-10-09"
   },
   {
    "repo": "VolosR/Cardputer",
@@ -194,12 +197,13 @@
    "repo": "aat440hz/FlockCameraDetector-M5CardputerAdv",
    "env": "m5cardputer-virtual",
    "before": "failed",
-   "after": "failed",
-   "class": "missing-header",
-   "reason": "needs MultipleSatellite.h, which no known library provides",
+   "after": "built",
+   "class": null,
+   "reason": null,
    "ram": null,
-   "outcome": "still failing",
-   "run_id": "37956088134"
+   "outcome": "built",
+   "run_id": "37956088134",
+   "fixed_by": "long-tail overlay fixes, 2026-10-09"
   },
   {
    "repo": "adammelancon/cardputer-iss-tracker",
@@ -326,12 +330,13 @@
    "repo": "colonelpanichacks/oui-spy-unified-blue",
    "env": "m5cardputer-virtual",
    "before": "failed",
-   "after": "failed",
-   "class": "compile-error",
-   "reason": "'DNSServer' does not name a type; did you mean 'Server'?",
+   "after": "built",
+   "class": null,
+   "reason": null,
    "ram": null,
-   "outcome": "still failing",
-   "run_id": "37956238334"
+   "outcome": "built",
+   "run_id": "37956238334",
+   "fixed_by": "long-tail overlay fixes, 2026-10-09"
   },
   {
    "repo": "cyberwisk/M5Cardputer_WebRadio",
@@ -449,7 +454,7 @@
    "before": "failed",
    "after": "failed",
    "class": "compile-error",
-   "reason": "return type specified for deduction guide",
+   "reason": "'Wire' was not declared in this scope (after the gnu++14 retry)",
    "ram": null,
    "outcome": "still failing",
    "run_id": "37956380061"
@@ -460,7 +465,7 @@
    "before": "failed",
    "after": "failed",
    "class": "compile-error",
-   "reason": "'vTaskDelay' was not declared in this scope",
+   "reason": "'vTaskDelay' was not declared (the app targets arduino-esp32 3.x; the shim builds on 2.0.17)",
    "ram": null,
    "outcome": "still failing",
    "run_id": "37956384826"
@@ -524,23 +529,25 @@
    "repo": "henriquesebastiao/saturn",
    "env": "m5cardputer",
    "before": "failed",
-   "after": "failed",
-   "class": "compile-error",
-   "reason": "ld returned 1 exit status",
+   "after": "built",
+   "class": null,
+   "reason": null,
    "ram": null,
-   "outcome": "still failing",
-   "run_id": "37956503870"
+   "outcome": "built",
+   "run_id": "37956503870",
+   "fixed_by": "long-tail overlay fixes, 2026-10-09"
   },
   {
    "repo": "henriquesebastiao/saturn",
    "env": "m5cardputer-virtual",
    "before": "failed",
-   "after": "failed",
-   "class": "compile-error",
-   "reason": "ld returned 1 exit status",
+   "after": "built",
+   "class": null,
+   "reason": null,
    "ram": null,
-   "outcome": "still failing",
-   "run_id": "37956508681"
+   "outcome": "built",
+   "run_id": "37956508681",
+   "fixed_by": "long-tail overlay fixes, 2026-10-09"
   },
   {
    "repo": "joejee90/Tiny-Journal",
@@ -691,7 +698,7 @@
    "before": "failed",
    "after": "failed",
    "class": "compile-error",
-   "reason": "no matching function for call to 'BLEAdvertisementData::addData(String)'",
+   "reason": "BLEAdvertisementData::addData(String) is the arduino-esp32 3.x API; the shim builds on 2.0.17",
    "ram": null,
    "outcome": "still failing",
    "run_id": "37956955064"
@@ -746,7 +753,7 @@
    "before": "failed",
    "after": "failed",
    "class": "compile-error",
-   "reason": "ambiguating new declaration of 'uint32_t millis()'",
+   "reason": "ambiguating new declaration of 'uint32_t millis()' (the app targets arduino-esp32 3.x; the shim builds on 2.0.17)",
    "ram": null,
    "outcome": "still failing",
    "run_id": "37956975258"
