@@ -1,6 +1,7 @@
 # Droidputter privacy policy
 
-Effective 2026-09-17. Applies to the Droidputter Android app (`com.droidputter`).
+Effective 2026-10-09 (app version 0.0.7 and later; earlier versions collect no usage data). Applies to the
+Droidputter Android app (`com.droidputter`).
 
 ## What the app does with data
 
@@ -19,23 +20,34 @@ Effective 2026-09-17. Applies to the Droidputter Android app (`com.droidputter`)
   the date, an optional note, and an anonymous identifier generated on your phone (`device-` followed by
   eight hexadecimal characters). That identifier is random, is not derived from your device or account,
   and cannot be linked to you by us. You can keep verdicts on your phone instead; they then never leave it.
+- **Usage and crash reports (optional).** On first launch the app asks whether to send anonymous usage
+  and crash reports; nothing is sent unless you tap "Send", and the Connection screen turns it off again at
+  any time. When on, the app sends events to PostHog Cloud (United States): app opened, catalog opened,
+  build requested and its outcome, firmware flashed, ESP32 linked (its app and board name), minutes
+  mirrored, verdict sent, ESP32 panics read off the USB wire, and app crashes (the stack trace). Each event
+  carries the same random anonymous identifier described under Verdicts, the app version and the phone
+  model and Android version. Never location, contacts, accounts, key presses or screen contents. While
+  reports are on, build requests to the build proxy also carry that identifier so builds can be counted per
+  phone. Aggregated numbers (never individual events or identifiers) are published on the public statistics
+  page.
 - **Catalog and feeds.** The app downloads the public catalog and verdict files from GitHub, the
   LauncherHub firmware list from `api.launcherhub.net`, and firmware binaries from the build proxy or from
   M5Stack's M5Burner CDN when you flash them. These are ordinary HTTPS downloads.
 
 ## What the app does not do
 
-- No account, no sign-in, no advertising, no analytics, no crash reporting, no third-party SDKs that
-  collect data.
+- No account, no sign-in, no advertising. The only third-party SDK that sends data is PostHog, and only
+  after you opt in to usage and crash reports (above).
 - No access to contacts, files outside the app's own storage, camera, microphone or the network beyond
   the endpoints named above.
 
 ## Data retention and deletion
 
 Everything the app stores lives in its private storage on your phone (build list, downloaded firmware
-parts, your verdicts, the anonymous identifier, the sharing consent). Uninstalling the app deletes all of
+parts, your verdicts, the anonymous identifier, the sharing and usage-report consents). Uninstalling the app deletes all of
 it. Published verdicts are public records in the GitHub repository; to have one removed, open an issue at
-https://github.com/fcavalcantirj/droidputter/issues quoting the anonymous identifier.
+https://github.com/fcavalcantirj/droidputter/issues quoting the anonymous identifier. The same request removes
+that identifier's usage and crash reports from PostHog.
 
 ## Children
 

@@ -46,6 +46,13 @@ any ESP32-S3 devkit on its native USB port). Open source, MIT: https://github.co
     yes (only after in-app consent). Shared: yes, published publicly with the user's verdict. Purpose:
     app functionality (community compatibility reports). Optional: yes. Ephemeral: no.
     Encrypted in transit: yes. Users can request deletion: yes (issue with the identifier).
+  - From 0.0.7, optional usage + crash reports (opt-in dialog, PostHog Cloud as processor):
+    - *App activity* -> "App interactions" (catalog opened, build requested, firmware flashed, ESP linked,
+      minutes mirrored, verdict sent): collected yes, shared no, optional yes, purpose Analytics.
+    - *App info and performance* -> "Crash logs" (stack traces, ESP panics) and "Diagnostics" (app version,
+      phone model, Android version): collected yes, shared no, optional yes, purposes Analytics + App
+      functionality.
+    - *Device or other IDs* (the same random identifier as above): also used for Analytics.
   - Location: *not collected, not shared* (used on-device, forwarded over the USB cable only).
   - Everything else: not collected.
   - Security practices: data encrypted in transit (HTTPS); deletion on request.

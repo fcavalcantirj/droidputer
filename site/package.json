@@ -1,0 +1,6 @@
+{
+  "name": "droidputer-stats",
+  "private": true,
+  "type": "module",
+  "description": "Public live usage statistics page for droidputter (static page + one Vercel function)."
+}

@@ -1,0 +1,2205 @@
+{
+ "source": "GitHub Actions build-app.yml runs on main, 2026-09-04..2026-10-08, first real error line per failed run",
+ "runs": [
+  {
+   "date": "2026-09-04",
+   "repo": "geo-tp/Ultimate-Remote",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-04",
+   "repo": "geo-tp/M5Cardputer-GPS-Logger",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-04",
+   "repo": "geo-tp/Ultimate-Remote",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs IRremote.hpp, which no known library provides"
+  },
+  {
+   "date": "2026-09-04",
+   "repo": null,
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-04",
+   "repo": null,
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-05",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-05",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-05",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-05",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-05",
+   "repo": "cyberwisk/m5Cardputer_audiospectrum",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-05",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-05",
+   "repo": "cyberwisk/m5Cardputer_audiospectrum",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-05",
+   "repo": "geo-tp/M5-Card-Computer-I2C-Scanner",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-05",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-05",
+   "repo": "geo-tp/M5-Card-Computer-I2C-Scanner",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-05",
+   "repo": "adammelancon/cardputer-iss-tracker",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-16",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "geo-tp/Bluetooth-Keyboard-Mouse-Emulator",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "joejee90/Tiny-Journal",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "m5stack/uiflow-micropython",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs esp_dmx.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "n0xa/m5stick-nemo",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "no matching function for call to 'BLEAdvertisementData::addData(String)'\", \"/home/runner/work/droidputter/droidputter/apps/_src/m5stick-nemo/m5stick-nemo.ino:18"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "Zeloksa/Cardputer-ADV-WiFi-BLE-Radar",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "joejee90/Tiny-Journal",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "viniciusbo/m5-palnagotchi",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "adammelancon/cardputer-iss-tracker",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "VolosR/Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "geo-tp/Bluetooth-Keyboard-Mouse-Emulator",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "d4rkmen/M5Gemini",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs LovyanGFX.hpp, which no known library provides"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "Mr-PauI/Gameboy-Enhanced-Firmware-m5stack-cardputer-",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs ./walnut-cgb/walnut_cgb.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "marivaaldo/ESP32Marauder",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "adammelancon/cardputer-iss-tracker",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "gdantas04/Cardputer-System-Monitor",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "geo-tp/M5Cardputer-Audio-Stream-Server",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "gdantas04/Cardputer-System-Monitor",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "marivaaldo/ESP32Marauder",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-17",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "geo-tp/Bluetooth-Keyboard-Mouse-Emulator",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "geo-tp/ESP32-Bus-Pirate",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "'vTaskDelay' was not declared in this scope\", \"/home/runner/work/droidputter/droidputter/apps/_src/esp32-bus-pirate/src/Abstracts/ANetworkController.cpp:179:9: "
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "cyberwisk/m5Cardputer_audiospectrum",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "bmorcelli/Launcher",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "gdantas04/Cardputer-System-Monitor",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "cyberwisk/M5Cardputer_WebRadio",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "joejee90/Tiny-Journal",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "m5stack/M5Cardputer-UserDemo",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "VolosR/Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "urtubia/miniacid",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "pin-names",
+   "reason": "'G2' missing in the bare-S3 board variant"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "urtubia/miniacid",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "pin-names",
+   "reason": "'G2' missing in the bare-S3 board variant"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "viniciusbo/m5-palnagotchi",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-18",
+   "repo": "Sor3nt/Flipper-Zero-ESP32-Port",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "geo-tp/Ultimate-Remote",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "flash-too-big",
+   "reason": "the firmware is 3446997 bytes; the app partition holds 3342336"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "viniciusbo/m5-palnagotchi",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "lunarc3/CardputerGPSMap",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "geo-tp/M5Cardputer-Audio-Stream-Server",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "marivaaldo/ESP32Marauder",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "urtubia/miniacid",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "pin-names",
+   "reason": "'G2' missing in the bare-S3 board variant"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "urtubia/miniacid",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "pin-names",
+   "reason": "'G2' missing in the bare-S3 board variant"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "gdantas04/Cardputer-System-Monitor",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "bomberman30/AdvanceOS-for-cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "geo-tp/Bluetooth-Keyboard-Mouse-Emulator",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "Devsur11/M5Gotchi",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "link-error",
+   "reason": "link failed: undefined reference to _binary_fonts_big_vlw_end"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "7h30th3r0n3/Evil-M5Core2",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs M5Dial.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "geo-tp/Ultimate-Remote",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "urtubia/miniacid",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "pin-names",
+   "reason": "'G2' missing in the bare-S3 board variant"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "echo-lalia/Cardputer-MicroHydra",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "echo-lalia/Cardputer-MicroHydra",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "adammelancon/cardputer-iss-tracker",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "fcavalcantirj/droidputter",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "7h30th3r0n3/Evil-M5Core2",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs M5Dial.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-19",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "justcallmekoko/ESP32Marauder",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs LinkedList.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "0xhalloween/Flipper-Zero-ESP32-ADV",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "VolosR/Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "CHARL3X/GLIDE-Synth-Cardputer-ADV",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 168 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "7h30th3r0n3/Evil-M5Core2",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs M5Dial.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "7h30th3r0n3/Evil-M5Core2",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs M5Dial.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "henriquesebastiao/saturn",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "ld returned 1 exit status\", \"*** [.pio/build/m5cardputer/firmware.elf] Error 1\"]}"
+  },
+  {
+   "date": "2026-09-20",
+   "repo": "cyberwisk/M5Cardputer_WebRadio",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "geo-tp/Ultimate-Remote",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "flash-too-big",
+   "reason": "the firmware is 3408657 bytes; the app partition holds 3342336"
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "0xhalloween/Flipper-Zero-ESP32-ADV",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "0xhalloween/Flipper-Zero-ESP32-ADV",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "marivaaldo/ESP32Marauder",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "marivaaldo/ESP32Marauder",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-21",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "n0xa/m5stick-nemo",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "no matching function for call to 'BLEAdvertisementData::addData(String)'\", \"/home/runner/work/droidputter/droidputter/apps/_src/m5stick-nemo/m5stick-nemo.ino:18"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "n0xa/m5stick-nemo",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "no matching function for call to 'BLEAdvertisementData::addData(String)'\", \"/home/runner/work/droidputter/droidputter/apps/_src/m5stick-nemo/m5stick-nemo.ino:18"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "geo-tp/Open-Wifi-Scanner",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "justcallmekoko/ESP32Marauder",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs LinkedList.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "justcallmekoko/ESP32Marauder",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs LinkedList.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "Mr-PauI/Gameboy-Enhanced-Firmware-m5stack-cardputer-",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs ./walnut-cgb/walnut_cgb.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-22",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-23",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-23",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-23",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-23",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-23",
+   "repo": "7h30th3r0n3/Evil-M5Core2",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs M5Dial.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-24",
+   "repo": "geo-tp/ESP32-Bus-Pirate",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "'vTaskDelay' was not declared in this scope\", \"/home/runner/work/droidputter/droidputter/apps/_src/esp32-bus-pirate/src/Abstracts/ANetworkController.cpp:179:9: "
+  },
+  {
+   "date": "2026-09-24",
+   "repo": "cyberwisk/M5Cardputer_WebRadio",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "VolosR/Cardputer",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "justcallmekoko/ESP32Marauder",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs LinkedList.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "meister5/m5stack-cardputer-adv-gps-tracker",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "Stachugit/MeshCore-Cardputer-ADV",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "Stachugit/MeshCore-Cardputer-ADV",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "henriquesebastiao/saturn",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "ld returned 1 exit status\", \"*** [.pio/build/m5cardputer/firmware.elf] Error 1\"]}"
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "henriquesebastiao/saturn",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 34808 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "henriquesebastiao/saturn",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "ld returned 1 exit status\", \"*** [.pio/build/m5cardputer/firmware.elf] Error 1\"]}"
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "geo-tp/Ultimate-Remote",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "flash-too-big",
+   "reason": "the firmware is 3446997 bytes; the app partition holds 3342336"
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-25",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "geo-tp/ESP32-Bus-Pirate",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "'vTaskDelay' was not declared in this scope\", \"/home/runner/work/droidputter/droidputter/apps/_src/esp32-bus-pirate/src/Abstracts/ANetworkController.cpp:179:9: "
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "adammelancon/cardputer-iss-tracker",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "geo-tp/M5Cardputer-Audio-Stream-Server",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "VolosR/Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "urtubia/miniacid",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "pin-names",
+   "reason": "'G2' missing in the bare-S3 board variant"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "geo-tp/Ultimate-Remote",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "flash-too-big",
+   "reason": "the firmware is 3408657 bytes; the app partition holds 3342336"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "geo-tp/Bluetooth-Keyboard-Mouse-Emulator",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "pinchepasta/mostly-a-Flipper",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "therezor/cardputer-ai",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "ambiguating new declaration of 'uint32_t millis()'\", \"/home/runner/work/droidputter/droidputter/apps/_src/cardputer-ai/main/main.cpp:464:13: error: 'void setup("
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "urtubia/miniacid",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "pin-names",
+   "reason": "'G2' missing in the bare-S3 board variant"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "viniciusbo/m5-palnagotchi",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "cyberwisk/m5Cardputer_audiospectrum",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "geo-tp/Cardputer-Game-Station-Emulators",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "return type specified for deduction guide\", \"/home/runner/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h:165:1: error: decl-specifier i"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "echo-lalia/Cardputer-MicroHydra",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "gdantas04/Cardputer-System-Monitor",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "lunarc3/CardputerGPSMap",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "urtubia/miniacid",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "pin-names",
+   "reason": "'G2' missing in the bare-S3 board variant"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "urtubia/miniacid",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "pin-names",
+   "reason": "'G2' missing in the bare-S3 board variant"
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "joejee90/Tiny-Journal",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-26",
+   "repo": "urtubia/miniacid",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "pin-names",
+   "reason": "'G2' missing in the bare-S3 board variant"
+  },
+  {
+   "date": "2026-09-27",
+   "repo": "bmorcelli/Bruce",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-27",
+   "repo": "bmorcelli/Bruce",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-27",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-27",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-27",
+   "repo": "geo-tp/Ultimate-Remote",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "flash-too-big",
+   "reason": "the firmware is 3408657 bytes; the app partition holds 3342336"
+  },
+  {
+   "date": "2026-09-27",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 33296 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-27",
+   "repo": "geo-tp/Ultimate-Remote",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "flash-too-big",
+   "reason": "the firmware is 3446997 bytes; the app partition holds 3342336"
+  },
+  {
+   "date": "2026-09-27",
+   "repo": "m5stack/uiflow-micropython",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs esp_dmx.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-27",
+   "repo": "m5stack/uiflow-micropython",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs esp_dmx.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-27",
+   "repo": "romalik/m5cardputer_doom",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-27",
+   "repo": "m5stack/uiflow-micropython",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs esp_dmx.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-28",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-28",
+   "repo": "geo-tp/Bluetooth-Keyboard-Mouse-Emulator",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "viniciusbo/m5-palnagotchi",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "romalik/m5cardputer_doom",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "romalik/m5cardputer_doom",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "geo-tp/M5Cardputer-Audio-Stream-Server",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "gdantas04/Cardputer-System-Monitor",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "cyberwisk/M5Cardputer_WebRadio",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "geo-tp/Ultimate-Remote",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "flash-too-big",
+   "reason": "the firmware is 3408657 bytes; the app partition holds 3342336"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "cyberwisk/m5Cardputer_audiospectrum",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "lunarc3/CardputerGPSMap",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "joejee90/Tiny-Journal",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "adammelancon/cardputer-iss-tracker",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "benbaker76/Pigtail",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "geo-tp/Bluetooth-Keyboard-Mouse-Emulator",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-09-30",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-10-03",
+   "repo": "echo-lalia/Cardputer-MicroHydra",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "not-arduino",
+   "reason": "ESP-IDF or MicroPython project, no Arduino sketch"
+  },
+  {
+   "date": "2026-10-03",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-10-03",
+   "repo": "adammelancon/cardputer-iss-tracker",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-10-03",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-10-03",
+   "repo": "bmorcelli/M5Stick-Launcher",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-10-03",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-10-04",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-10-04",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-10-04",
+   "repo": "0ct0sec/M5PORKCHOP",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "dram-overflow",
+   "reason": "the app plus the shim need 21400 bytes more static RAM than the ESP32-S3 has"
+  },
+  {
+   "date": "2026-10-05",
+   "repo": "colonelpanichacks/flock-you",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-10-05",
+   "repo": "aat440hz/FlockCameraDetector-M5CardputerAdv",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs MultipleSatellite.h, which no known library provides"
+  },
+  {
+   "date": "2026-10-06",
+   "repo": "joejee90/Tiny-Journal",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "colonelpanichacks/oui-spy-unified-blue",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "'DNSServer' does not name a type; did you mean 'Server'?\", \"/home/runner/work/droidputter/droidputter/apps/_src/oui-spy-unified-blue/src/raw/detector.cpp:3109:5"
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "colonelpanichacks/oui-spy-unified-blue",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "'DNSServer' does not name a type; did you mean 'Server'?\", \"/home/runner/work/droidputter/droidputter/apps/_src/oui-spy-unified-blue/src/raw/detector.cpp:3109:5"
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "colonelpanichacks/oui-spy-unified-blue",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "'NimBLEUUID' does not name a type\", \"/home/runner/work/droidputter/droidputter/apps/_src/oui-spy-unified-blue/src/raw/flockyou_promiscious.cpp:1710:8: error: 'N"
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "colonelpanichacks/oui-spy-unified-blue",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "compile-error",
+   "reason": "'DNSServer' does not name a type; did you mean 'Server'?\", \"/home/runner/work/droidputter/droidputter/apps/_src/oui-spy-unified-blue/src/raw/detector.cpp:3109:5"
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "geo-tp/Bluetooth-Keyboard-Mouse-Emulator",
+   "env": "m5cardputer",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "serialgeist/ESP32Marauder",
+   "env": "m5cardputer",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs JPEGDecoder.h, which no known library provides"
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "BruceDevices/firmware",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "env-not-found",
+   "reason": "its envs live in extra_configs files (Bruce, Launcher, MeshCore)"
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "d4rkmen/M5Apps",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs LovyanGFX.hpp, which no known library provides"
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "geo-tp/Bluetooth-Keyboard-Mouse-Emulator",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "wisnc/stellar-map",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "adammelancon/cardputer-iss-tracker",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "m5stack/M5Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "failed",
+   "class": "missing-header",
+   "reason": "needs libssh_esp32.h, which no known library provides"
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "VolosR/Cardputer",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  },
+  {
+   "date": "2026-10-08",
+   "repo": "viniciusbo/m5-palnagotchi",
+   "env": "m5cardputer-virtual",
+   "result": "built",
+   "class": "built",
+   "reason": ""
+  }
+ ]
+}
