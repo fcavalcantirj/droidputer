@@ -451,13 +451,19 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
         # include scan runs for PlatformIO repos too and adds registry deps whose package is not declared yet.
         inferred, unknown = infer_ino_deps(src_dir_abs, src)
         declared = {re.split(r"[@=]", d, 1)[0].strip().lower() for d in lib_deps}
-        declared_text = " ".join(lib_deps).lower()
-        provider = {dep: hdr for hdr, dep in INCLUDE_TO_DEP.items() if dep}
+        squash = lambda s: re.sub(r"[\s_-]+", "", s.lower())
+        declared_text = squash(" ".join(lib_deps))
+        if "asyncwebserver" in declared_text:   # every async web server fork pulls its own AsyncTCP
+            declared_text += " asynctcp"
+        provider: dict[str, list[str]] = {}
+        for hdr, dep in INCLUDE_TO_DEP.items():
+            if dep:
+                provider.setdefault(dep, []).append(hdr)
         # oui-spy declares mathieucarbou's ESPAsyncWebServer; adding the esphome fork for the same header linked two
         # copies (multiple definition of AsyncWebSocket::canHandle). The header's stem in a declared dep = provided.
         def already(d: str) -> bool:
-            stem = Path(provider.get(d, "")).stem.lower()
-            return re.split(r"[@=]", d, 1)[0].strip().lower() in declared or bool(stem) and stem in declared_text
+            stems = [squash(Path(h).stem) for h in provider.get(d, [])]
+            return re.split(r"[@=]", d, 1)[0].strip().lower() in declared or any(s and s in declared_text for s in stems)
         added = [d for d in inferred if not already(d)]
         if added:
             lib_deps += added
