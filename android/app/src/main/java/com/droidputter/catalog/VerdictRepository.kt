@@ -15,6 +15,8 @@ import java.net.SocketTimeoutException
 import java.net.URL
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -40,6 +42,7 @@ class VerdictRepository(private val context: Context, private val proxy: BuildPr
     @Volatile var local: List<Verdict> = if (localFile.isFile) Verdict.parseList(localFile.readText()) else emptyList()
         private set
     @Volatile private var sent: Map<String, VerdictReceipt> = if (sentFile.isFile) SentVerdicts.parse(sentFile.readText()) else emptyMap()
+    private val submitLock = Mutex()
 
     /** "device-" + 8 hex chars, minted on first use and kept for the life of the install; never a person. */
     val reporter: String by lazy {
@@ -95,14 +98,16 @@ class VerdictRepository(private val context: Context, private val proxy: BuildPr
      * Hand the verdict to the proxy. Success = the receipt, remembered so the same report is never filed
      * twice from this device (an already-sent verdict succeeds at once, without a request). Failure = a
      * short reason for the status line, always ending in "kept on this phone": the local record stays and
-     * the next tap resends.
+     * the next tap resends. One send at a time: the consent dialog's Share (and a Catalog tap mid-send) runs
+     * resendUnsent() beside the tapped send, and both used to POST the same verdict before either receipt
+     * landed (issues #78/79, #81/82, #88/89, #90/91) -- under the lock the second one finds the receipt.
      */
-    suspend fun submit(v: Verdict): Result<VerdictReceipt> {
-        sentReceipt(v)?.let { return Result.success(it) }
+    suspend fun submit(v: Verdict): Result<VerdictReceipt> = submitLock.withLock {
+        sentReceipt(v)?.let { return@withLock Result.success(it) }
         if (v.firmwareSha256.isBlank()) {
-            return Result.failure(IOException("no firmware hash for this build (flash it from the phone first), kept on this phone"))
+            return@withLock Result.failure(IOException("no firmware hash for this build (flash it from the phone first), kept on this phone"))
         }
-        return try {
+        try {
             val receipt = proxy.submitVerdict(v)
             remember(v, receipt)
             Result.success(receipt)
