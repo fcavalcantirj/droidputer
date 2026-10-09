@@ -151,6 +151,20 @@ footer { margin-top: 64px; color: var(--muted); font-size: 13px; display: flex; 
   </header>
 
 
+  <section id="phones">
+    <h2>What real phones did</h2>
+    <p class="sub">When a phone flashes an app, Droidputer watches the ESP for 20 seconds: does it boot once, say HELLO, and stream its screen to the phone? Those automatic reports are public. Anonymous per-install ids; the developer's own test phones are among them.</p>
+    <div class="kpis" id="kpis3"></div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h3>The first 20 seconds after a flash</h3><p class="note">automatic reports, one per flash</p><div id="outcomes"></div></div>
+      <div class="card"><h3>Apps each phone tried</h3><p class="note">distinct apps with a verdict, per phone</p><div id="appsPerPhone"></div></div>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h3>What phones flashed</h3><p class="note">distinct phones per app, automatic reports</p><div id="mostFlashed"></div></div>
+      <div class="card"><h3>Mirror activity in the first 20 s</h3><p class="note">frames streamed to the phone, each flash that came up (sorted)</p><div id="framesLine"></div></div>
+    </div>
+  </section>
+
   <section id="sofar">
     <h2>How people used it so far</h2>
     <p class="sub">Real records from before in-app analytics existed: every build the phones asked the proxy for since 2026-09-04, every public verdict, every APK download and GitHub's own visitor counts. Each card names its source.</p>
@@ -415,6 +429,12 @@ function tablesFrom(d) {
     const dc = {}; d.history.runs.forEach((r) => { dc[r.date] = (dc[r.date] || 0) + 1; });
     out.push({ title: "build requests per day, 2026-09-04..10-08", cols: ["day", "requests"], rows: Object.entries(dc).sort() });
   }
+  if (gh.behaviour) {
+    const b = gh.behaviour;
+    out.push({ title: "what real phones did (automatic post-flash reports)", cols: ["metric", "value"], rows: [["phones that flashed", b.phones_that_flashed], ["flashes watched", b.flashes_observed], ["mirror up", b.mirror_up], ["no HELLO", b.no_hello], ["HELLO, no frames", b.hello_no_frames]] });
+    out.push({ title: "apps tried per phone", cols: ["apps", "phones"], rows: Object.entries(b.apps_per_phone) });
+    out.push({ title: "phones per flashed app", cols: ["app", "phones"], rows: b.most_flashed.map((r) => [r.app, r.phones]) });
+  }
   if (gh.verdicts && gh.verdicts.timeline) out.push({ title: "verdicts per day", cols: ["day", "verdicts", "new_phones", "phones_cumulative"], rows: gh.verdicts.timeline.map((r) => [r.day, r.verdicts, r.new_phones, r.phones_cumulative]) });
   if (d.traffic) {
     out.push({ title: `GitHub visitors per day (snapshot ${d.traffic.taken.slice(0, 10)})`, cols: ["day", "views", "uniques"], rows: d.traffic.views.daily.map((r) => [r.day, r.count, r.uniques]) });
@@ -492,6 +512,28 @@ function render(d) {
     { color: () => css("--critical"), tip: (r) => `${fmt(r.value)} in 30 days`, empty: connected ? "none in 30 days" : "waiting for analytics" });
 
   if (gh.verdicts) { $("verdictNote").textContent = `${gh.verdicts.total} verdicts from ${gh.verdicts.reporters} phones, live from apps/verdicts.json`; verdictBars($("verdicts"), gh.verdicts.by_app.slice(0, 14)); }
+
+  // what real phones did: the app's automatic post-flash reports (verdicts.json)
+  const bh = gh.behaviour;
+  if (bh) {
+    const pct = bh.flashes_observed ? Math.round(100 * bh.mirror_up / bh.flashes_observed) : 0;
+    const kp3 = [
+      [fmt(bh.phones_that_flashed), "phones flashed from the app", "and reported back"],
+      [fmt(bh.flashes_observed), "flashes watched", "20 s each, automatically"],
+      [pct + "%", "came up mirrored", `${fmt(bh.mirror_up)} of ${fmt(bh.flashes_observed)} flashes`],
+      [fmt(bh.no_hello), "never said HELLO", "the app crashed or hung before the link"],
+    ];
+    $("kpis3").replaceChildren(...kp3.map(([v, l, s]) => { const k = document.createElement("div"); k.className = "kpi"; const a = document.createElement("div"); a.className = "v"; a.textContent = v; const b = document.createElement("div"); b.className = "l"; b.textContent = l; const c = document.createElement("div"); c.className = "s"; c.textContent = s; k.append(a, b, c); return k; }));
+    barsH($("outcomes"), [
+      { label: "mirror up ✓", value: bh.mirror_up, c: "ok", d: "booted once, said HELLO, streamed frames" },
+      { label: "no HELLO", value: bh.no_hello, c: "bad", d: "rebooting or hung before the link" },
+      { label: "HELLO, no frames", value: bh.hello_no_frames, c: "mid", d: "linked but nothing drawn in 20 s" },
+    ], { color: (r) => r.c === "ok" ? css("--good") : r.c === "bad" ? css("--critical") : css("--seq-2"), tip: (r) => `${fmt(r.value)} flashes · ${r.d}` });
+    barsH($("appsPerPhone"), ["1", "2", "3-4", "5+"].filter((k) => bh.apps_per_phone[k]).map((k) => ({ label: k === "1" ? "1 app" : `${k} apps`, value: bh.apps_per_phone[k] })),
+      { color: (r, i) => css(["--seq-1", "--seq-2", "--seq-4", "--seq-6"][i] || "--seq-4"), tip: (r) => `${fmt(r.value)} phones` });
+    barsH($("mostFlashed"), bh.most_flashed.map((r) => ({ label: r.app, value: r.phones })), { tip: (r) => `${fmt(r.value)} phones flashed it` });
+    line($("framesLine"), bh.frames_in_20s.map((n, i) => ({ d: `flash ${i + 1}`, v: n })), { name: "frames in 20 s" });
+  }
 
   // so far: real records from before in-app analytics
   const liveRepos = connected && ph.builds ? ph.builds.filter((r) => r.kind === "repo") : [];

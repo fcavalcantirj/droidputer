@@ -137,7 +137,32 @@ async function github() {
       if (x.reporter && !seen.has(x.reporter)) { seen.add(x.reporter); d.new_phones++; }
       days.set(x.date, d);
     }
+    // What phones did after flashing, from the app's AUTOMATIC verdicts: for 20 s after a flash from the phone it
+    // counts boots, whether the ESP said HELLO and how many mirrored frames arrived ("auto: linked, 296 frames in 20 s",
+    // "auto: boots=0 hello=false frames=0"). Real phones, anonymous per-install ids (the developer's own test
+    // installs included).
+    const auto = v.filter((x) => String(x.note || "").startsWith("auto:"));
+    const frames = auto.map((x) => Number((/(\d+) frames/.exec(x.note) || [])[1] || 0));
+    const perPhone = new Map();
+    for (const x of v) if (x.reporter) perPhone.set(x.reporter, (perPhone.get(x.reporter) || new Set()).add(x.name));
+    const bucket = (n) => (n >= 5 ? "5+" : n >= 3 ? "3-4" : String(n));
+    const appsPerPhone = {};
+    for (const s of perPhone.values()) appsPerPhone[bucket(s.size)] = (appsPerPhone[bucket(s.size)] || 0) + 1;
+    const flashedBy = new Map();
+    for (const x of auto) if (x.reporter) flashedBy.set(x.name, (flashedBy.get(x.name) || new Set()).add(x.reporter));
+    const behaviour = {
+      flashes_observed: auto.length,
+      phones_that_flashed: new Set(auto.map((x) => x.reporter).filter(Boolean)).size,
+      mirror_up: auto.filter((x) => /linked/.test(x.note)).length,
+      no_hello: auto.filter((x) => /hello=false/.test(x.note)).length,
+      hello_no_frames: auto.filter((x) => /hello=true/.test(x.note) && !/linked/.test(x.note)).length,
+      frames_in_20s: frames.filter((n) => n > 0).sort((a, b) => a - b),
+      apps_per_phone: appsPerPhone,
+      most_flashed: [...flashedBy.entries()].map(([app, s]) => ({ app, phones: s.size })).sort((a, b) => b.phones - a.phones).slice(0, 10),
+      envs: v.reduce((m, x) => ((m[x.env] = (m[x.env] || 0) + 1), m), {}),
+    };
     let cum = 0;
+    out.behaviour = behaviour;
     out.verdicts = {
       total: v.length,
       reporters: new Set(v.map((x) => x.reporter).filter(Boolean)).size,
