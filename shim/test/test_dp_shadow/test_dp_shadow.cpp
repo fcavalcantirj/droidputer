@@ -81,6 +81,22 @@ static void test_clear_dirty_top_keeps_the_rest_dirty(void) {
   TEST_ASSERT_FALSE(dp::dp_shadow_dirty(&y0, &y1));
 }
 
+// The virtual panel draws into dp_shadow_storage() and then tees the same rows back (teeRect): the storage must be
+// the shadow itself, 4-byte aligned (read as uint16_t on the S3), and a self-copy must keep the pixels and mark rows.
+static void test_storage_is_the_aligned_shadow_and_self_copy_keeps_pixels(void) {
+  uint8_t* fb = dp::dp_shadow_storage();
+  TEST_ASSERT_EQUAL_PTR(dp::dp_shadow_buffer(), fb);
+  TEST_ASSERT_EQUAL_UINT32(0, (uintptr_t)fb % 4);
+  uint8_t* row = fb + ((size_t)7 * dp::DP_SHADOW_W + 10) * 2;
+  for (int i = 0; i < 8; i++) row[i] = (uint8_t)(0xA0 + i);          // the panel's own write
+  dp::dp_shadow_clear_dirty();
+  dp::dp_shadow_set_window(10, 7, 13, 7);
+  dp::dp_shadow_write_bytes(row, 8);                                 // teeRect: src == dst
+  for (int i = 0; i < 8; i++) TEST_ASSERT_EQUAL_UINT8(0xA0 + i, row[i]);
+  uint16_t y0 = 0, y1 = 0;
+  TEST_ASSERT_TRUE(dp::dp_shadow_dirty(&y0, &y1)); TEST_ASSERT_EQUAL_UINT16(7, y0); TEST_ASSERT_EQUAL_UINT16(7, y1);
+}
+
 int main(int, char**) {
   UNITY_BEGIN();
   RUN_TEST(test_window_write_lands_row_major_and_marks_rows_dirty);
@@ -91,5 +107,6 @@ int main(int, char**) {
   RUN_TEST(test_rle_be_matches_rle_on_host_order_pixels);
   RUN_TEST(test_rle_be_returns_zero_when_not_shorter);
   RUN_TEST(test_clear_dirty_top_keeps_the_rest_dirty);
+  RUN_TEST(test_storage_is_the_aligned_shadow_and_self_copy_keeps_pixels);
   return UNITY_END();
 }

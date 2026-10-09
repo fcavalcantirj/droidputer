@@ -59,6 +59,7 @@ INCLUDE_TO_DEP = {
     "RadioLib.h": "jgromes/RadioLib@^7", "LoRa.h": "sandeepmistry/LoRa@^0.8",
     "MFRC522.h": "miguelbalboa/MFRC522@^1.4", "DHT.h": "adafruit/DHT sensor library@^1.4",
     "OneWire.h": "paulstoffregen/OneWire@^2.3", "DallasTemperature.h": "milesburton/DallasTemperature@^4",
+    "LinkedList.h": "ivanseidel/LinkedList@^1.3", "JPEGDecoder.h": "bodmer/JPEGDecoder@^2.0",
     "ArduinoOTA.h": None, "WiFi.h": None, "WiFiClient.h": None, "WiFiClientSecure.h": None, "WiFiUdp.h": None, "WiFiMulti.h": None,
     "HTTPClient.h": None, "WebServer.h": None, "ESPmDNS.h": None, "DNSServer.h": None, "Update.h": None, "HTTPUpdate.h": None,
     "Preferences.h": None, "SPIFFS.h": None, "LittleFS.h": None, "FS.h": None, "SD.h": None, "SD_MMC.h": None, "FFat.h": None,
@@ -69,6 +70,56 @@ INCLUDE_TO_DEP = {
     "M5UnitLCD.h": None, "M5UnitOLED.h": None, "M5AtomDisplay.h": None, "M5ModuleDisplay.h": None, "M5Stack.h": None,
 }
 LOCAL_HEADER_EXTS = (".h", ".hpp", ".hh")
+# Folders that hold OTHER people's sketches: a vendored library's examples/ (M5Apps shipped LovyanGFX and the .ino
+# search picked LovyanGFX's own example, 2026-10-08), ESP-IDF components, build output.
+VENDORED_DIRS = {"components", "managed_components", "lib", "libraries", "examples", ".pio", "test", "tests"}
+# The shim intercepts M5GFX (and so M5Unified/M5Cardputer). An app that draws through TFT_eSPI or Arduino_GFX
+# never reaches it: no mirror until the TFT_eSPI shim (M4). Bruce = TFT_eSPI, M5Stick-Launcher = Arduino_GFX.
+SHIM_GFX_HEADERS = {"M5GFX.h", "M5GFX.hpp", "M5Unified.h", "M5Unified.hpp", "M5Cardputer.h"}
+OTHER_GFX_HEADERS = {"TFT_eSPI.h": "TFT_eSPI", "Arduino_GFX_Library.h": "Arduino_GFX"}
+OTHER_GFX_INI = {"USER_SETUP_LOADED": "TFT_eSPI", "TFT_eSPI": "TFT_eSPI", "TFT_DATABUS_N": "Arduino_GFX", "GFX Library for Arduino": "Arduino_GFX"}
+PREBUILT_HINT = "flash its prebuilt from the LauncherHub tab instead (no phone mirror)"
+
+
+def fail(cls: str, reason: str):
+    """Stop with a classified reason as the JSON line the CI and the proxy read (build-app.yml -> failure.json)."""
+    print(json.dumps({"ok": False, "failed": cls, "reason": reason}))
+    sys.exit(2)
+
+
+def outside_vendored(p: Path, root: Path) -> bool:
+    return not VENDORED_DIRS & set(p.relative_to(root).parts[:-1])
+
+
+def includes_in(root: Path) -> set[str]:
+    """Header basenames #included anywhere under root, vendored folders excluded."""
+    found = set()
+    for f in root.rglob("*"):
+        if f.suffix not in (".ino", ".cpp", ".c", ".h", ".hpp") or not f.is_file() or not outside_vendored(f, root):
+            continue
+        try:
+            text = f.read_text(errors="replace")
+        except OSError:
+            continue
+        found.update(Path(m.group(1)).name for m in re.finditer(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]', text, re.M))
+    return found
+
+
+def foreign_graphics(src: Path, env_text: str) -> str | None:
+    """'TFT_eSPI' / 'Arduino_GFX' when the app draws through a display library the shim cannot see, else None.
+    The chosen env's own config decides first: multi-board firmwares include M5Unified for their M5 boards but
+    drive the Cardputer through TFT_eSPI (Bruce: USER_SETUP_LOADED) or Arduino_GFX (Launcher: TFT_DATABUS_N).
+    Every TFT_eSPI build that "succeeded" through the proxy got an auto-verdict broken (hello=false), both envs."""
+    for key, lib in OTHER_GFX_INI.items():
+        if key in env_text:
+            return lib
+    inc = includes_in(src)
+    if inc & SHIM_GFX_HEADERS:
+        return None
+    for hdr, lib in OTHER_GFX_HEADERS.items():
+        if hdr in inc:
+            return lib
+    return None
 
 
 def infer_ino_deps(sketch_dir: Path, repo: Path) -> tuple[list[str], list[str]]:
@@ -136,7 +187,9 @@ extends = env:m5cardputer
 board = esp32-s3-devkitc-1
 board_build.psram = true
 board_build.arduino.memory_type = qio_opi
+; The devkitc-1 variant has no M5 G<n> pin names; dp_m5pins.h restores the StampS3 variant's set (miniacid: 'G2').
 build_flags = ${{env:m5cardputer.build_flags}} -DDROIDPUTTER_VIRTUAL=1 -UM5GFX_BOARD -DM5GFX_BOARD=26
+    -include ${{PROJECT_DIR}}/../../shim/lib/DroidputterShim/src/dp_m5pins.h
 """
 
 
@@ -160,7 +213,10 @@ def clone(slug: str, name: str, ref: str | None) -> Path:
             subprocess.run(cmd, cwd=dst, check=True)
     else:
         cmd = ["git", "clone", "-q", "--depth", "1"] + (["--branch", ref] if ref else []) + [url, str(dst)]
-        subprocess.run(cmd, check=True)
+        if subprocess.run(cmd).returncode != 0:
+            fail("clone-failed", f"git clone {slug} failed (private, renamed or missing repo/ref)")
+    if (dst / ".gitmodules").exists():   # best effort: a private submodule must not sink a public build
+        subprocess.run(["git", "submodule", "update", "-q", "--init", "--recursive", "--depth", "1"], cwd=dst)
     return dst
 
 
@@ -175,6 +231,8 @@ def read_ini(path: Path) -> configparser.ConfigParser | None:
     cp = configparser.ConfigParser(allow_no_value=True, strict=False, interpolation=None, delimiters=("=",))
     cp.optionxform = str
     cp.read(path)
+    for pat in multiline(cp.get("platformio", "extra_configs", fallback="")):
+        cp.read(sorted(str(p) for p in path.parent.glob(pat)))
     return cp
 
 
@@ -207,16 +265,58 @@ def anchor_flag(flag: str, src: Path, app: Path) -> str:
     return flag
 
 
-def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict:
-    src = clone(slug, name, ref)
-    app = APPS / name
+def library_example(src: Path, name: str) -> Path | None:
+    """The sketch to build from a LIBRARY repo (m5stack/M5Cardputer): the example a committed overlay of the same
+    name already uses (m5-example = examples/Basic/keyboard/inputText), else the first Basic example, else the
+    first one. Was rglob order: the runner's filesystem picked Basic/buzzer (built) one day and
+    Advanced/SSHClient (libssh_esp32.h missing, 12 failed builds) the next."""
+    exs = sorted(src.glob("examples/**/*.ino"))
+    if not exs:
+        return None
+    ov = APPS / name / "platformio.ini"
+    m = re.search(r"^src_dir\s*=\s*\S*?examples/(\S+)", ov.read_text(), re.M) if ov.exists() else None
+    if m:
+        hit = [e for e in exs if e.parent == src / "examples" / m.group(1)]
+        if hit:
+            return hit[0]
+    return ([e for e in exs if "/Basic/" in e.as_posix()] or exs)[0]
+
+
+def preflight(slug: str, name: str, src: Path, env_src: str | None):
+    """Decide BEFORE PlatformIO runs whether the repo can be a shim build at all, and fail() with a class when
+    not -- 75 of the 174 failed proxy builds (2026-09-04..10-08) were repos that could never build, retried
+    blind. Returns (ini, env name) for a PlatformIO repo, (None, sketch path) for an Arduino-IDE one."""
     cp = read_ini(src / "platformio.ini")
-    info = {"name": name, "repo": slug, "src": str(src), "upstream_commit": upstream_commit(src)}
-    lib_deps, flags, extra_board, src_dir, extra_lib_dirs, src_filter, ldf_mode = [], [], [], None, [], "", "deep+"
     if cp:
         env = pick_env(cp, env_src)
         if not env:
-            sys.exit(f"{slug}: no [env:*] in its platformio.ini")
+            fail("no-cardputer-env", f"{slug}: its platformio.ini has no [env:*] to build")
+        lib = foreign_graphics(src, "\n".join(f"{k}={v}" for k, v in cp.items(env)))
+        if lib:
+            fail("unsupported-graphics", f"{slug} draws with {lib}, which the shim cannot mirror yet; {PREBUILT_HINT}")
+        return cp, env
+    if (src / "library.properties").exists() or (src / "library.json").exists():
+        example = library_example(src, name)
+        if not example:
+            fail("library-repo", f"{slug} is a library with no example sketch to build")
+        return None, example
+    inos = sorted((p for p in src.rglob("*.ino") if outside_vendored(p, src)), key=lambda p: len(p.parts))
+    if not inos:
+        fail("not-arduino", f"{slug} has neither a platformio.ini nor an Arduino sketch (ESP-IDF or MicroPython?); {PREBUILT_HINT}")
+    lib = foreign_graphics(src, "")
+    if lib:
+        fail("unsupported-graphics", f"{slug} draws with {lib}, which the shim cannot mirror yet; {PREBUILT_HINT}")
+    return None, inos[0]
+
+
+def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict:
+    src = clone(slug, name, ref)
+    app = APPS / name
+    cp, target = preflight(slug, name, src, env_src)
+    info = {"name": name, "repo": slug, "src": str(src), "upstream_commit": upstream_commit(src)}
+    lib_deps, flags, extra_board, src_dir, extra_lib_dirs, src_filter, ldf_mode = [], [], [], None, [], "", "deep+"
+    if cp:
+        env = target
         info["env_src"] = env
         src_dir = cp.get("platformio", "src_dir", fallback="src")
         for dep in multiline(cp.get(env, "lib_deps", fallback="")):
@@ -235,12 +335,9 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
                 paths = [anchored(src / p, app) if not p.startswith("/") and (src / p).exists() else p for p in multiline(v)]
                 extra_board.append(f"{key} = {paths[0]}" if len(paths) == 1 else f"{key} =\n" + "\n".join(f"    {p}" for p in paths))
     else:  # Arduino-IDE repo: the sketch dir is the source dir (PlatformIO compiles .ino)
-        inos = sorted(src.rglob("*.ino"), key=lambda p: len(p.parts))
-        if not inos:
-            sys.exit(f"{slug}: neither platformio.ini nor a .ino found")
-        src_dir = str(inos[0].parent.relative_to(src))
+        src_dir = str(target.parent.relative_to(src))
         info["env_src"] = "(ino)"
-        lib_deps, unknown = infer_ino_deps(inos[0].parent, src)
+        lib_deps, unknown = infer_ino_deps(target.parent, src)
         info["inferred_deps"] = lib_deps
         if unknown:
             info["unresolved_includes"] = unknown
@@ -254,7 +351,7 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
         ldf_mode = "deep"
     src_dir_abs = src / src_dir
     if not src_dir_abs.exists():
-        sys.exit(f"{slug}: src_dir {src_dir_abs} missing")
+        fail("src-dir-missing", f"{slug}: src_dir {src_dir} does not exist in the repo")
     if cp:
         # PlatformIO repos declare lib_deps, but not always all of them: Ultimate-Remote #includes <IRremote.hpp>
         # with no IRremote in its ini (Arduino-IDE users have it installed globally -- and so did this Mac's
@@ -303,6 +400,28 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
     return info
 
 
+def classify_build(out: str) -> tuple[str, str]:
+    """(class, one-line reason) of a failed `pio run`, for the phone's status line and the proxy's failure cache.
+    Same rules as the 2026-10-09 dissection of the 174 failed proxy builds."""
+    m = re.search(r"region `dram0_0_seg' overflowed by (\d+) bytes", out)
+    if m:
+        return "dram-overflow", f"the app plus the shim need {m.group(1)} bytes more static RAM than the ESP32-S3 has"
+    m = re.search(r"program size \((\d+) bytes\) is greater than maximum allowed \((\d+) bytes\)", out)
+    if m:
+        return "flash-too-big", f"the firmware is {m.group(1)} bytes; the app partition holds {m.group(2)}"
+    m = re.search(r"fatal error: (\S+): No such file", out)
+    if m:
+        return "missing-header", f"needs {m.group(1)}, which no known library provides"
+    m = re.search(r"undefined reference to `([^']+)'", out)
+    if m:
+        return "link-error", f"link failed: undefined reference to {m.group(1)[:80]}"
+    m = re.search(r"\berror: (.+)", out)
+    if m:
+        return "compile-error", m.group(1).strip()[:160]
+    tail = [ln for ln in out.splitlines() if ln.strip()][-1:] or ["(no output)"]
+    return "build-error", tail[0][:160]
+
+
 def build(app: Path, upload: bool, env: str = "m5cardputer") -> dict:
     """`pio run -e <env>` in the overlay dir; the parts land in apps/<name>/.pio/build/<env> (reported as build_dir)."""
     cmd = [str(PIO), "run", "-e", env] + (["-t", "upload"] if upload else [])
@@ -320,6 +439,7 @@ def build(app: Path, upload: bool, env: str = "m5cardputer") -> dict:
     if not res["ok"]:
         errs = [ln for ln in out.splitlines() if re.search(r"\berror\b:|fatal error|undefined reference|No such file|\*\*\* \[", ln)]
         res["error"] = errs[:8] if errs else out.splitlines()[-30:]
+        res["failed"], res["reason"] = classify_build(out)
     if upload:
         res["uploaded"] = "Hard resetting" in out or "SUCCESS" in out
     return res
@@ -349,6 +469,21 @@ def main() -> int:
             for d in (REPO_ROOT / info["app"] / ".pio" / "libdeps").glob("*/NimBLE-Arduino*"):
                 subprocess.run(["rm", "-rf", str(d)])
             info["nimble_retry"] = alt
+            info.pop("failed", None); info.pop("reason", None)
+            info.update(build(REPO_ROOT / info["app"], a.upload, a.env))
+        # Over the 3,342,336 B OTA slot of default_8MB.csv (Ultimate-Remote, 2026-09-19..30): one factory slot of
+        # 0x7E0000 (max_app_8MB.csv, in the pinned framework). The phone flashes partitions.bin with the app.
+        if not info["ok"] and info.get("failed") == "flash-too-big":
+            ini = REPO_ROOT / info["app"] / "platformio.ini"
+            text = ini.read_text()
+            line = "board_build.partitions = max_app_8MB.csv"
+            if re.search(r"^board_build\.partitions\s*=.*$", text, re.M):
+                text = re.sub(r"^board_build\.partitions\s*=.*$", line, text, count=1, flags=re.M)
+            else:
+                text = text.replace("board_build.psram = false\n", f"board_build.psram = false\n{line}\n", 1)
+            ini.write_text(text)
+            info["partition_retry"] = "max_app_8MB.csv"
+            info.pop("failed", None); info.pop("reason", None)
             info.update(build(REPO_ROOT / info["app"], a.upload, a.env))
     print(json.dumps(info))
     return 0 if info.get("ok", True) else 1

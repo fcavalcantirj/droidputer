@@ -8,7 +8,7 @@
 // never match again (no back-compat).
 
 import { randomUUID } from "node:crypto";
-import { DEFAULT_ENV, buildSummary, loadArtifact, partsOf } from "./artifact.js";
+import { DEFAULT_ENV, DETERMINISTIC_FAILURES, buildSummary, loadArtifact, loadFailure, partsOf } from "./artifact.js";
 
 export const IN_FLIGHT_LIMIT = 6;
 export const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -108,6 +108,21 @@ export async function createBuild(gh, input, { now = Date.now, uuid = randomUUID
     return { status: 202, body: { request_id: requestIdOf(titleOf(running)), ...echo, cached: false, run_id: String(running.id) } };
   }
 
+  // The same build failed in the last 24 h for a reason a rebuild cannot change (2026-09-04..10-08: M5PORKCHOP
+  // overflowed DRAM 30 times, Bruce hit "no env" 26 times, each a fresh runner): answer with that run.
+  const failed = same.find(
+    (r) => r.status === "completed" && r.conclusion === "failure" && now() - Date.parse(r.created_at) < CACHE_MAX_AGE_MS,
+  );
+  if (failed) {
+    const why = await loadFailure(gh, String(failed.id));
+    if (why && DETERMINISTIC_FAILURES.has(why.class)) {
+      return {
+        status: 200,
+        body: { request_id: requestIdOf(titleOf(failed)), ...echo, cached: true, run_id: String(failed.id), failure_class: why.class, reason: why.reason },
+      };
+    }
+  }
+
   if (countInFlight(runs) >= IN_FLIGHT_LIMIT) {
     return { status: 429, body: { error: "too many builds in flight", retry_after_s: 60 } };
   }
@@ -172,6 +187,10 @@ export async function buildStatus(gh, requestId, { baseUrl }) {
   const run = await findRunByRequestId(gh, requestId);
   if (!run) return { status: 200, body: { request_id: requestId, status: "queued" } };
   const desc = describeRun(run);
+  if (desc.status === "failed") {
+    const why = await loadFailure(gh, desc.run_id);
+    return { status: 200, body: { ...desc, request_id: requestId, ...(why ? { failure_class: why.class, reason: why.reason } : {}) } };
+  }
   if (desc.status !== "ready") return { status: 200, body: { ...desc, request_id: requestId } };
   const parsed = await loadArtifact(gh, desc.run_id, { name: nameOf(titleOf(run)), env: desc.env });
   return {

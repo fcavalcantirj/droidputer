@@ -25,6 +25,10 @@ void dp_shadow_mark_all_dirty();
 void dp_shadow_clear_dirty();
 void dp_shadow_clear_dirty_top(uint16_t rows);                    // the first `rows` of the dirty band were flushed; the rest stays dirty
 const uint8_t* dp_shadow_buffer();                                 // W*H*2 bytes, row-major, wire order
+// The same bytes, writable and 4-byte aligned: the virtual panel (dp_panel.cpp) draws straight into it, so the
+// bare-S3 build carries ONE 64,800 B frame instead of a panel framebuffer plus an identical shadow copy
+// (2026-10-09: that second copy overflowed dram0_0_seg for M5PORKCHOP, Pigtail and saturn by 21-35 KB).
+uint8_t* dp_shadow_storage();
 uint32_t dp_shadow_cursor();                                       // test hook: pixel index inside the window
 
 }  // namespace dp

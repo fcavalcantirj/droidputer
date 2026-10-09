@@ -1,6 +1,7 @@
 // POST /api/build {repo, ref?, name?, env?} -> 200 cached | 202 dispatched | 429 too many in flight
 //   env: m5cardputer (Cardputer ADV, default) | m5cardputer-virtual (bare ESP32-S3, phone-only); part of the
-//   build's identity (cache hit / in-flight join) and echoed in the body.
+//   build's identity (cache hit / in-flight join) and echoed in the body. A deterministic failure of the same build in
+//   the last 24 h is also a 200 cached, carrying failure_class + reason (build-app.yml failure.json), no new runner.
 // GET  /api/build                          -> the newest page of build runs, described (each with its env)
 
 import { createBuild, listBuilds } from "../lib/builds.js";

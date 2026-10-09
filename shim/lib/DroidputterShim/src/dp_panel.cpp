@@ -2,6 +2,7 @@
 #ifdef ARDUINO
 #ifdef DROIDPUTTER_VIRTUAL
 #include "droidputter.h"
+#include "dp_shadow.h"
 
 #ifndef DROIDPUTTER_W
 #define DROIDPUTTER_W 240
@@ -13,10 +14,10 @@
 namespace lgfx {
 inline namespace v1 {
 
+// The framebuffer IS the tee's shadow (dp_shadow_storage(): 240x135 RGB565 = 64,800 B, wire byte order, 4-byte
+// aligned): one frame in DRAM, not two (2026-10-09). _lines_buffer (Panel_FrameBufferBase) indexes it per line.
+static_assert(DROIDPUTTER_W == dp::DP_SHADOW_W && DROIDPUTTER_H == dp::DP_SHADOW_H, "virtual panel must match the shadow");
 namespace {
-// Shadow framebuffer: 240x135 RGB565 = 64,800 B, static (no per-write alloc).
-// _lines_buffer (Panel_FrameBufferBase) indexes it one row pointer per line.
-uint16_t s_framebuffer[DROIDPUTTER_W * DROIDPUTTER_H];
 uint8_t* s_lines[DROIDPUTTER_H];
 }  // namespace
 
@@ -28,7 +29,8 @@ Panel_Droidputter::Panel_Droidputter(void) {
 }
 
 bool Panel_Droidputter::init(bool use_reset) {
-  auto base = reinterpret_cast<uint8_t*>(s_framebuffer);
+  dp::dp_shadow_reset();   // black, clean; before the first draw (dp_display.cpp never resets in this build)
+  uint8_t* base = dp::dp_shadow_storage();
   for (uint16_t y = 0; y < DROIDPUTTER_H; y++) s_lines[y] = base + (size_t)y * DROIDPUTTER_W * 2;
   _lines_buffer = s_lines;
   bool ok = Panel_FrameBufferBase::init(use_reset);

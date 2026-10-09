@@ -1,5 +1,5 @@
 // Virtual panel: no bus, no physical display. Every write feeds the tee
-// (dp_display) and a static RGB565 shadow framebuffer, so a bare ESP32-S3
+// (dp_display), drawing straight into the tee's RGB565 shadow, so a bare ESP32-S3
 // with no TFT of its own can still run an M5GFX/M5Unified app -- the phone
 // is the only screen. Selected by the patched M5GFX::init_impl() (see
 // shim/patches/M5GFX-0.2.27-droidputter.patch) when built with

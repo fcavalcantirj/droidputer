@@ -23,7 +23,13 @@ static const uint16_t MAXW = DP_SHADOW_W;
 static uint8_t stage[32768];             // RLE staging for one flush
 static uint8_t convbuf[MAXW * 2];        // pixelsConv chunk (one row of converted pixels)
 static uint32_t last_flush_ms = 0;
+#ifdef DROIDPUTTER_VIRTUAL
+// The virtual panel draws straight into the shadow and resets it in Panel_Droidputter::init() (dp_panel.cpp). A reset
+// here, on the first tee call, would wipe what the panel already drew: writeImage/copyRect tee AFTER their write.
+static bool shadow_ready = true;
+#else
 static bool shadow_ready = false;
+#endif
 
 static void ensureShadow() { if (!shadow_ready) { dp_shadow_reset(); shadow_ready = true; } }
 

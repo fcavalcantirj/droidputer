@@ -3,7 +3,7 @@
 
 namespace dp {
 
-static uint8_t fb[(size_t)DP_SHADOW_W * DP_SHADOW_H * 2];
+alignas(4) static uint8_t fb[(size_t)DP_SHADOW_W * DP_SHADOW_H * 2];   // aligned: the virtual panel reads/writes it as uint16_t
 static uint16_t wx0, wy0, ww, wh;      // window
 static uint32_t wcur, wpix;            // cursor (pixels from the window start), window pixel count
 static int32_t dy0 = -1, dy1 = -1;     // dirty rows, inclusive; -1 = clean
@@ -31,7 +31,7 @@ static void walk(size_t npix, const uint8_t* src, uint8_t c0, uint8_t c1) {
     uint32_t row = wcur / ww, col = wcur % ww;
     uint32_t left = ww - col; if (left > npix) left = (uint32_t)npix;
     uint8_t* dst = fb + (((size_t)(wy0 + row) * DP_SHADOW_W + wx0 + col) * 2);
-    if (src) { memcpy(dst, src, left * 2); src += left * 2; }
+    if (src) { if (dst != src) memcpy(dst, src, left * 2); src += left * 2; }   // dst == src: the virtual panel's own rows
     else { for (uint32_t i = 0; i < left; i++) { dst[i * 2] = c0; dst[i * 2 + 1] = c1; } }
     dirtyRows(wy0 + row, wy0 + row);
     wcur += left; npix -= left;
@@ -69,6 +69,7 @@ void dp_shadow_clear_dirty_top(uint16_t rows) {
   if (dy0 > dy1) dy0 = dy1 = -1;
 }
 const uint8_t* dp_shadow_buffer() { return fb; }
+uint8_t* dp_shadow_storage() { return fb; }
 uint32_t dp_shadow_cursor() { return wcur; }
 
 }  // namespace dp

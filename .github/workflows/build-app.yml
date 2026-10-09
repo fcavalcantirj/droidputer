@@ -128,6 +128,36 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+      # Why it failed, machine-readable, for the proxy's status call and the phone's status line: the overlay's last
+      # JSON line carries {failed: <class>, reason} (tools/overlay.py fail() / classify_build()); anything that died
+      # before that line is "infra". Named <name>-<env>-failure: the proxy never selects it as the flashable one.
+      - name: Failure reason (failure.json)
+        if: failure()
+        run: |
+          mkdir -p failure
+          python3 - <<'PY'
+          import json, pathlib
+          rec = {"class": "infra", "reason": "the build stopped before the overlay finished (runner, network or input problem)"}
+          out = pathlib.Path("overlay.out")
+          for line in reversed(out.read_text(errors="replace").splitlines() if out.exists() else []):
+              try:
+                  j = json.loads(line)
+              except ValueError:
+                  continue
+              if isinstance(j, dict) and j.get("failed"):
+                  rec = {"class": j["failed"], "reason": j.get("reason", "")}
+              break
+          pathlib.Path("failure/failure.json").write_text(json.dumps(rec))
+          print(json.dumps(rec))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: ${{ inputs.name }}-${{ inputs.env }}-failure
+          path: failure/
+          retention-days: 7
+
       - name: Build log tail (on failure)
         if: failure()
         run: |

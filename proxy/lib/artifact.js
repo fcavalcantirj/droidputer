@@ -19,6 +19,17 @@ export const PART_FILES = Object.freeze(Object.keys(PART_OFFSETS));
 export const BUILD_ENVS = Object.freeze(["m5cardputer", "m5cardputer-virtual"]);
 export const DEFAULT_ENV = BUILD_ENVS[0];
 const ELF_SUFFIX = "-elf";
+/** build-app.yml uploads <name>-<env>-failure (failure.json: {class, reason}) when a run fails; never flashable. */
+export const FAILURE_SUFFIX = "-failure";
+/**
+ * Failure classes that a rebuild of the same repo/env/shim cannot change (tools/overlay.py fail() and
+ * classify_build()): the proxy answers them from the last failed run instead of burning another runner.
+ * Not here: infra, clone-failed, build-error (network, runner, registry hiccups are worth a retry).
+ */
+export const DETERMINISTIC_FAILURES = Object.freeze(new Set([
+  "unsupported-graphics", "not-arduino", "library-repo", "no-cardputer-env", "src-dir-missing",
+  "dram-overflow", "flash-too-big", "missing-header", "link-error", "compile-error",
+]));
 const CACHE_MAX = 8;
 
 export class ArtifactError extends Error {
@@ -145,7 +156,7 @@ export function buildSummary(parsed) {
  */
 export function selectArtifact(artifacts, { name, env } = {}) {
   const envs = env ? [env] : BUILD_ENVS;
-  const named = (a) => typeof a.name === "string" && !a.name.endsWith(ELF_SUFFIX);
+  const named = (a) => typeof a.name === "string" && !a.name.endsWith(ELF_SUFFIX) && !a.name.endsWith(FAILURE_SUFFIX);
   if (name) return artifacts.find((a) => named(a) && envs.some((e) => a.name === `${name}-${e}`));
   return artifacts.find((a) => named(a) && envs.some((e) => a.name.endsWith(`-${e}`)));
 }
@@ -185,4 +196,38 @@ export async function loadArtifact(gh, runId, sel = {}) {
   if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
   cache.set(key, parsed);
   return parsed;
+}
+
+/** @type {Map<string, {class: string, reason: string} | null>} keyed by `${repo}#${runId}`; a finished run's failure never changes */
+const failureCache = new Map();
+
+export function _resetFailureCache() {
+  failureCache.clear();
+}
+
+/**
+ * Why a failed run failed: its `<name>-<env>-failure` artifact's failure.json, or null (runs from before
+ * 2026-10-09, expired artifacts, any download problem -- a missing reason must never break a status call).
+ * @param {import("./github.js").GitHub} gh
+ * @param {string} runId
+ * @returns {Promise<{class: string, reason: string} | null>}
+ */
+export async function loadFailure(gh, runId) {
+  const key = `${gh.repo}#${runId}`;
+  if (failureCache.has(key)) return failureCache.get(key) ?? null;
+  let rec = null;
+  try {
+    const artifacts = await gh.listArtifacts(runId);
+    const match = artifacts.find((a) => typeof a.name === "string" && a.name.endsWith(FAILURE_SUFFIX) && !a.expired);
+    if (match) {
+      const file = parseArtifactZip(await gh.downloadArtifactZip(match.id)).files.get("failure.json");
+      const j = file ? JSON.parse(strFromU8(file)) : null;
+      if (j && typeof j.class === "string") rec = { class: j.class, reason: typeof j.reason === "string" ? j.reason : "" };
+    }
+  } catch {
+    return null;   // not cached: the next poll tries again
+  }
+  if (failureCache.size >= CACHE_MAX * 8) failureCache.delete(failureCache.keys().next().value);
+  failureCache.set(key, rec);
+  return rec;
 }
