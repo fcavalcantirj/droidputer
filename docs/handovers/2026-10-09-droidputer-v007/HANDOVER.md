@@ -31,7 +31,7 @@ Repo `/Users/fcavalcanti/dev/droidputter` (local folder keeps the old name on pu
 Git state at handover:
 - [REAL] `origin/main` = `fa4a4d7` (site replay card) plus the one commit that adds this handover file.
   Everything up to `fa4a4d7` is merged and deployed.
-- [REAL] Current branch `fix/compat-retry` = `34e894a` (one commit on top of main: compat-retry in
+- [REAL] Current branch `fix/compat-retry` (one commit on top of main, rebased onto the handover commit: compat-retry in
   `tools/overlay.py` + new `shim/lib/DroidputterShim/src/dp_compat_core.h`), pushed.
 - [REAL] UNCOMMITTED on that branch: `site/api/stats.js`, `site/index.html` (new "How people used it so far"
   section + verdict timeline + traffic) and untracked `site/data/traffic.json` (GitHub traffic snapshot taken
