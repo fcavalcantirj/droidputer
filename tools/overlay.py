@@ -236,6 +236,32 @@ def read_ini(path: Path) -> configparser.ConfigParser | None:
     return cp
 
 
+def pio_get(cp: configparser.ConfigParser, section: str, option: str, depth: int = 0) -> str | None:
+    """An option as PlatformIO reads it: the section's own value, else its `extends` chain, else [env] (for env:*),
+    with ${section.option} / ${this.option} / ${sysenv.X} references expanded. Copying the raw text broke
+    MeshCore (2026-10-09): `${m5stack_cardputer_cap_lora868_base.build_flags}` landed in an ini without that
+    section -> InvalidProjectConfError. Unresolvable references expand to nothing."""
+    if depth > 10:
+        return None
+    raw = cp.get(section, option, fallback=None) if cp.has_section(section) else None
+    if raw is None and cp.has_section(section):
+        for parent in (s.strip() for s in cp.get(section, "extends", fallback="").split(",") if s.strip()):
+            raw = pio_get(cp, parent if cp.has_section(parent) else f"env:{parent}", option, depth + 1)
+            if raw is not None:
+                break
+    if raw is None and section.startswith("env:") and cp.has_section("env"):
+        raw = pio_get(cp, "env", option, depth + 1)
+    if raw is None:
+        return None
+
+    def expand(m: re.Match) -> str:
+        sect, opt = m.group(1), m.group(2)
+        if sect == "sysenv":
+            return os.environ.get(opt, "")
+        return pio_get(cp, section if sect == "this" else sect, opt, depth + 1) or ""
+    return re.sub(r"\$\{([\w:.-]+?)\.([\w.-]+)\}", expand, raw)
+
+
 def pick_env(cp: configparser.ConfigParser, wanted: str | None) -> str | None:
     envs = [s for s in cp.sections() if s.startswith("env:")]
     if wanted:
@@ -291,7 +317,8 @@ def preflight(slug: str, name: str, src: Path, env_src: str | None):
         env = pick_env(cp, env_src)
         if not env:
             fail("no-cardputer-env", f"{slug}: its platformio.ini has no [env:*] to build")
-        lib = foreign_graphics(src, "\n".join(f"{k}={v}" for k, v in cp.items(env)))
+        keys = set(cp.options(env)) | {"build_flags", "lib_deps"}
+        lib = foreign_graphics(src, "\n".join(f"{k}={pio_get(cp, env, k) or ''}" for k in sorted(keys)))
         if lib:
             fail("unsupported-graphics", f"{slug} draws with {lib}, which the shim cannot mirror yet; {PREBUILT_HINT}")
         return cp, env
@@ -319,16 +346,16 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
         env = target
         info["env_src"] = env
         src_dir = cp.get("platformio", "src_dir", fallback="src")
-        for dep in multiline(cp.get(env, "lib_deps", fallback="")):
+        for dep in multiline(pio_get(cp, env, "lib_deps") or ""):
             if not SHIM_LIBS.search(dep):
                 lib_deps.append(dep)
-        for f in multiline(cp.get(env, "build_flags", fallback="")):
+        for f in multiline(pio_get(cp, env, "build_flags") or ""):
             f = re.sub(r"\s*;.*$", "", f)  # trailing ini comments
             if not f or STD_FLAG.match(f) and f in ("-std=gnu++11", "-std=gnu++14", "-std=c++11", "-std=c++14"):
                 continue
             flags.append(anchor_flag(f, src, app))
         for key in ("board_build.partitions", "board_build.embed_files", "board_build.embed_txtfiles"):
-            v = cp.get(env, key, fallback=None)
+            v = pio_get(cp, env, key)
             if v:
                 # built-in partition names (default_8MB.csv, ...) resolve inside the framework; only
                 # repo-relative files get anchored on ${PROJECT_DIR}
