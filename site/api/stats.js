@@ -15,8 +15,10 @@ const TIMEOUT_MS = 25000;
 const BUILD_REQUEST_EVENTS = "('build_dispatched','build_cache_hit','build_joined','build_failed_cached')";
 // A phone = one app install = PostHog's per-install distinct_id on events the Android SDK sent (the proxy and manual
 // checks carry no $lib). Emulators are left out: they cannot host the USB link, and they were our own test runs.
-// "All time" = since analytics went live; an unbounded scan hits PostHog's execution limit even on tiny data.
-const SINCE = "timestamp > toDateTime('2026-10-09 00:00:00')";
+// Live = since v0.0.7 shipped (2026-10-09 19:00 UTC). Everything earlier in the project was the author's own
+// emulator runs and proxy tests, and the page's history cards already cover the time before. Also bounds every
+// scan: an unbounded one hits PostHog's execution limit even on tiny data.
+const SINCE = "timestamp > toDateTime('2026-10-09 19:00:00')";
 const APP = "(properties.$lib = 'posthog-android' AND NOT (coalesce(properties.$device_model, '') LIKE 'sdk_gphone%'))";
 
 // Every query is aggregate-only; `device` is the anonymous per-install id (opt-in), never returned.
@@ -28,12 +30,12 @@ export const QUERIES = {
       countIf(event = 'flash_finished' AND properties.result = 'ok' AND ${APP}) AS flashes,
       countIf(event = 'link_up' AND ${APP}) AS links,
       round(sumIf(toFloat(properties.seconds), event = 'mirror_session' AND ${APP}) / 60, 1) AS mirror_minutes
-    FROM events WHERE timestamp > now() - INTERVAL 30 DAY
+    FROM events WHERE timestamp > now() - INTERVAL 30 DAY AND ${SINCE}
     GROUP BY day ORDER BY day`,
   funnel: `
     SELECT event, uniq(distinct_id) AS devices, count() AS events
     FROM events
-    WHERE timestamp > now() - INTERVAL 30 DAY AND ${APP}
+    WHERE timestamp > now() - INTERVAL 30 DAY AND ${SINCE} AND ${APP}
       AND event IN ('Application Opened','catalog_open','build_requested','usb_attached','flash_finished','link_up','verdict_sent')
     GROUP BY event`,
   apps: `
@@ -43,7 +45,7 @@ export const QUERIES = {
       countIf(event = 'link_up') AS links,
       round(sumIf(toFloat(properties.seconds), event = 'mirror_session') / 60, 1) AS mirror_minutes
     FROM events
-    WHERE timestamp > now() - INTERVAL 30 DAY AND event IN ('flash_finished','link_up','mirror_session') AND notEmpty(coalesce(properties.app, '')) AND ${APP}
+    WHERE timestamp > now() - INTERVAL 30 DAY AND ${SINCE} AND event IN ('flash_finished','link_up','mirror_session') AND notEmpty(coalesce(properties.app, '')) AND ${APP}
     GROUP BY app ORDER BY devices DESC, links DESC LIMIT 15`,
   builds: `
     SELECT 'result' AS kind, concat(toString(properties.result), '|', coalesce(toString(properties.failure_class), '')) AS k, uniq(properties.run_id) AS n
@@ -53,7 +55,7 @@ export const QUERIES = {
     FROM events WHERE event IN ${BUILD_REQUEST_EVENTS} AND ${SINCE} GROUP BY k ORDER BY n DESC LIMIT 40`,
   health: `
     SELECT event, coalesce(toString(properties.app), '') AS app, count() AS n
-    FROM events WHERE timestamp > now() - INTERVAL 30 DAY AND event IN ('$exception', 'esp_panic') AND ${APP}
+    FROM events WHERE timestamp > now() - INTERVAL 30 DAY AND ${SINCE} AND event IN ('$exception', 'esp_panic') AND ${APP}
     GROUP BY event, app ORDER BY n DESC LIMIT 20`,
   totals: `
     SELECT uniqIf(distinct_id, ${APP}) AS devices_all_time,
