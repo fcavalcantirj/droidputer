@@ -122,6 +122,24 @@ Git state at handover:
   (https://droidputter-proxy.vercel.app — the domain is hardcoded in every shipped APK).
 - [REAL] Live page today: 0 phones — no released app sends analytics (v0.0.6 predates them). Only v0.0.7 fixes that.
 
+### Hardware session (DONE by the author, 2026-10-09 ~14:50-15:10, Felipe's StickS3 on the Mac)
+- [REAL] Device: ESP32-S3-PICO-1 rev v0.2, MAC ac:27:6e:d2:68:b8, 8 MB flash, 8 MB PSRAM, port /dev/cu.usbmodem101,
+  the only Espressif device attached (0x303a:0x1001).
+- [REAL] Backup: two full 8 MB reads, both sha256 `217dd6f68699da3896a55c440766cc61db93270058255b5cb7590237851f9107`;
+  kept at `~/.config/droidputter/backups/sticks3-ac276ed268b8-2026-10-09.bin` (original: Arduino 2.0.17 app in app0,
+  default_8MB layout; prints `SPIKE dock bat_mv=...` on boot).
+- [REAL] Runs on hardware with `tools/dp_receiver.py` as the phone, 60 s each, no reboot, no panic, 0 dropped
+  (screens in `evidence/`): M5PORKCHOP-virtual (1,383 frames, 8.6 MB, ~290 KB/s, heap 65.6 -> 36.9 KB, ASCII-pig
+  screen), miniacid-virtual (746 frames, 7.3 MB, heap ~204 KB, 303A synth screen), saturn-virtual (67 frames,
+  heap ~44 KB, menu screen).
+- [REAL] Restore: `write_flash 0x0 <backup>` (esptool hash verified) + full read-back sha256 identical to the
+  backup; the StickS3 boots its own firmware again (`SPIKE dock ...`, no droidputter frames).
+- [REAL] Traps seen: esptool cannot connect while a shim app streams ~290 KB/s on the same CDC port
+  (`Invalid head of packet (0xE5)`) -- flash again once a lighter app runs, or use `--connect-attempts 10`;
+  `dp_receiver.py` (Python) reports CRC "bad" frames at >~120 KB/s while the ESP's own STATS show 0 dropped --
+  a host-receiver limit, not firmware.
+- Not exercised: crash B's IOException path (the transport is the Android app's, not the Mac receiver's).
+
 ### Rename
 - [REAL] Repo renamed `droidputter` -> `droidputer`: old raw URLs serve 200, API GET 301, POST 307 (Node fetch
   follows); end-to-end proxy build on the renamed repo finished `ready`, 4 parts. GitHub Pages does NOT redirect:
@@ -216,7 +234,8 @@ Emulator for app tests: AVD `dp-test` (API 35 arm64, `~/.android/avd/dp-test.avd
 9. Gates before the tag: shim `pio test -e native`, `android/gates.sh`, `:core:test`, `:app:assembleDebug`,
    `:app:assembleRelease`, proxy `npm test`, the new asset gate — all green; then tag `v0.0.7` and confirm the
    release workflow published `droidputer-v0.0.7.apk/.aab`.
-10. StickS3 session follows Blocking constraint 2 step by step (identify, double backup, test PORKCHOP/miniacid/
+10. [ALREADY DONE by the author 2026-10-09, see "Hardware session" -- builder: do NOT repeat unless the shim changes]
+    StickS3 session follows Blocking constraint 2 step by step (identify, double backup, test PORKCHOP/miniacid/
     saturn virtual builds with `tools/dp_receiver.py` as the phone stand-in for 60 s each, restore, read-back
     sha256 equal), and reports boots / HELLO / frames / a PNG per app; it also exercises crash B's USB open path.
 11. `progress.txt` gets one appended entry with [REAL]/[TEST]/[UNVERIFIED] labels; Solvr room `droidputter`
