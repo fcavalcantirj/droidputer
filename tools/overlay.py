@@ -602,6 +602,14 @@ def main() -> int:
             info["cxx14_retry"] = True
             info.pop("failed", None); info.pop("reason", None)
             info.update(build(REPO_ROOT / info["app"], a.upload, a.env))
+        # Symbols the 3.x core / the Arduino IDE make visible without an #include (Wire, std::function, FreeRTOS):
+        # one retry with dp_compat_core.h force-included. Builds that compile never get it.
+        if not info["ok"] and re.search(r"'(Wire|function|vTaskDelay|xTaskCreate\w*|xSemaphore\w*|xQueue\w*)' (was not declared|does not name a type)", info.get("reason", "")):
+            ini = REPO_ROOT / info["app"] / "platformio.ini"
+            ini.write_text(ini.read_text().replace("build_flags =\n", "build_flags =\n    -include ${PROJECT_DIR}/../../shim/lib/DroidputterShim/src/dp_compat_core.h\n", 1))
+            info["compat_retry"] = True
+            info.pop("failed", None); info.pop("reason", None)
+            info.update(build(REPO_ROOT / info["app"], a.upload, a.env))
         # Wi-Fi deauthers override the framework's ieee80211_raw_frame_sanity_check (saturn); the Arduino-IDE recipe for
         # them is -zmuldefs, so the app's definition wins at link time.
         if not info["ok"] and "ieee80211_raw_frame_sanity_check" in info.get("reason", ""):
