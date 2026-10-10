@@ -1,8 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import {
   ArrowRight,
   ArrowUpRight,
   CircuitBoard,
+  Flame,
   Keyboard,
   MapPin,
   Monitor,
@@ -11,14 +14,22 @@ import {
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PLAY_URL, REPO_URL } from "@/lib/telemetry";
+import { formatNumber, PLAY_URL, REPO_URL } from "@/lib/telemetry";
+import { useCountUp } from "@/lib/use-count-up";
 
-export function HardwareHero({ onInstall }: { onInstall: () => void }) {
+export function HardwareHero({ onInstall, burns }: { onInstall: () => void; burns?: number }) {
+  const shown = useCountUp(burns);
   return (
     <section className="hardware-hero" aria-label="Meet Droidputer">
       <div className="hero-copy">
         <div className="hero-eyebrow">
           <span className="status-dot" /> LITTLE BOARD. BIG POTENTIAL.
+          {burns != null && (
+            <span className="burn-chip" title="Firmwares flashed onto ESP32-S3 boards from the app, all time">
+              <Flame size={11} strokeWidth={2.4} />
+              {formatNumber(shown)} BURNED
+            </span>
+          )}
         </div>
         <h2>
           Your phone.

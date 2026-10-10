@@ -58,6 +58,7 @@ import {
   PlayView,
 } from "@/components/dashboard/detail-views";
 import { DashboardAnalytics } from "@/components/dashboard/analytics";
+import { BurnToast } from "@/components/dashboard/burn-toast";
 import { track } from "@/lib/analytics";
 import {
   downloadData,
@@ -113,16 +114,18 @@ const periods = [
 export function Dashboard({
   initialData,
   view,
+  celebrate,
 }: {
   initialData?: Stats;
   view: View;
+  celebrate?: boolean;
 }) {
   const { data, error, isLoading, isValidating, mutate } = useSWR<Stats>(
     STATS_URL,
     fetchStats,
     {
       fallbackData: initialData,
-      refreshInterval: 60000,
+      refreshInterval: 30000,
       revalidateOnFocus: false,
       errorRetryCount: 2,
       dedupingInterval: 15000,
@@ -160,6 +163,7 @@ export function Dashboard({
   return (
     <div className="dashboard-shell">
       <DashboardAnalytics view={view} ready={!!data} />
+      <BurnToast data={data} celebrate={celebrate} />
       <div className="gh-ribbon">
         <a href={REPO_URL} data-track="ribbon" target="_blank" rel="noreferrer">
           View on GitHub
@@ -194,11 +198,11 @@ export function Dashboard({
                 />
                 {state}
               </Badge>
-              <span className="refresh-caption">Refreshes every 60s</span>
+              <span className="refresh-caption">Refreshes every 30s</span>
             </div>
           </div>
           {view === "overview" && (
-            <HardwareHero onInstall={() => setInstallOpen(true)} />
+            <HardwareHero onInstall={() => setInstallOpen(true)} burns={data?.burns?.ok ? data.burns.total : undefined} />
           )}
           {view !== "about" && (
             <div className="section-toolbar">

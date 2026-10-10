@@ -1,5 +1,5 @@
 // GET /api/stats -> the public stats document (lib/stats-server.js). Same contract as the old api/stats.js: JSON,
-// edge-cached 120 s (stale for 10 min while it refreshes), readable cross-origin.
+// edge-cached 30 s (stale for 5 min while it refreshes) so new burns surface fast, readable cross-origin.
 import { getStats } from "@/lib/stats-server";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export async function GET() {
   return new Response(JSON.stringify(body), {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
+      "Cache-Control": "public, s-maxage=30, stale-while-revalidate=300",
       "Access-Control-Allow-Origin": "*",
     },
   });

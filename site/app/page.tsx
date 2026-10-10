@@ -15,7 +15,7 @@ const views: View[] = [
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; celebrate?: string }>;
 }) {
   const params = await searchParams;
   const view = views.includes(params.view as View)
@@ -33,5 +33,5 @@ export default async function Page({
   } catch {
     // The client can retry independently if the upstream feed is slow during server rendering.
   }
-  return <Dashboard initialData={data} view={view} />;
+  return <Dashboard initialData={data} view={view} celebrate={!!params.celebrate} />;
 }

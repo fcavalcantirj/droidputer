@@ -25,8 +25,18 @@ export type BuildRun = {
   class: string;
   reason: string;
 };
+export type Burns = {
+  ok: boolean;
+  reason?: string;
+  total?: number;
+  by_app?: { app: string; burns: number }[];
+  by_day?: { day: string; burns: number }[];
+  sources?: { analytics_events: number; automatic_reports: number; seen_by_both: number };
+  note?: string;
+};
 export type Stats = {
   generated_at: string;
+  burns?: Burns;
   github: {
     releases?:
       { tag: string; published: string; apk_downloads: number }[] | null;

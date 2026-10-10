@@ -147,6 +147,8 @@ async function github() {
     // "auto: boots=0 hello=false frames=0"). Real phones, anonymous per-install ids (the developer's own test
     // installs included).
     const auto = v.filter((x) => String(x.note || "").startsWith("auto:"));
+    // Internal only: the burn count de-duplicates against analytics by (phone, app, day); never serialised.
+    Object.defineProperty(out, "autoReports", { value: auto, enumerable: false });
     const frames = auto.map((x) => Number((/(\d+) frames/.exec(x.note) || [])[1] || 0));
     const perPhone = new Map();
     for (const x of v) if (x.reporter) perPhone.set(x.reporter, (perPhone.get(x.reporter) || new Set()).add(x.name));
@@ -350,10 +352,67 @@ async function play() {
   }
 }
 
+// Firmware burns: every flash from a phone that finished and verified. Two consent-gated records exist: the app's
+// flash_finished (result ok) analytics event (v0.0.7+, analytics opt-in) and the public automatic post-flash report
+// (verdict note "auto:", sharing opt-in). Both carry the same anonymous per-install id, so a burn is one
+// (phone, app, day) key counted max(analytics events, automatic reports): a phone that consented to both is never
+// counted twice. The ids stay inside this function; only aggregates leave.
+const BURNS_SQL = `
+  SELECT toString(coalesce(properties.device, distinct_id)) AS device, toString(properties.app) AS app,
+    toString(toDate(timestamp)) AS day, count() AS n
+  FROM events
+  WHERE event = 'flash_finished' AND properties.result = 'ok' AND ${SINCE} AND ${APP}
+  GROUP BY device, app, day`;
+
+export function countBurns(analyticsRows, autoReports) {
+  const keys = new Map();
+  const at = (device, app, day) => {
+    const k = `${device}\u0000${app}\u0000${day}`;
+    if (!keys.has(k)) keys.set(k, { app, day, analytics: 0, reports: 0 });
+    return keys.get(k);
+  };
+  for (const r of analyticsRows || []) at(r.device, r.app || "unknown", String(r.day).slice(0, 10)).analytics += Number(r.n) || 0;
+  for (const r of autoReports || []) at(r.reporter || "anonymous", r.name || "unknown", String(r.date).slice(0, 10)).reports++;
+  const byApp = new Map(), byDay = new Map();
+  let total = 0, analytics = 0, reports = 0, both = 0;
+  for (const k of keys.values()) {
+    const n = Math.max(k.analytics, k.reports);
+    total += n;
+    analytics += k.analytics;
+    reports += k.reports;
+    if (k.analytics && k.reports) both += n;
+    byApp.set(k.app, (byApp.get(k.app) || 0) + n);
+    byDay.set(k.day, (byDay.get(k.day) || 0) + n);
+  }
+  return {
+    total,
+    by_app: [...byApp].map(([app, burns]) => ({ app, burns })).sort((a, b) => b.burns - a.burns || a.app.localeCompare(b.app)),
+    by_day: [...byDay].map(([day, burns]) => ({ day, burns })).sort((a, b) => a.day.localeCompare(b.day)),
+    sources: { analytics_events: analytics, automatic_reports: reports, seen_by_both: both },
+  };
+}
+
+async function burns(gh) {
+  let rows = [], analyticsError = null;
+  if (PH_KEY && PH_PROJECT) {
+    try { rows = await hogql(BURNS_SQL); } catch (e) { analyticsError = String(e.message || e).slice(0, 200); }
+  } else analyticsError = "analytics not connected yet";
+  const auto = gh.autoReports;
+  if (!auto && analyticsError) return { ok: false, reason: "no burn source answered" };
+  return {
+    ok: true,
+    ...countBurns(rows, auto || []),
+    note: "A burn = a flash from the app that finished and verified. Analytics events (opt-in, v0.0.7+) and public automatic post-flash reports (opt-in) are merged per phone, app and day, so no burn is counted twice.",
+    ...(analyticsError ? { analytics_error: analyticsError } : {}),
+    ...(!auto ? { reports_error: "verdicts unavailable" } : {}),
+  };
+}
+
 /** One full stats document, every source fetched now. */
 export async function buildStats() {
   const [ph, gh, gp] = await Promise.all([posthog(), github(), play()]);
-  return { generated_at: new Date().toISOString(), posthog: ph, github: gh, play: gp, history: historyData, replay: replayData, traffic: trafficData };
+  const bn = await burns(gh);
+  return { generated_at: new Date().toISOString(), burns: bn, posthog: ph, github: gh, play: gp, history: historyData, replay: replayData, traffic: trafficData };
 }
 
 // One build per minute per warm instance, shared by the API route and the server-rendered page; concurrent callers

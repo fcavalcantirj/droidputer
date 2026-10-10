@@ -3,6 +3,7 @@
 import {
   ArrowDownToLine,
   CheckCheck,
+  Flame,
   GitBranch,
   Smartphone,
   type LucideIcon,
@@ -10,6 +11,7 @@ import {
 import { Area, AreaChart } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import { buildActivity, formatNumber, type Stats } from "@/lib/telemetry";
+import { useCountUp } from "@/lib/use-count-up";
 
 function Metric({
   title,
@@ -19,7 +21,9 @@ function Metric({
   icon: Icon,
   points,
   progress,
+  className,
 }: {
+  className?: string;
   title: string;
   value: string;
   note: string;
@@ -29,7 +33,7 @@ function Metric({
   progress?: number;
 }) {
   return (
-    <article className="metric-card">
+    <article className={className ? `metric-card ${className}` : "metric-card"}>
       <div className="metric-heading">
         <span>{title}</span>
         <Icon size={16} strokeWidth={1.5} />
@@ -91,8 +95,25 @@ export function Metrics({ data }: { data: Stats }) {
   const percent = behaviour?.flashes_observed
     ? Math.round((behaviour.mirror_up / behaviour.flashes_observed) * 100)
     : 0;
+  const burns = data.burns?.ok ? data.burns : undefined;
+  const burned = useCountUp(burns?.total);
+  let running = 0;
+  const burnCurve = (burns?.by_day ?? []).map((day) => (running += day.burns));
   return (
     <div className="metrics-grid">
+      <Metric
+        className="metric-burns"
+        title="Firmware burned"
+        value={formatNumber(burned)}
+        note={
+          burns
+            ? `${formatNumber(burns.by_app?.length)} different apps, flashed from phones`
+            : "Flashes from the app, all time"
+        }
+        source="LIVE · ALL TIME"
+        icon={Flame}
+        points={burnCurve}
+      />
       <Metric
         title="Phones reporting"
         value={formatNumber(verdicts?.reporters)}
