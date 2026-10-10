@@ -215,9 +215,9 @@ same need without depending on a second firmware.
      - DONE (Felipe: 30 min, into v0.0.8): Ultimate-Remote's 22:47 build exceeded the app's 20 min poll limit (`BuildFlow.kt` `MAX_POLL_MS`).
      - Phone flashes failed ~1 in 4 (3 of 13 on 2026-10-10): the link's reconnect raced the flasher. FIXED in e3a9e71,
        accepted on the phone (946008f: 10/10 on the R8 "dev" build, the race hit once and both guards blocked it).
-       Ships with the next Play release (v0.0.8) -- Felipe's word.
-     - Proxy cache key = newest commit touching shim/ + tools/overlay.py, so a revert or no-op commit rebuilds every
-       app; keying on the git tree hash of those paths would keep the cache. Low priority.
+       Released in v0.0.8 (GitHub Release 2026-10-10; the Play upload of the AAB is Felipe's manual step).
+     - DONE (fb07c43, deployed + verified live): the proxy cache keys on the content of shim/ + tools/overlay.py
+       ("<tree 7>.<blob 7>"), so a revert or no-op commit reuses every cached build.
   7. GPIO over OTG assessment (Felipe offered an LED or a sensor): not started.
   8. HELLO board label (shim only, after 5; a shim commit moves the proxy's shim sha): `droidputter.cpp` hardcodes
      "cardputer-adv" into HELLO's board for every build, and the app forwards it to link_up / esp_panic / verdicts.
@@ -226,7 +226,8 @@ same need without depending on a second firmware.
      facts "s3-f<flashMB>-p<psramMB>" (`esp_flash_get_physical_size`, not the image-header size; `ESP.getPsramSize()`);
      devkit N16R8 -> "s3-f16-p8" [UNVERIFIED until measured]. Pure labelling function (red test first, mutants),
      docs/PROTOCOL.md, CI <= 3 (an M5GFX app, a TFT_eSPI app, a refusal), phone check of the next auto-verdict.
-  9. Release notes carry a test matrix -- which firmware is tested on which board (Felipe, 2026-10-10). Release notes
+  9. DONE for v0.0.8 (its notes; release.yml now really publishes the tag message, 652a3bb). Keep for every release:
+     Release notes carry a test matrix -- which firmware is tested on which board (Felipe, 2026-10-10). Release notes
      = the annotated tag message + release.yml's fixed footer, so the matrix goes in the next tag message. Board
      source: env + the journal for verdict rows before item 8 (47 virtual rows say "cardputer-adv", 22 "unknown"),
      the verdict's own board after it. m5cardputer = Cardputer ADV; m5cardputer-virtual = bare S3 devkit since
