@@ -110,7 +110,8 @@ the phone, mirrors, and takes the phone's keys. It never changes an app's source
     is passed through (key repeats swallowed); the rest reach Android as usual.
 11. GPS: open the Connection screen and tap **Start GPS feed**; grant location once. The phone's
     NMEA sentences reach the app like a serial GPS (`droidputter_gps()`, ~28 sentences/s on
-    2026-09-05); the link's foreground service keeps them flowing with the screen off.
+    2026-09-05). The feed runs while the app is on screen; screen-off GPS left the Google Play build
+    (2026-09-17, v0.0.3).
 12. **Repaint** (bottom right) re-sends HELLO_ACK and the ESP redraws its whole screen into the
     phone; **Reconnect** on the Connection screen re-probes the port and asks for permission again.
 13. Verdict: 20 s after the flash the app decides works / broken from the link evidence (boot
@@ -321,8 +322,9 @@ governor deferrals/s before band splitting (2026-09-04), then 29.6 fps / 101.3 K
 frames -- the app's own draw rate, not the link, is the limit -- and 59.6 fps / 166.8 KB/s median
 in a busier draw state of the same app, on the 64 B-read build (2026-09-05). After a hard reset
 the phone's HELLO_ACK lands 300 ms later (2026-09-03, 2026-09-05) and 190-330 ms across the four
-2026-09-16 flashes; a fresh plug links in 230 ms (2026-09-04). A `LinkForegroundService` keeps the
-reader and the GPS feed (about 28 sentences/s, 2026-09-05) alive with the screen off. The link
+2026-09-16 flashes; a fresh plug links in 230 ms (2026-09-04). A `LinkForegroundService` (type `connectedDevice`) keeps the
+reader alive with the screen off. The GPS feed (about 28 sentences/s, 2026-09-05) runs while the app is on screen: the
+location type that kept it going with the screen off was dropped for Google Play (2026-09-17). The link
 drops on a USB detach or a reader `IOException` and comes back on the next attach intent
 (`UsbLinkManager.kt`); `LinkStateMachine`'s three-missed-PING rule (`MAX_MISSED_PINGS`) has no
 timer feeding it yet, so PING_IN is a probe: once when the port opens, then every second for 30 s
@@ -408,15 +410,17 @@ through M5GFX and M5Cardputer. Three pieces cover them, again without touching t
 - **Keys.** `dp_kbdmatrix.h` is force-included and overrides `gpio_get_level`. The app's own scan drives the row
   through pins 8 / 9 / 11 and reads the columns on pins 13, 15, 3, 4, 5, 6, 7. The shim reads the row from
   `GPIO_OUT_REG` and answers each column from the keys the phone holds (`dp_kbdmap.h`). It takes one snapshot
-  of the phone's keys per scan, so a tap counts once.
+  of the phone's keys per scan and drops a key once its release has arrived, so one tap selects once (2026-10-10,
+  shim d2cd447: taps and 120 ms holds on the phone).
 - **Serial.** `dp_appserial.h`, compiled into the app's sources only (`build_src_flags`), makes the app's `Serial`
   output-only. The app's own command line then never swallows the phone's KEY frames on the shared USB link.
 
 `tools/overlay.py` builds these apps from `TFT_RECIPES` (`justcallmekoko/ESP32Marauder`, `marivaaldo/esp32marauder`,
-`serialgeist/esp32marauder`) in the `m5cardputer-virtual` env only. The `m5cardputer` env refuses them. Every other
-overlay's generated `platformio.ini` is byte-identical to before. Marauder builds, flashes from the phone, mirrors,
-and its menus move with the phone's arrows (2026-10-10, verdicts #92-#102). One issue is open: enter on a menu item
-returns to the top menu (being worked on).
+`serialgeist/esp32marauder`) in the `m5cardputer-virtual` env only. The `m5cardputer` env refuses them. The other
+overlays checked (M5PORKCHOP, stellar-map, ISS tracker, miniacid, VolosR/Cardputer, and two refusals) generate a
+byte-identical `platformio.ini`. Marauder builds, flashes from the phone, mirrors,
+its menus move with the phone's arrows, enter opens a submenu, and back returns one level (2026-10-10, shim d2cd447;
+verdicts #92, #94, #95, #101, #102).
 
 ### Build on demand
 
@@ -599,7 +603,7 @@ the phone's screen. Build env = the PlatformIO env the proxy builds (`m5cardpute
 
 | Phone | OS | Role | Last [REAL] | Notes |
 |---|---|---|---|---|
-| Poco X7 Pro | Android 16 / HyperOS | screen, keyboard, GPS, flasher | 2026-10-10 | v0.0.7 from Google Play. 16 KB USB reads; the link's foreground service keeps GPS flowing with the screen off. Wireless debugging for triage (the USB-C port is the ESP's). |
+| Poco X7 Pro | Android 16 / HyperOS | screen, keyboard, GPS, flasher | 2026-10-10 | v0.0.7 from Google Play. 16 KB USB reads; GPS runs while the app is on screen (screen-off GPS left the Play build on 2026-09-17). Wireless debugging for triage (the USB-C port is the ESP's). |
 
 Apps built by the proxy and flashed from the phone onto the bare devkit (`m5cardputer-virtual`), 2026-10-10. "Works" is
 the app's 20 s auto-verdict (boot report, HELLO, frames). The verdict issues are public, and `apps/verdicts.json` is
@@ -612,7 +616,7 @@ the live list.
 | miniacid | [urtubia/miniacid](https://github.com/urtubia/miniacid) | works | [#99](https://github.com/fcavalcantirj/droidputer/issues/99) |
 | ISS tracker | [adammelancon/cardputer-iss-tracker](https://github.com/adammelancon/cardputer-iss-tracker) | works | [#100](https://github.com/fcavalcantirj/droidputer/issues/100) |
 | M5PORKCHOP | [0ct0sec/M5PORKCHOP](https://github.com/0ct0sec/M5PORKCHOP) | works; its menu opens with the backtick key | [#93](https://github.com/fcavalcantirj/droidputer/issues/93) |
-| ESP32Marauder | [justcallmekoko/ESP32Marauder](https://github.com/justcallmekoko/ESP32Marauder) | works, through TFT_eSPI; arrows move one row per tap; enter on a menu item is an open issue | [#102](https://github.com/fcavalcantirj/droidputer/issues/102) |
+| ESP32Marauder | [justcallmekoko/ESP32Marauder](https://github.com/justcallmekoko/ESP32Marauder) | works, through TFT_eSPI; arrows move one row per tap; enter opens a submenu, back returns one level (shim d2cd447) | [#102](https://github.com/fcavalcantirj/droidputer/issues/102) |
 | Pigtail | [benbaker76/Pigtail](https://github.com/benbaker76/Pigtail) | broken: reboots every ~2.7 s (interrupt watchdog) after its first frames; under investigation | [#98](https://github.com/fcavalcantirj/droidputer/issues/98) |
 
 Rule learned on the StickS3: a virtual build must use the generic `esp32-s3-devkitc-1` variant, the octal-PSRAM memory type and
