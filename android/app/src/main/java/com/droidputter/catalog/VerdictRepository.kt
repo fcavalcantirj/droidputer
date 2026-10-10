@@ -132,7 +132,7 @@ class VerdictRepository(private val context: Context, private val proxy: BuildPr
      */
     suspend fun resendUnsent(): Resend {
         val filed = ArrayList<VerdictReceipt>()
-        if (!consented) return Resend(filed, null)
+        if (!consented || !com.droidputter.BuildConfig.SHARE_VERDICTS) return Resend(filed, null)   // dev builds never share
         for (v in unsent()) {
             val record = if (v.reporter.isNullOrBlank()) v.copy(reporter = reporter) else v
             submit(record).onSuccess { filed += it }.onFailure { return Resend(filed, it.message) }

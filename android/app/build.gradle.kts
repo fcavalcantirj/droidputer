@@ -75,6 +75,7 @@ android {
     defaultConfig {
         applicationId = "com.droidputter"
         manifestPlaceholders["appLabel"] = "Droidputer"
+        buildConfigField("boolean", "SHARE_VERDICTS", "true")
         minSdk = 26
         targetSdk = 36
         // release.yml derives both from the tag (vMAJOR.MINOR.PATCH -> code MAJOR*10000 + MINOR*100 + PATCH);
@@ -114,6 +115,7 @@ android {
             // A dev build never feeds the public stats (a consented dev install = one more phone, its test flashes = burns);
             // -PposthogKey=<token> still turns it on for telemetry work.
             buildConfigField("String", "POSTHOG_KEY", "\"${project.findProperty("posthogKey") ?: "off"}\"")
+            buildConfigField("boolean", "SHARE_VERDICTS", "false")   // test flashes never file public verdicts
         }
         release {
             isMinifyEnabled = true
@@ -123,6 +125,16 @@ android {
             // RELEASE_KEYSTORE_B64 secret into a temp file. Otherwise the debug key, so local/android.yml builds are
             // unchanged. Losing that keystore means no in-place updates for installed users (uninstall + reinstall).
             signingConfig = signingConfigs.getByName(if (releaseSigningReady) "release" else "debug")
+        }
+        // Release code (R8, release timing) beside the Play app: `assembleDev` reproduced the flasher race the debug
+        // build never hit (2026-10-10). Debug-signed, no analytics, no public verdicts.
+        create("dev") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".dev"
+            manifestPlaceholders["appLabel"] = "Droidputer dev"
+            signingConfig = signingConfigs.getByName("debug")
+            buildConfigField("String", "POSTHOG_KEY", "\"${project.findProperty("posthogKey") ?: "off"}\"")
+            buildConfigField("boolean", "SHARE_VERDICTS", "false")
         }
     }
 

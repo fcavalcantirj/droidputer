@@ -701,6 +701,7 @@ class MainActivity : ComponentActivity() {
         verdictRepository.addLocal(v)
         verdictVersion++
         verdictRepository.sentReceipt(v)?.let { flashStatus = "$label already sent (#${it.issueNumber})"; return }
+        if (!BuildConfig.SHARE_VERDICTS) { flashStatus = "$label saved on this phone (dev build: never shared)"; return }
         if (!verdictRepository.consented) {
             // First verdict on this install: ask once before anything leaves the phone (the record is public).
             flashStatus = "$label saved on this phone"
