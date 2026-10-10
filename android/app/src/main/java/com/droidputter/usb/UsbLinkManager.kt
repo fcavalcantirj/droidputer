@@ -169,7 +169,7 @@ class UsbLinkManager(
      * the permission answer re-opened the device mid-flash (3 of 13 phone flashes, 2026-10-10 [REAL]);
      * [endRawSession] re-probes once the flash is done. */
     fun reconnect() {
-        if (rawClient != null) return
+        if (rawClient != null) { android.util.Log.d("Droidputter", "reconnect skipped: the flasher holds the port"); return }
         runCatching {
             findDevice()?.let { driver ->
                 dispatch(LinkEvent.DeviceAttached)
@@ -256,7 +256,7 @@ class UsbLinkManager(
      *  a physical detach: close the port and wait for the OS attach intent to bring it back. Not while the
      *  flasher holds the port: [beginRawSession] closed the link on purpose and already moved the state. */
     fun onReaderFailed() {
-        if (rawClient != null) return
+        if (rawClient != null) { android.util.Log.d("Droidputter", "reader failure ignored: the flasher closed the link"); return }
         dispatch(LinkEvent.Detached)
         closeTransport()
         emitStatus()

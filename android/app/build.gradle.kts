@@ -74,6 +74,7 @@ android {
 
     defaultConfig {
         applicationId = "com.droidputter"
+        manifestPlaceholders["appLabel"] = "Droidputer"
         minSdk = 26
         targetSdk = 36
         // release.yml derives both from the tag (vMAJOR.MINOR.PATCH -> code MAJOR*10000 + MINOR*100 + PATCH);
@@ -105,6 +106,12 @@ android {
     }
 
     buildTypes {
+        // A debug build installs BESIDE the Play app (com.droidputter.dev, its own label): phone tests of an app change
+        // without touching the user's install, consent or builds. Release keeps com.droidputter.
+        debug {
+            applicationIdSuffix = ".dev"
+            manifestPlaceholders["appLabel"] = "Droidputer dev"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
