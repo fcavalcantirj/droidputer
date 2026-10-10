@@ -1061,5 +1061,16 @@
     "note": "auto: linked, 6 frames in 20 s",
     "date": "2026-10-10",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "tiny-journal",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "4f2dc1be7233ca3ad057c15848a7899a31a30b052a7b184f08db2a268719d443",
+    "shim_commit": "d2cd447",
+    "board": "cardputer-adv",
+    "result": "works",
+    "note": "auto: linked, 6 frames in 20 s",
+    "date": "2026-10-10",
+    "reporter": "device-337a90f7"
   }
 ]
