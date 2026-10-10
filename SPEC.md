@@ -227,6 +227,8 @@ same need without depending on a second firmware.
      devkit N16R8 -> "s3-f16-p8" [UNVERIFIED until measured]. Pure labelling function (red test first, mutants),
      docs/PROTOCOL.md, CI <= 3 (an M5GFX app, a TFT_eSPI app, a refusal), phone check of the next auto-verdict.
   9. DONE for v0.0.8 (its notes; release.yml now really publishes the tag message, 652a3bb). Keep for every release:
+     NEXT release (Felipe, 2026-10-10): put M5PORKCHOP in the Play "What's new" -- it was tested for v0.0.8 (#104,
+     d2cd447, backtick opens its menu) but left out of the v0.0.8 Play text, which was already sent for review.
      Release notes carry a test matrix -- which firmware is tested on which board (Felipe, 2026-10-10). Release notes
      = the annotated tag message + release.yml's fixed footer, so the matrix goes in the next tag message. Board
      source: env + the journal for verdict rows before item 8 (47 virtual rows say "cardputer-adv", 22 "unknown"),
