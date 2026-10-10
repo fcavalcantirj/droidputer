@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>droidputer, live</title>
 <meta name="description" content="Live, raw usage statistics of droidputer: an Android phone as the screen, keyboard and GPS of an ESP32-S3 running Cardputer apps.">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-BQTBY7HTMP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-BQTBY7HTMP');
+</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23101418'/%3E%3Crect x='3' y='4' width='10' height='6' fill='%233987e5'/%3E%3Crect x='3' y='11' width='10' height='1' fill='%23c3c2b7'/%3E%3C/svg%3E">
 <style>
 :root {
@@ -694,6 +703,53 @@ setInterval(load, 60_000);
 let resizeT; addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => DATA && render(DATA), 150); });
 // the little screen's clock and cursor tick on their own; only the 240x135 canvas is redrawn
 setInterval(() => { if (screenState) drawScreen(screenState.lines, screenState.live); }, 600);
+
+/* ---------- Google Analytics 4 (G-BQTBY7HTMP): how people read this page ----------
+   GA4's enhanced measurement already sends page_view, the 90 % scroll and outbound clicks. These add what it
+   cannot see: depth steps, which sections get read, the two calls to action, the data downloads (blob URLs),
+   the theme switch, the raw tables and which charts people hover. Bound once; the minute refresh re-renders
+   charts but never re-binds. Every call is a no-op if the tag is blocked. */
+const track = (name, params = {}) => { try { if (typeof gtag === "function") gtag("event", name, params); } catch {} };
+(() => {
+  const marks = [25, 50, 75, 100], sent = new Set();
+  const onScroll = () => {
+    const h = document.documentElement.scrollHeight - innerHeight;
+    const p = h > 0 ? 100 * scrollY / h : 100;
+    for (const m of marks) if (p >= m - 0.5 && !sent.has(m)) { sent.add(m); track("scroll_depth", { percent_scrolled: m }); }
+    if (sent.size === marks.length) removeEventListener("scroll", onScroll);
+  };
+  addEventListener("scroll", onScroll, { passive: true });
+})();
+(() => {
+  // A section counts as read when any part of it enters the top 60 % of the viewport (tall sections never reach
+  // a visibility ratio, so no threshold on the ratio itself).
+  const io = new IntersectionObserver((es) => es.forEach((e) => {
+    if (!e.isIntersecting) return;
+    io.unobserve(e.target);
+    track("section_view", { section: e.target.id });
+  }), { rootMargin: "0px 0px -40% 0px", threshold: 0 });
+  document.querySelectorAll("main section[id]").forEach((s) => io.observe(s));
+})();
+document.addEventListener("click", (e) => {
+  const a = e.target.closest && e.target.closest("a[href]");
+  if (!a) return;
+  if (a.classList.contains("getplay")) track("store_click", { store: "google_play", placement: "hero", link_url: a.href });
+  else if (a.closest(".ribbon")) track("repo_click", { placement: "ribbon", link_url: a.href });
+});
+$("dlJson").addEventListener("click", () => track("file_download", { file_extension: "json", file_name: "droidputer-stats.json", link_text: "Download JSON" }));
+$("dlCsv").addEventListener("click", () => track("file_download", { file_extension: "csv", file_name: "droidputer-stats.csv", link_text: "Download CSV" }));
+$("theme").addEventListener("click", () => track("theme_change", { theme: document.documentElement.getAttribute("data-theme") || "auto" }));
+document.querySelector("#raw details").addEventListener("toggle", (e) => { if (e.target.open) track("raw_tables_open"); });
+(() => {
+  const hovered = new Set();
+  document.addEventListener("pointerover", (e) => {
+    const svg = e.target.closest && e.target.closest("svg.chart");
+    const id = svg && svg.parentElement && svg.parentElement.id;
+    if (!id || hovered.has(id)) return;
+    hovered.add(id);
+    track("chart_hover", { chart: id });
+  });
+})();
 </script>
 </body>
 </html>

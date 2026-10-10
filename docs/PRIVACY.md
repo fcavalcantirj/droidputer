@@ -49,6 +49,17 @@ it. Published verdicts are public records in the GitHub repository; to have one 
 https://github.com/fcavalcantirj/droidputer/issues quoting the anonymous identifier. The same request removes
 that identifier's usage and crash reports from PostHog.
 
+## The statistics website
+
+The public statistics page (`droidputer.vercel.app`, from 2026-10-10) uses Google Analytics 4 (measurement
+ID `G-BQTBY7HTMP`) to count visits and how the page is read: pages viewed, how far a page is scrolled, which
+sections come into view, clicks on its Google Play and GitHub links, the JSON/CSV downloads, the theme switch,
+opening the raw tables and which charts are hovered. Google Analytics sets first-party cookies (`_ga`,
+`_ga_*`) and receives what a browser normally sends (browser and device type, referrer, and an approximate
+location Google derives from the connection); Google states that Google Analytics 4 does not log or store IP
+addresses. The app itself does not use Google Analytics. To opt out, block cookies for the site or install
+Google's opt-out add-on: https://tools.google.com/dlpage/gaoptout
+
 ## Children
 
 The app is not directed at children and has no content or features aimed at them.
