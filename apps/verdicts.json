@@ -1094,5 +1094,16 @@
     "note": "auto: linked, 43 frames in 20 s",
     "date": "2026-10-10",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "m5cardputer_webradio",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "80d96af3a5de2b28b5523cc566428aa2c262d37f06cf028cc47faef7f415f203",
+    "shim_commit": "d2cd447",
+    "board": "cardputer-adv",
+    "result": "works",
+    "note": "auto: linked, 804 frames in 20 s",
+    "date": "2026-10-10",
+    "reporter": "device-337a90f7"
   }
 ]
