@@ -929,5 +929,16 @@
     "note": "auto: linked, 393 frames in 20 s",
     "date": "2026-10-10",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "stellar-map",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "299df0f6a97d6541695f81978daf877992c629cca0b22b14b8e9fdecf555ae65",
+    "shim_commit": "8c79bc8",
+    "board": "cardputer-adv",
+    "result": "works",
+    "note": "auto: linked, 710 frames in 20 s",
+    "date": "2026-10-10",
+    "reporter": "device-337a90f7"
   }
 ]
