@@ -1050,5 +1050,16 @@
     "note": "auto: linked, 5 frames in 20 s",
     "date": "2026-10-10",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "ultimate-remote",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "9e7563afc60a992d85ade3289f0387db95d806deb59eff0b8319761fb04510ca",
+    "shim_commit": "d2cd447",
+    "board": "cardputer-adv",
+    "result": "works",
+    "note": "auto: linked, 6 frames in 20 s",
+    "date": "2026-10-10",
+    "reporter": "device-337a90f7"
   }
 ]
