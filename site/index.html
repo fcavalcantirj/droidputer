@@ -54,7 +54,7 @@ a { color: var(--accent); }
 .tnum { font-variant-numeric: tabular-nums; }
 
 /* hero */
-header.hero { padding: 48px 0 24px; display: grid; gap: 28px; }
+header.hero { padding: 20px 0 24px; display: grid; gap: 28px; }
 .brand { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .brand h1 { margin: 0; font-size: clamp(40px, 8vw, 76px); line-height: 1; letter-spacing: -0.04em; font-weight: 800; }
 .brand h1 span { color: var(--accent); }
@@ -62,6 +62,13 @@ header.hero { padding: 48px 0 24px; display: grid; gap: 28px; }
 .live i { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 0 var(--good); animation: pulse 2.4s infinite; }
 .live.stale i { background: var(--muted); animation: none; }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(12,163,12,.55); } 70% { box-shadow: 0 0 0 9px rgba(12,163,12,0); } 100% { box-shadow: 0 0 0 0 rgba(12,163,12,0); } }
+/* corner links: GitHub ribbon (page top right), Google Play (hero top left) */
+.ribbon { position: absolute; top: 0; right: 0; width: 132px; height: 132px; overflow: hidden; z-index: 5; pointer-events: none; }
+.ribbon a { pointer-events: auto; position: absolute; top: 30px; right: -46px; width: 190px; transform: rotate(45deg); background: var(--ink); color: var(--page); text-align: center; font-size: 12.5px; font-weight: 600; letter-spacing: .02em; line-height: 30px; text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+.ribbon a:hover, .ribbon a:focus-visible { background: var(--accent); color: #fff; }
+.getplay { justify-self: start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; border-radius: 999px; background: var(--surface); box-shadow: 0 0 0 1px var(--ring); color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none; }
+.getplay svg { width: 16px; height: 16px; color: var(--accent); }
+.getplay:hover, .getplay:focus-visible { box-shadow: 0 0 0 1px var(--accent); }
 .lede { margin: 0; max-width: 720px; font-size: clamp(17px, 2.2vw, 21px); color: var(--ink-2); }
 .lede b { color: var(--ink); font-weight: 600; }
 
@@ -137,8 +144,10 @@ footer { margin-top: 64px; color: var(--muted); font-size: 13px; display: flex; 
 </style>
 </head>
 <body>
+<div class="ribbon"><a href="https://github.com/fcavalcantirj/droidputer" aria-label="droidputer source code on GitHub">View on GitHub</a></div>
 <main>
   <header class="hero">
+    <a class="getplay" href="https://play.google.com/store/apps/details?id=com.droidputter"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>Get it on Google Play</a>
     <div class="brand">
       <h1>droid<span>puter</span></h1>
       <div class="live" id="live"><i></i><span id="liveText">connecting…</span></div>
