@@ -995,5 +995,16 @@
     "note": "auto: linked, 407 frames in 20 s",
     "date": "2026-10-10",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "esp32marauder",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "febed6876840fba7abc293154a734230211c3eb405d1c2f2a330fadadc1cb6f9",
+    "shim_commit": "d2cd447",
+    "board": "cardputer-adv",
+    "result": "works",
+    "note": "auto: linked, 407 frames in 20 s",
+    "date": "2026-10-10",
+    "reporter": "device-337a90f7"
   }
 ]
