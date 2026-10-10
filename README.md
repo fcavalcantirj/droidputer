@@ -485,7 +485,7 @@ plus `build.json` and `SHA256SUMS` -- are uploaded as the artifact `<name>-<env>
 unzips it in memory (`fflate`, 8 runs cached per warm instance) and returns each part's offset,
 size, sha256 and a `GET /api/artifact/{run}/{file}` URL served immutable with the sha256 as
 ETag (`proxy/lib/artifact.js`, `proxy/api/artifact/[run]/[file].js`). The phone polls every 5 s
-(`BuildProxy.POLL_INTERVAL_MS`, up to 20 min), saves a ready build as a catalog entry in
+(`BuildProxy.POLL_INTERVAL_MS`, up to 30 min: Ultimate-Remote takes up to ~23 min in CI), saves a ready build as a catalog entry in
 `my_builds.json`, and `BinStore` downloads each part into `filesDir/bins/<sha256>.bin`, verifying
 the hash; a cached part is served with no network. Measured on 2026-09-04: 88.7 s from dispatch
 to a successful run (about 92 s tap-to-hash-verified parts) for a repo nobody had built before

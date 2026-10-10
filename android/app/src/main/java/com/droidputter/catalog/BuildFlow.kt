@@ -144,7 +144,9 @@ class BuildFlow(
         const val TAG = "Droidputter"
         /** Proxy failure classes that mean "never a shim build" (tools/overlay.py preflight), not a broken build. */
         val REFUSALS = setOf("unsupported-graphics", "not-arduino", "library-repo")
-        const val MAX_POLL_MS = 20L * 60 * 1000   // a GitHub runner queue can stall; 20 min is beyond any healthy 2-4 min build
+        // A GitHub runner queue can stall, so the wait is bounded -- but above the slowest healthy build: Ultimate-Remote
+        // takes 17-23 min in CI (22:47 on 2026-10-10), so a 20 min wait gave up on a build that then succeeded.
+        const val MAX_POLL_MS = 30L * 60 * 1000
         const val MAX_CONSECUTIVE_FAILURES = 3
     }
 }

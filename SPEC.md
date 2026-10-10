@@ -212,7 +212,7 @@ same need without depending on a second firmware.
      M5Unified/M5GFX versions or the shim. Next single variable: the overlay libs without the shim (needs a scratch
      path; the proxy always links the shim). A refusal is Felipe's call.
   6. Felipe's calls, pending:
-     - Ultimate-Remote's 22:47 build exceeds the app's 20 min poll limit (`BuildFlow.kt` `MAX_POLL_MS`).
+     - DONE (Felipe: 30 min, into v0.0.8): Ultimate-Remote's 22:47 build exceeded the app's 20 min poll limit (`BuildFlow.kt` `MAX_POLL_MS`).
      - Phone flashes failed ~1 in 4 (3 of 13 on 2026-10-10): the link's reconnect raced the flasher. FIXED in e3a9e71,
        accepted on the phone (946008f: 10/10 on the R8 "dev" build, the race hit once and both guards blocked it).
        Ships with the next Play release (v0.0.8) -- Felipe's word.
