@@ -200,19 +200,35 @@ same need without depending on a second firmware.
   (Marauder and 2 forks) — Marauder builds, flashes from the phone, mirrors, arrows navigate. Bruce still needs the
   arduino-esp32 3.x track too. Open: LovyanGFX-only apps that don't go through M5GFX.
 - **Next session (from 2026-10-10, builder's journal order; phone runs need a hands-off window).**
-  1. Re-test Marauder enter on d2cd447 on the phone: a 120 ms hold and a tap on two top-level entries, fn off and
-     latched, back once each. Expect the submenu to stay, and one level back per tap.
-  2. stellar-map + M5PORKCHOP on d2cd447: the shared `dp_keys` path must keep its 2-poll tap visibility.
-  3. Ultimate-Remote + BT Keyboard/Mouse: both proxy builds succeeded and are cached, so flash from the phone.
-  4. VolosR Cardputer, Tiny-Journal, System Monitor, audiospectrum, WebRadio: build, flash, auto-verdict, one
-     navigation key.
+  1. DONE 2026-10-10 (06242d8): Marauder enter fixed on the phone with d2cd447 (120 ms holds and taps, Recon and
+     Device, fn off and latched; back returns one level).
+  2. DONE (4f44d9e): stellar-map + M5PORKCHOP keep their taps on d2cd447 (#103, #104).
+  3. DONE (3e16e47): Ultimate-Remote #107, BT Keyboard/Mouse #106 (rebuilt on d2cd447: the proxy cache is per shim).
+  4. DONE (3e16e47): VolosR #105, Tiny-Journal #108, System Monitor #109, audiospectrum #110, WebRadio #111 (its
+     Wi-Fi list filters out networks below -80 dBm, so no key to show there).
   5. Pigtail (#98): an interrupt-watchdog boot loop inside the BT controller init (`btdm_controller_task` …
      `r_rwip_reset`, from logcat + CI ELF addr2line). Measure it first (compare the BT keyboard app's BLE init on the
      same devkit), then fix. A refusal is Felipe's call.
   6. Felipe's calls, pending:
      - Ultimate-Remote's 22:47 build exceeds the app's 20 min poll limit (`BuildFlow.kt` `MAX_POLL_MS`).
-     - The phone flasher gave up on one `FLASH_DEFL_BEGIN` timeout; one automatic retry would have saved the run.
+     - Phone flashes fail ~1 in 4 (3 of 13 on 2026-10-10) -- ROOT CAUSE found (3e16e47): when the flasher closes the
+       link, the reader's catch can still see its transport, calls `onReaderFailed()` and 1.5 s later
+       `linkManager.reconnect()`, which (unlike the attach/permission receivers) ignores the raw session and re-opens
+       the device mid-flash. Fix = guard `reconnect()`/`onReaderFailed()` on `rawClient`, TDD; an app change, so a
+       Play release.
   7. GPIO over OTG assessment (Felipe offered an LED or a sensor): not started.
+  8. HELLO board label (shim only, after 5; a shim commit moves the proxy's shim sha): `droidputter.cpp` hardcodes
+     "cardputer-adv" into HELLO's board for every build, and the app forwards it to link_up / esp_panic / verdicts.
+     Real-panel env: the board M5GFX autodetect found (board_M5Cardputer=14 -> "cardputer", board_M5CardputerADV=24
+     -> "cardputer-adv", else "m5board-<n>"; needs one dp:: hook after autodetect). Virtual builds: measured chip
+     facts "s3-f<flashMB>-p<psramMB>" (`esp_flash_get_physical_size`, not the image-header size; `ESP.getPsramSize()`);
+     devkit N16R8 -> "s3-f16-p8" [UNVERIFIED until measured]. Pure labelling function (red test first, mutants),
+     docs/PROTOCOL.md, CI <= 3 (an M5GFX app, a TFT_eSPI app, a refusal), phone check of the next auto-verdict.
+  9. Release notes carry a test matrix -- which firmware is tested on which board (Felipe, 2026-10-10). Release notes
+     = the annotated tag message + release.yml's fixed footer, so the matrix goes in the next tag message. Board
+     source: env + the journal for verdict rows before item 8 (47 virtual rows say "cardputer-adv", 22 "unknown"),
+     the verdict's own board after it. m5cardputer = Cardputer ADV; m5cardputer-virtual = bare S3 devkit since
+     2026-09-16 (StickS3 before).
 
 ## Open questions
 
