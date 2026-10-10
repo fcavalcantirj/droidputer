@@ -896,5 +896,16 @@
     "note": "auto: linked, 359 frames in 20 s",
     "date": "2026-10-10",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "m5porkchop",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "a30c0e8514a9d0e051b253405d20a05d40d1fca085c7a0d2613189d97ca84e8e",
+    "shim_commit": "a551151",
+    "board": "cardputer-adv",
+    "result": "works",
+    "note": "auto: linked, 28 frames in 20 s",
+    "date": "2026-10-10",
+    "reporter": "device-337a90f7"
   }
 ]
