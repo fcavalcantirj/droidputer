@@ -962,5 +962,16 @@
     "note": "auto: boots=8 hello=true frames=4",
     "date": "2026-10-10",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "miniacid",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "3e5f3214f24b263d955c562ccd993fef866096fc823e821f46062c8ec07fb162",
+    "shim_commit": "c09487b",
+    "board": "cardputer-adv",
+    "result": "works",
+    "note": "auto: linked, 222 frames in 20 s",
+    "date": "2026-10-10",
+    "reporter": "device-337a90f7"
   }
 ]
