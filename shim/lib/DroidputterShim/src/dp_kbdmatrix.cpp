@@ -20,8 +20,11 @@ extern "C" int dp_gpio_get_level(gpio_num_t pin) {
   if (column < 0) return gpio_get_level(pin);
   const uint32_t out = REG_READ(GPIO_OUT_REG);   // the output latch: readable even on output-only pins
   const int row = ((out >> 8) & 1) | (((out >> 9) & 1) << 1) | (((out >> 11) & 1) << 2);
-  uint8_t ys[16], xs[16];
-  const uint8_t held = dp::injectedKeys(ys, xs, 16);
+  // ONE snapshot of the phone's held keys per matrix scan: the driver scans rows 0..7, columns 0..6 in order, so a
+  // scan starts at row 0 / column 0. dp::injectedKeys() counts snapshots to keep a quick tap visible for
+  // DP_KEYS_MIN_SEEN app polls; called on all 56 column reads it would expire a tap inside one scan.
+  static uint8_t ys[16], xs[16], held = 0;
+  if (row == 0 && column == 0) held = dp::injectedKeys(ys, xs, 16);
   for (uint8_t k = 0; k < held; k++) {
     const int x = xs[k], y = ys[k];
     const int keyRow = (x % 2 == 0) ? 7 - y : 3 - y;

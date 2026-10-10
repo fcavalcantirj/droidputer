@@ -555,8 +555,13 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None, build_e
     lib_deps = ([] if recipe else [M5UNIFIED]) + lib_deps + ["symlink://../../shim/lib/DroidputterShim"]
     virtual_extra = ""
     if recipe and recipe.get("kbd_matrix"):
+        # The app also reads the USB serial itself (Marauder's command line): dp_appserial.h keeps it off the link's
+        # bytes -- in the app's own sources only (build_src_flags), never the framework that defines the real Serial.
         virtual_extra = ("\n    -DDROIDPUTTER_KBD_MATRIX\n"
-                         "    -include ${PROJECT_DIR}/../../shim/lib/DroidputterShim/src/dp_kbdmatrix.h")
+                         "    -include ${PROJECT_DIR}/../../shim/lib/DroidputterShim/src/dp_kbdmatrix.h\n"
+                         "build_src_flags =\n"
+                         "    -DDROIDPUTTER_APP_SERIAL\n"
+                         "    -include ${PROJECT_DIR}/../../shim/lib/DroidputterShim/src/dp_appserial.h")
 
     app.mkdir(parents=True, exist_ok=True)
     ini = ENV_TEMPLATE.format(
