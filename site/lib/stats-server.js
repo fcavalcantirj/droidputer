@@ -1,12 +1,15 @@
-// GET /api/stats -> every number on the public stats page, as one JSON document (the page's Download buttons
-// export exactly this). Sources: the hosted PostHog project (anonymous, opt-in app events + the build proxy's
-// server-side events), public GitHub data (release downloads, apps/verdicts.json), Google Play's own daily vitals
-// (Play Developer Reporting API, service account) and data/*.json (build history from before analytics existed).
-// Aggregates only: no device ids, no IPs, no per-event rows ever leave here.
-// Cached at the edge for 120 s, so the PostHog query budget (2,400/h) is never near.
+// Every number on the public stats site, as one JSON document: served by app/api/stats/route.js (the Export /
+// Download buttons save exactly this) and rendered server-side by app/page.tsx. Sources: the hosted PostHog project
+// (anonymous, opt-in app events + the build proxy's server-side events), public GitHub data (release downloads,
+// apps/verdicts.json), Google Play's own vitals (Play Developer Reporting API, service account) and public/data/*.json
+// (build history from before analytics existed, bundled at build time). Aggregates only: no device ids, no IPs, no
+// per-event rows ever leave here. Built at most once a minute per warm instance (getStats) and cached at the edge
+// for 120 s by the route, so the PostHog query budget (2,400/h) is never near.
 
 import { createSign } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import historyData from "../public/data/history.json" with { type: "json" };
+import replayData from "../public/data/replay.json" with { type: "json" };
+import trafficData from "../public/data/traffic.json" with { type: "json" };
 
 const REPO = "fcavalcantirj/droidputer";
 const PH_HOST = (process.env.POSTHOG_API_HOST || "https://us.posthog.com").replace(/\/+$/, "");
@@ -347,19 +350,21 @@ async function play() {
   }
 }
 
-async function local(name) {
-  try {
-    return JSON.parse(await readFile(new URL(`../data/${name}`, import.meta.url), "utf8"));
-  } catch {
-    return null;
-  }
+/** One full stats document, every source fetched now. */
+export async function buildStats() {
+  const [ph, gh, gp] = await Promise.all([posthog(), github(), play()]);
+  return { generated_at: new Date().toISOString(), posthog: ph, github: gh, play: gp, history: historyData, replay: replayData, traffic: trafficData };
 }
 
-export default async function handler(req, res) {
-  const [ph, gh, gp, history, replay, traffic] = await Promise.all([posthog(), github(), play(), local("history.json"), local("replay.json"), local("traffic.json")]);
-  const body = { generated_at: new Date().toISOString(), posthog: ph, github: gh, play: gp, history, replay, traffic };
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "public, s-maxage=120, stale-while-revalidate=600");
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.status(200).send(JSON.stringify(body));
+// One build per minute per warm instance, shared by the API route and the server-rendered page; concurrent callers
+// wait on the same build instead of each querying PostHog.
+const STATS_TTL_MS = 60 * 1000;
+let statsCache = null; // { at, body }
+let statsPending = null;
+export async function getStats() {
+  if (statsCache && Date.now() - statsCache.at < STATS_TTL_MS) return statsCache.body;
+  statsPending ||= buildStats()
+    .then((body) => { statsCache = { at: Date.now(), body }; return body; })
+    .finally(() => { statsPending = null; });
+  return statsPending;
 }

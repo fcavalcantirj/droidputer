@@ -30,3 +30,7 @@ proxy/.vercel/
 # ~/.config/droidputter/play-service-account.json (600); deployed only as the Vercel env PLAY_SERVICE_ACCOUNT_JSON.
 *service-account*.json
 droidputer-[0-9a-f]*.json
+# site/ (Next.js stats dashboard): dependencies + build output
+site/node_modules/
+site/.next/
+site/*.tsbuildinfo
