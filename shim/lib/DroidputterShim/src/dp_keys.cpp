@@ -35,11 +35,15 @@ void dp_keys_push(uint8_t row, uint8_t col, uint8_t down) {
 }
 
 uint8_t dp_keys_snapshot(uint8_t* rows, uint8_t* cols, uint8_t max) {
+  return dp_keys_snapshot_min(rows, cols, max, DP_KEYS_MIN_SEEN);
+}
+
+uint8_t dp_keys_snapshot_min(uint8_t* rows, uint8_t* cols, uint8_t max, uint8_t min_seen) {
   uint8_t n = nheld < max ? nheld : max;
   for (uint8_t i = 0; i < n; i++) { rows[i] = held_r[i]; cols[i] = held_c[i]; }
   for (uint8_t i = 0; i < nheld; i++) if (held_seen[i] < 255) held_seen[i]++;
   for (uint8_t i = 0; i < nheld;) {
-    if (held_pending[i] && held_seen[i] >= DP_KEYS_MIN_SEEN) removeAt(i); else i++;
+    if (held_pending[i] && held_seen[i] >= min_seen) removeAt(i); else i++;
   }
   return n;
 }

@@ -20,6 +20,8 @@ void pixelsConv(lgfx::v1::pixelcopy_t* param, uint32_t npixels);    // convert p
 void poll();                                                        // parse phone->ESP frames (keys, GPS_NMEA); also run from the draw path every 16 ms, so apps that never call M5Cardputer.update() still link (2026-09-04)
 // injected keys (row,col) currently held; returns count, fills out[max]
 uint8_t injectedKeys(uint8_t* rows, uint8_t* cols, uint8_t max);
+// For apps that poll key LEVELS (not changes): a tap is reported to exactly one poll (see dp_keys_snapshot_min).
+uint8_t injectedKeysOnce(uint8_t* rows, uint8_t* cols, uint8_t max);
 // link triage counters (TX watchdog): kicks, CDC re-inits, ms since the last frame left the chip, ms since the last inbound frame
 void linkDebug(uint32_t* kicks, uint32_t* reinits, uint32_t* tx_mute_ms, uint32_t* rx_age_ms);
 }

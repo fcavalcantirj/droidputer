@@ -22,6 +22,12 @@ void dp_keys_push(uint8_t row, uint8_t col, uint8_t down);
 // the count copied.
 uint8_t dp_keys_snapshot(uint8_t* rows, uint8_t* cols, uint8_t max);
 
+// Same, with the minimum visibility of an already-released tap set per caller. Apps that act on a key's LEVEL every
+// poll (ESP32Marauder's isKeyPressed: one select per poll it sees the key down) need min_seen = 1, or one tap acts
+// twice (measured 2026-10-10: enter opened Recon and, one poll later, selected its first item, Back). Apps that act on
+// CHANGES (M5Cardputer's isChange) keep DP_KEYS_MIN_SEEN so a tap between two polls is never invisible.
+uint8_t dp_keys_snapshot_min(uint8_t* rows, uint8_t* cols, uint8_t max, uint8_t min_seen);
+
 // All held keys released. Called when the USB link drops so a phone that
 // disconnects mid-keypress never leaves a key stuck down on the ESP.
 void dp_keys_release_all();

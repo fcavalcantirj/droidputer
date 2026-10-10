@@ -219,6 +219,7 @@ void poll() {
   internal::flushTick();
 }
 uint8_t injectedKeys(uint8_t* rows, uint8_t* cols, uint8_t max) { return dp_keys_snapshot(rows, cols, max); }
+uint8_t injectedKeysOnce(uint8_t* rows, uint8_t* cols, uint8_t max) { return dp_keys_snapshot_min(rows, cols, max, 1); }
 void linkDebug(uint32_t* kicks, uint32_t* reinits, uint32_t* tx_mute_ms, uint32_t* rx_age_ms) {
   uint32_t now = millis();
   if (kicks) *kicks = internal::cdc_kicks; if (reinits) *reinits = internal::cdc_reinits;

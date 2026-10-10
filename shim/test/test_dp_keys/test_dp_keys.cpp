@@ -74,6 +74,19 @@ static void test_fast_tap_stays_visible_for_min_seen_snapshots(void) {
   TEST_ASSERT_EQUAL_UINT8(1, dp::dp_keys_held_count());
 }
 
+static void test_level_polled_tap_is_seen_exactly_once(void) {
+  dp::dp_keys_release_all();
+  uint8_t r[4], c[4];
+  dp::dp_keys_push(2, 13, 1); dp::dp_keys_push(2, 13, 0);              // a tap that ends before the next poll
+  TEST_ASSERT_EQUAL_UINT8(1, dp::dp_keys_snapshot_min(r, c, 4, 1));    // poll 1: enter is down
+  TEST_ASSERT_EQUAL_UINT8(2, r[0]); TEST_ASSERT_EQUAL_UINT8(13, c[0]);
+  TEST_ASSERT_EQUAL_UINT8(0, dp::dp_keys_snapshot_min(r, c, 4, 1));    // poll 2: gone -- one select, not two
+  dp::dp_keys_push(3, 11, 1);                                          // a real hold stays down every poll
+  for (int i = 0; i < 3; i++) TEST_ASSERT_EQUAL_UINT8(1, dp::dp_keys_snapshot_min(r, c, 4, 1));
+  dp::dp_keys_push(3, 11, 0);
+  TEST_ASSERT_EQUAL_UINT8(0, dp::dp_keys_snapshot_min(r, c, 4, 1));
+}
+
 int main(int argc, char** argv) {
   UNITY_BEGIN();
   RUN_TEST(test_down_up_ordering);
@@ -81,5 +94,6 @@ int main(int argc, char** argv) {
   RUN_TEST(test_up_of_unheld_key_is_noop);
   RUN_TEST(test_link_down_releases_all);
   RUN_TEST(test_fast_tap_stays_visible_for_min_seen_snapshots);
+  RUN_TEST(test_level_polled_tap_is_seen_exactly_once);
   return UNITY_END();
 }
