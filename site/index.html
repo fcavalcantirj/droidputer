@@ -167,12 +167,17 @@ footer { margin-top: 64px; color: var(--muted); font-size: 13px; display: flex; 
 
   <section id="play">
     <h2>Google Play</h2>
-    <p class="sub">Google's own daily numbers for every install from Google Play, all versions: how many people used the app each day and how many of them hit a crash. Days are Pacific time (America/Los_Angeles), the only time zone Google offers for daily data, and each day appears after Google closes it.</p>
+    <p class="sub">Google's own records for every install from Google Play, all versions: the crashes and freezes it received, day by day, and what broke. Days are Pacific time (America/Los_Angeles), the only time zone Google offers for daily data, and each day appears after Google closes it.</p>
     <div class="kpis" id="kpisPlay"></div>
     <div class="grid2" style="margin-top:16px">
+      <div class="card"><h3>Crash reports per day</h3><p class="note">reports Google received, Pacific days · hover for users and app versions</p><div id="playErrors"></div></div>
+      <div class="card"><h3>What crashed</h3><p class="note">the crash causes Google grouped, by reports · hover for users, versions, last seen</p><div id="playIssues"></div></div>
+    </div>
+    <div class="grid2" id="playRates" style="margin-top:16px;display:none">
       <div class="card"><h3>Daily users</h3><p class="note">distinct users per Pacific day · Google Play Developer Reporting API</p><div id="playUsers"></div></div>
       <div class="card"><h3>Crash rate</h3><p class="note">share of that day's users who had a crash · hover for the user-perceived rate (crash while the app was on screen)</p><div id="playCrash"></div></div>
     </div>
+    <p id="playNote" style="margin:12px 0 0;color:var(--muted);font-size:13px"></p>
   </section>
 
   <section id="sofar">
@@ -430,6 +435,10 @@ function tablesFrom(d) {
   if (gh.releases) out.push({ title: "APK downloads per release", cols: ["tag", "published", "apk_downloads"], rows: gh.releases.map((r) => [r.tag, r.published, r.apk_downloads]) });
   if (gh.verdicts) out.push({ title: "verdicts by app", cols: ["app", "works", "broken"], rows: gh.verdicts.by_app.map((r) => [r.app, r.works, r.broken]) });
   const gp = d.play || {};
+  if (gp.ok && gp.errors) out.push({ title: "Google Play crash and ANR reports per day (Pacific days, all versions)", cols: ["day", "crash_reports", "crash_users", "anr_reports", "anr_users", "crash_reports_by_versionCode"],
+    rows: gp.errors.daily.map((r) => [r.day, r.crash_reports, r.crash_users, r.anr_reports, r.anr_users, Object.entries(r.versions).map(([v, x]) => `${v}:${x.crash_reports || 0}`).join(" ")]) });
+  if (gp.ok && gp.issues) out.push({ title: "Google Play crash causes (30 days)", cols: ["type", "exception", "cause", "reports", "users", "first_versionCode", "last_versionCode", "last_seen"],
+    rows: gp.issues.map((i) => [i.type, i.exception, i.cause, i.reports, i.users, i.first_version, i.last_version, i.last_seen]) });
   if (gp.ok && gp.daily && gp.daily.length) {
     const pc = (v) => v == null ? null : Math.round(v * 1e4) / 1e2;
     out.push({ title: "Google Play, daily (Pacific days, all versions; rates in %)", cols: ["day", "users", "crash_rate_pct", "user_perceived_crash_rate_pct", "anr_rate_pct", "user_perceived_anr_rate_pct"],
@@ -462,26 +471,45 @@ function tablesFrom(d) {
 
 /* ---------- Google Play (Reporting API, Pacific days) ---------- */
 const pct = (v) => v == null || Number.isNaN(v) ? "—" : `${v < 1 ? v.toFixed(2) : v.toFixed(1)}%`;
+const shortJava = (s) => String(s || "").replace(/^com\.droidputter\./, "").replace(/^java\.(io|lang|util)\./, "");
+const causeLabel = (c) => { const p = String(c || "?").split("."), m = p[p.length - 1], k = p[p.length - 2] || ""; return m === "<init>" ? `new ${k}` : m; };
 function renderPlay(gp) {
-  const rows = gp.ok && gp.daily ? gp.daily : [];
-  const last = rows.length ? rows[rows.length - 1] : null;
+  const tile = ([v, l, s]) => { const k = document.createElement("div"); k.className = "kpi"; const a = document.createElement("div"); a.className = "v"; a.textContent = v; const b = document.createElement("div"); b.className = "l"; b.textContent = l; const c = document.createElement("div"); c.className = "s"; c.textContent = s; k.append(a, b, c); return k; };
   // Google's error body is JSON ("403 {"error":{"message":...}}"): show its code + message, never the raw blob.
   const why = (r) => { const s = String(r), m = /"message"\s*:\s*"([^"]+)"/.exec(s), c = /^(\d{3})\b/.exec(s); return m ? `${c ? c[1] + " · " : ""}${m[1]}` : s.slice(0, 120); };
   const off = !gp.ok && gp.reason === "Google Play not connected yet";
-  const state = !gp.ok ? (off ? gp.reason : `Google Play did not answer: ${why(gp.reason)}`) : rows.length ? null : "Google returned no daily rows yet";
-  const peak = rows.reduce((m, r) => Math.max(m, Number(r.users) || 0), 0);
+  const state = !gp.ok ? (off ? gp.reason : `Google Play did not answer: ${why(gp.reason)}`) : null;
+  const ed = gp.ok && gp.errors ? gp.errors.daily : [];
+  const issues = gp.ok && gp.issues ? gp.issues : [];
+  const crashes = ed.reduce((s, d) => s + d.crash_reports, 0), anrs = ed.reduce((s, d) => s + d.anr_reports, 0);
+  const lastIssue = [...issues].sort((a, b) => b.last_seen.localeCompare(a.last_seen))[0];
+  const rows = gp.ok && gp.daily ? gp.daily : [], last = rows.length ? rows[rows.length - 1] : null;
   const tiles = [
-    [last ? fmt(last.users) : "—", "daily users on Play", last ? `Google · ${last.day} (Pacific)${gp.stale ? " · cached" : ""}` : !gp.ok && !off ? "Google Play did not answer" : state],
-    [rows.length ? fmt(peak) : "—", "busiest day, 30 days", rows.length ? `${rows.length} days reported` : "Google Play Developer Reporting API"],
-    [last ? pct(100 * last.crash_rate) : "—", "crash rate", last ? `user-perceived ${pct(100 * last.user_perceived_crash_rate)}` : "share of daily users"],
+    [gp.ok && gp.errors ? fmt(crashes) : "—", "crash reports, 30 days", gp.ok && gp.errors ? `${issues.length} different causes · Google Play` : state || ""],
+    [lastIssue ? lastIssue.last_seen.slice(5) : "—", "last crash Google recorded", lastIssue ? `in versionCode ${lastIssue.last_version} · ${shortJava(lastIssue.exception)}` : gp.ok ? "none in 30 days" : ""],
+    [gp.ok && gp.errors ? fmt(anrs) : "—", "freezes (ANR), 30 days", "app not responding · Google Play"],
+    [last ? fmt(last.users) : "—", "daily users on Play", last ? `Google · ${last.day} (Pacific)` : gp.ok ? "Google publishes none for this app yet" : ""],
   ];
-  if (gp.anr === true && last && last.anr_rate != null) tiles.push([pct(100 * last.anr_rate), "ANR rate", `user-perceived ${pct(100 * last.user_perceived_anr_rate)}`]);
-  $("kpisPlay").replaceChildren(...tiles.map(([v, l, s]) => { const k = document.createElement("div"); k.className = "kpi"; const a = document.createElement("div"); a.className = "v"; a.textContent = v; const b = document.createElement("div"); b.className = "l"; b.textContent = l; const c = document.createElement("div"); c.className = "s"; c.textContent = s; k.append(a, b, c); return k; }));
-  const empty = state || "no data yet";
-  const users = rows.filter((r) => r.users != null).map((r) => ({ d: r.day, v: Number(r.users) }));
-  const crash = rows.filter((r) => r.crash_rate != null).map((r) => ({ d: r.day, v: 100 * Number(r.crash_rate), up: r.user_perceived_crash_rate }));
-  line($("playUsers"), users.length ? users : null, { name: "daily users", empty });
-  line($("playCrash"), crash.length ? crash : null, { name: "crash rate", empty, fv: pct, axis: pct, tipOf: (p) => `crash rate · user-perceived ${pct(100 * Number(p.up))}` });
+  if (last && last.crash_rate != null) tiles.push([pct(100 * last.crash_rate), "crash rate", `user-perceived ${pct(100 * last.user_perceived_crash_rate)}`]);
+  $("kpisPlay").replaceChildren(...tiles.map(tile));
+  const empty = state || (gp.ok && gp.errors_error ? `Google Play did not answer: ${why(gp.errors_error)}` : "no data yet");
+  const verTip = (v) => Object.entries(v || {}).map(([code, x]) => `v${code}: ${x.crash_reports || 0}`).join(", ");
+  line($("playErrors"), ed.length ? ed.map((d) => ({ d: d.day, v: d.crash_reports, u: d.crash_users, ver: d.versions })) : null,
+    { name: "crash reports", empty, tipOf: (p) => `crash reports · ${fmt(p.u)} user${p.u === 1 ? "" : "s"}${p.v ? " · versionCode " + verTip(p.ver) : ""}` });
+  barsH($("playIssues"), issues.map((i) => ({ label: causeLabel(i.cause), value: i.reports, i })),
+    { color: () => css("--critical"), tip: (r) => `${shortJava(r.i.exception)} in ${shortJava(r.i.cause)} · ${fmt(r.i.reports)} reports · ${fmt(r.i.users)} users · versionCode ${r.i.first_version}${r.i.last_version !== r.i.first_version ? "–" + r.i.last_version : ""} · last ${r.i.last_seen}`,
+      empty: state || (gp.ok && gp.issues_error ? `Google Play did not answer: ${why(gp.issues_error)}` : "no crashes in 30 days") });
+  // Daily users and crash/ANR rates: Google returns no rows for a small app; the row appears once it does.
+  $("playRates").style.display = rows.length ? "" : "none";
+  if (rows.length) {
+    const users = rows.filter((r) => r.users != null).map((r) => ({ d: r.day, v: Number(r.users) }));
+    const crash = rows.filter((r) => r.crash_rate != null).map((r) => ({ d: r.day, v: 100 * Number(r.crash_rate), up: r.user_perceived_crash_rate }));
+    line($("playUsers"), users.length ? users : null, { name: "daily users" });
+    line($("playCrash"), crash.length ? crash : null, { name: "crash rate", fv: pct, axis: pct, tipOf: (p) => `crash rate · user-perceived ${pct(100 * Number(p.up))}` });
+  }
+  $("playNote").textContent = !gp.ok ? "" : gp.rates_error ? `Daily users and crash rates: Google Play did not answer (${why(gp.rates_error)}).`
+    : rows.length ? `Daily users and rates through ${gp.freshest} (Pacific).`
+    : `Daily users and crash rates: Google's Reporting API returned no rows for this app yet (asked for the 30 days to ${gp.freshest || "today"}); they appear here as soon as it does. Crash reports through ${gp.errors ? gp.errors.freshest : "—"}.`;
 }
 
 function render(d) {

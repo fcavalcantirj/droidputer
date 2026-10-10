@@ -177,9 +177,11 @@ async function github() {
   return out;
 }
 
-// Google Play: daily users and crash/ANR rates as Google computes them for Play installs (all versions). DAILY
-// rows are Pacific-time days (the API supports no other zone for DAILY). Google publishes a day after it closes,
-// so the window ends at the freshest day the metric set reports. Play changes daily: 30 min per warm instance.
+// Google Play, as Google itself records it for Play installs (all versions), via the Play Developer Reporting API:
+// crash/ANR reports per day (errorCountMetricSet), the crash issues behind them (errorIssues), and daily users +
+// crash/ANR rates (crash/anrRateMetricSet) -- the rate sets return no rows for a small app, so the page shows them
+// only once Google does. DAILY rows are Pacific-time days (the only zone Google offers for DAILY); each window ends
+// at the freshest day the metric set reports. Play changes daily: cached 30 min per warm instance.
 const PLAY_PKG = "com.droidputter";
 const PLAY_API = "https://playdeveloperreporting.googleapis.com/v1beta1";
 const PLAY_SCOPE = "https://www.googleapis.com/auth/playdeveloperreporting";
@@ -216,8 +218,10 @@ async function playAccessToken(sa) {
 }
 
 const ymd = (d) => `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
+const metric = (r, name) => Number(((r.metrics || []).find((m) => m.metric === name) || {}).decimalValue?.value) || 0;
+const dim = (r, name) => ((r.dimensions || []).find((d) => d.dimension === name) || {}).stringValue;
 
-/** Query rows -> { "YYYY-MM-DD": { field: number } } plus the metric names Google actually returned. */
+/** Rate-set rows -> { "YYYY-MM-DD": { field: number } } plus the metric names Google actually returned. */
 export function playRows(rows, fieldOf) {
   const days = {}, seen = new Set();
   for (const r of rows || []) {
@@ -232,12 +236,31 @@ export function playRows(rows, fieldOf) {
   return { days, seen: [...seen] };
 }
 
+/** errorCountMetricSet rows (by reportType) + (by reportType, versionCode) -> one row per day, every day kept. */
+export function playErrorDays(totalRows, versionRows) {
+  const days = {};
+  const at = (r) => (days[ymd(r.startTime)] ||= { day: ymd(r.startTime), crash_reports: 0, crash_users: 0, anr_reports: 0, anr_users: 0, versions: {} });
+  for (const r of totalRows || []) {
+    const t = String(dim(r, "reportType") || "").toLowerCase(), o = at(r);
+    if (t !== "crash" && t !== "anr") continue;
+    o[`${t}_reports`] += metric(r, "errorReportCount");
+    o[`${t}_users`] += metric(r, "distinctUsers");
+  }
+  for (const r of versionRows || []) {
+    const t = String(dim(r, "reportType") || "").toLowerCase(), v = dim(r, "versionCode"), n = metric(r, "errorReportCount");
+    if (!n || !v || (t !== "crash" && t !== "anr")) continue;
+    const o = at(r), x = (o.versions[v] ||= {});
+    x[`${t}_reports`] = (x[`${t}_reports`] || 0) + n;
+  }
+  return Object.values(days).sort((a, b) => a.day.localeCompare(b.day));
+}
+
 /** One metric set: its freshest DAILY day, then the PLAY_DAYS days ending there (endTime is exclusive). */
-async function playSet(token, set) {
+async function playQuery(token, set, metrics, dimensions = []) {
   const auth = { Authorization: `Bearer ${token}` };
   const meta = await fetchJson(`${PLAY_API}/apps/${PLAY_PKG}/${set}`, { headers: auth });
   const fresh = ((meta.freshnessInfo || {}).freshnesses || []).find((f) => f.aggregationPeriod === "DAILY");
-  if (!fresh || !fresh.latestEndTime) return { days: {}, seen: [], freshest: null };
+  if (!fresh || !fresh.latestEndTime) return { rows: [], freshest: null, start: null };
   const e = fresh.latestEndTime, tz = { id: (e.timeZone && e.timeZone.id) || PLAY_TZ };
   const s = new Date(Date.UTC(e.year, e.month - 1, e.day) - PLAY_DAYS * 86400000);
   const q = await fetchJson(`${PLAY_API}/apps/${PLAY_PKG}/${set}:query`, {
@@ -247,14 +270,29 @@ async function playSet(token, set) {
       timelineSpec: {
         aggregationPeriod: "DAILY",
         startTime: { year: s.getUTCFullYear(), month: s.getUTCMonth() + 1, day: s.getUTCDate(), timeZone: tz },
-        endTime: { year: e.year, month: e.month, day: e.day, timeZone: tz },
+        endTime: { year: e.year, month: e.month, day: e.day, timeZone: tz },   // a DAILY end carries no hours
       },
-      metrics: Object.keys(PLAY_SETS[set]),
-      pageSize: 1000,
+      ...(dimensions.length ? { dimensions } : {}),
+      metrics,
+      pageSize: 10000,
     }),
   });
   const last = new Date(Date.UTC(e.year, e.month - 1, e.day) - 86400000);   // the exclusive end's previous day
-  return { ...playRows(q.rows, PLAY_SETS[set]), freshest: last.toISOString().slice(0, 10), first_start: (q.rows || [])[0]?.startTime || null };
+  return { rows: q.rows || [], freshest: last.toISOString().slice(0, 10), start: s.toISOString().slice(0, 10) };
+}
+
+/** The crash/ANR issues Google grouped from those reports (UTC interval; Google rejects any other zone here). */
+async function playIssues(token, startDay) {
+  const p = new URLSearchParams({ pageSize: "50" });
+  const put = (k, d) => { p.set(`interval.${k}.year`, d.getUTCFullYear()); p.set(`interval.${k}.month`, d.getUTCMonth() + 1); p.set(`interval.${k}.day`, d.getUTCDate()); p.set(`interval.${k}.timeZone.id`, "UTC"); };
+  const today = new Date(); put("startTime", new Date(`${startDay}T00:00:00Z`)); put("endTime", new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())));
+  const j = await fetchJson(`${PLAY_API}/apps/${PLAY_PKG}/errorIssues:search?${p}`, { headers: { Authorization: `Bearer ${token}` } });
+  // Kept: what broke and how often. Dropped: issue ids and Play Console links (they carry account ids).
+  return (j.errorIssues || []).map((i) => ({
+    type: i.type, cause: i.cause, exception: i.location, reports: Number(i.errorReportCount) || 0, users: Number(i.distinctUsers) || 0,
+    first_version: (i.firstAppVersion || {}).versionCode || null, last_version: (i.lastAppVersion || {}).versionCode || null,
+    last_seen: String(i.lastErrorReportTime || "").slice(0, 10),
+  })).sort((a, b) => b.reports - a.reports);
 }
 
 async function play() {
@@ -268,26 +306,38 @@ async function play() {
   } catch {
     return { ok: false, reason: "PLAY_SERVICE_ACCOUNT_JSON is not a service-account key" };
   }
+  const why = (r) => r.status === "rejected" ? noEmails(r.reason && r.reason.message || r.reason) : null;
   try {
     const token = await playAccessToken(sa);
-    const [crash, anr] = await Promise.allSettled([playSet(token, "crashRateMetricSet"), playSet(token, "anrRateMetricSet")]);
-    if (crash.status === "rejected") throw crash.reason;
+    const [crash, anr, errTot, errVer] = await Promise.allSettled([
+      playQuery(token, "crashRateMetricSet", Object.keys(PLAY_SETS.crashRateMetricSet)),
+      playQuery(token, "anrRateMetricSet", Object.keys(PLAY_SETS.anrRateMetricSet)),
+      playQuery(token, "errorCountMetricSet", ["errorReportCount", "distinctUsers"], ["reportType"]),
+      playQuery(token, "errorCountMetricSet", ["errorReportCount", "distinctUsers"], ["reportType", "versionCode"]),
+    ]);
+    if ([crash, anr, errTot].every((r) => r.status === "rejected")) throw crash.reason;
+    const issues = await Promise.allSettled([playIssues(token, errTot.status === "fulfilled" && errTot.value.start || new Date(Date.now() - PLAY_DAYS * 864e5).toISOString().slice(0, 10))]).then((a) => a[0]);
+    const rc = crash.status === "fulfilled" ? playRows(crash.value.rows, PLAY_SETS.crashRateMetricSet) : { days: {}, seen: [] };
+    const ra = anr.status === "fulfilled" ? playRows(anr.value.rows, PLAY_SETS.anrRateMetricSet) : { days: {}, seen: [] };
     const days = {};
-    for (const part of [crash.value, anr.status === "fulfilled" ? anr.value : null]) {
-      for (const [d, v] of Object.entries((part && part.days) || {})) days[d] = { ...(days[d] || {}), ...v };
-    }
+    for (const part of [rc.days, ra.days]) for (const [d, v] of Object.entries(part)) days[d] = { ...(days[d] || {}), ...v };
     const daily = Object.keys(days).sort().map((day) => ({ day, ...days[day] }));
+    const errors = errTot.status === "fulfilled" ? playErrorDays(errTot.value.rows, errVer.status === "fulfilled" ? errVer.value.rows : []) : null;
     const body = {
       ok: true,
       source: "Google Play Developer Reporting API",
       package: PLAY_PKG,
       timezone: PLAY_TZ,
-      freshest: crash.value.freshest,
-      fields_seen: [...new Set([...crash.value.seen, ...(anr.status === "fulfilled" ? anr.value.seen : [])])],
-      first_start: crash.value.first_start,
-      anr: anr.status === "fulfilled" ? true : noEmails(anr.reason && anr.reason.message || anr.reason),
-      daily,
+      freshest: crash.status === "fulfilled" ? crash.value.freshest : null,
+      fields_seen: [...new Set([...rc.seen, ...ra.seen])],
+      daily,                                     // daily users + crash/ANR rates: empty until Google publishes them
       latest: daily.length ? daily[daily.length - 1] : null,
+      rates_error: why(crash),
+      anr: anr.status === "fulfilled" ? true : why(anr),
+      errors: errors && { freshest: errTot.value.freshest, start: errTot.value.start, daily: errors, versions_error: why(errVer) },
+      errors_error: why(errTot),
+      issues: issues.status === "fulfilled" ? issues.value : null,
+      issues_error: why(issues),
     };
     playCache = { at: Date.now(), body };
     return body;
