@@ -206,16 +206,18 @@ same need without depending on a second firmware.
   3. DONE (3e16e47): Ultimate-Remote #107, BT Keyboard/Mouse #106 (rebuilt on d2cd447: the proxy cache is per shim).
   4. DONE (3e16e47): VolosR #105, Tiny-Journal #108, System Monitor #109, audiospectrum #110, WebRadio #111 (its
      Wi-Fi list filters out networks below -80 dBm, so no key to show there).
-  5. Pigtail (#98): an interrupt-watchdog boot loop inside the BT controller init (`btdm_controller_task` …
-     `r_rwip_reset`, from logcat + CI ELF addr2line). Measure it first (compare the BT keyboard app's BLE init on the
-     same devkit), then fix. A refusal is Felipe's call.
+  5. Pigtail (#98, #112): an interrupt-watchdog boot loop inside the BT controller init (`btdm_controller_task` …
+     `r_rwip_reset`). MEASURED 2026-10-10 (a14991a, d7ec544): upstream 1.0.11 (same source, same esp-idf) runs Wi-Fi
+     promiscuous + BLE on the same devkit, ours loops; BLE alone (BT keyboard) is fine; NimBLE 2.5.1 refuted. Left:
+     M5Unified/M5GFX versions or the shim. Next single variable: the overlay libs without the shim (needs a scratch
+     path; the proxy always links the shim). A refusal is Felipe's call.
   6. Felipe's calls, pending:
      - Ultimate-Remote's 22:47 build exceeds the app's 20 min poll limit (`BuildFlow.kt` `MAX_POLL_MS`).
-     - Phone flashes fail ~1 in 4 (3 of 13 on 2026-10-10) -- ROOT CAUSE found (3e16e47): when the flasher closes the
-       link, the reader's catch can still see its transport, calls `onReaderFailed()` and 1.5 s later
-       `linkManager.reconnect()`, which (unlike the attach/permission receivers) ignores the raw session and re-opens
-       the device mid-flash. Fix = guard `reconnect()`/`onReaderFailed()` on `rawClient`, TDD; an app change, so a
-       Play release.
+     - Phone flashes failed ~1 in 4 (3 of 13 on 2026-10-10): the link's reconnect raced the flasher. FIXED in e3a9e71,
+       accepted on the phone (946008f: 10/10 on the R8 "dev" build, the race hit once and both guards blocked it).
+       Ships with the next Play release (v0.0.8) -- Felipe's word.
+     - Proxy cache key = newest commit touching shim/ + tools/overlay.py, so a revert or no-op commit rebuilds every
+       app; keying on the git tree hash of those paths would keep the cache. Low priority.
   7. GPIO over OTG assessment (Felipe offered an LED or a sensor): not started.
   8. HELLO board label (shim only, after 5; a shim commit moves the proxy's shim sha): `droidputter.cpp` hardcodes
      "cardputer-adv" into HELLO's board for every build, and the app forwards it to link_up / esp_panic / verdicts.
