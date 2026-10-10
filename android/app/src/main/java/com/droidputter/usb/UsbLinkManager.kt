@@ -70,7 +70,7 @@ class UsbLinkManager(
     interface RawDeviceClient {
         fun onDeviceReady(driver: UsbSerialDriver, connection: UsbDeviceConnection)
     }
-    private var rawClient: RawDeviceClient? = null
+    @Volatile private var rawClient: RawDeviceClient? = null   // set by the flasher on Dispatchers.IO, read on main
 
     fun beginRawSession(client: RawDeviceClient) {
         rawClient = client
@@ -164,8 +164,12 @@ class UsbLinkManager(
     /** Manual "Reconnect" action: re-probes for the ESP and, if present, re-requests permission
      * even from [LinkState.ERROR] or [LinkState.RECONNECTING] where no OS intent will retry it
      * on its own (e.g. permission was denied once, or the state machine gave up after missed
-     * pings but the device never physically detached). No-op if nothing is plugged in. */
+     * pings but the device never physically detached). No-op if nothing is plugged in, and while the
+     * flasher holds the port: the reader's catch calls this 1.5 s after the flasher closed the link, and
+     * the permission answer re-opened the device mid-flash (3 of 13 phone flashes, 2026-10-10 [REAL]);
+     * [endRawSession] re-probes once the flash is done. */
     fun reconnect() {
+        if (rawClient != null) return
         runCatching {
             findDevice()?.let { driver ->
                 dispatch(LinkEvent.DeviceAttached)
@@ -249,8 +253,10 @@ class UsbLinkManager(
     }
 
     /** The reader thread died with an IOException (device gone or re-enumerating). Same handling as
-     *  a physical detach: close the port and wait for the OS attach intent to bring it back. */
+     *  a physical detach: close the port and wait for the OS attach intent to bring it back. Not while the
+     *  flasher holds the port: [beginRawSession] closed the link on purpose and already moved the state. */
     fun onReaderFailed() {
+        if (rawClient != null) return
         dispatch(LinkEvent.Detached)
         closeTransport()
         emitStatus()
