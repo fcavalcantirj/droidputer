@@ -84,6 +84,39 @@ SHIM_GFX_HEADERS = {"M5GFX.h", "M5GFX.hpp", "M5Unified.h", "M5Unified.hpp", "M5C
 OTHER_GFX_HEADERS = {"TFT_eSPI.h": "TFT_eSPI", "Arduino_GFX_Library.h": "Arduino_GFX"}
 OTHER_GFX_INI = {"USER_SETUP_LOADED": "TFT_eSPI", "TFT_eSPI": "TFT_eSPI", "TFT_DATABUS_N": "Arduino_GFX", "GFX Library for Arduino": "Arduino_GFX"}
 PREBUILT_HINT = "flash its prebuilt from the LauncherHub tab instead (no phone mirror)"
+VIRTUAL_ENV = "m5cardputer-virtual"
+# TFT_eSPI apps the shim CAN mirror on a bare ESP32-S3 (the virtual env only): their TFT setup and build recipe are
+# known, so the patched TFT_eSPI (shim/apply-tft.sh: every pixel to the phone, no SPI, no pins) renders them, and
+# dp_kbdmatrix.h feeds phone keys to apps that scan the original Cardputer GPIO keyboard themselves. Measured
+# 2026-10-09 (M4 spike): ESP32Marauder MARAUDER_CARDPUTER builds unchanged on 2.0.17, 95.5 % of the min_spiffs app slot.
+# Not the m5cardputer env: there the keyboard emulation would hide a real Cardputer's keys and nothing mirrors.
+MARAUDER = {
+    "sketch": "esp32_marauder/esp32_marauder.ino",
+    "user_setup": "User_Setup_marauder_m5cardputer.h",
+    "flags": ["-DMARAUDER_CARDPUTER", "-Wl,-zmuldefs"],
+    # The library versions Marauder's own CI installs for the Cardputer target (.github/workflows/build_parallel.yml);
+    # TFT_eSPI is the shim's patched copy in lib/.
+    "lib_deps": [
+        "https://github.com/marian-craciunescu/ESP32Ping.git#1.6",
+        "https://github.com/ESP32Async/AsyncTCP.git#v3.4.8",
+        "https://github.com/stevemarple/MicroNMEA.git#v2.0.6",
+        "https://github.com/ESP32Async/ESPAsyncWebServer.git#v3.8.1",
+        "https://github.com/PaulStoffregen/XPT2046_Touchscreen.git#v1.4",
+        "https://github.com/Bodmer/JPEGDecoder.git#1.8.0",
+        "https://github.com/h2zero/NimBLE-Arduino.git#1.3.8",
+        "https://github.com/adafruit/Adafruit_NeoPixel.git#1.12.0",
+        "https://github.com/pololu/apa102-arduino.git#3.0.0",
+        "https://github.com/bblanchon/ArduinoJson.git#v6.18.2",
+        "https://github.com/ivanseidel/LinkedList.git#v1.3.3",
+        "https://github.com/plerup/espsoftwareserial.git#8.1.0",
+        "https://github.com/adafruit/Adafruit_BusIO.git#1.15.0",
+        "https://github.com/adafruit/Adafruit_MAX1704X.git#1.0.2",
+        "https://github.com/adafruit/Adafruit_TCA8418.git",
+    ],
+    "partitions": "min_spiffs.csv",
+    "kbd_matrix": True,
+}
+TFT_RECIPES = {"justcallmekoko/esp32marauder": MARAUDER, "marivaaldo/esp32marauder": MARAUDER, "serialgeist/esp32marauder": MARAUDER}
 
 
 def fail(cls: str, reason: str):
@@ -194,7 +227,7 @@ board_build.psram = true
 board_build.arduino.memory_type = qio_opi
 ; The devkitc-1 variant has no M5 G<n> pin names; dp_m5pins.h restores the StampS3 variant's set (miniacid: 'G2').
 build_flags = ${{env:m5cardputer.build_flags}} -DDROIDPUTTER_VIRTUAL=1 -UM5GFX_BOARD -DM5GFX_BOARD=26
-    -include ${{PROJECT_DIR}}/../../shim/lib/DroidputterShim/src/dp_m5pins.h
+    -include ${{PROJECT_DIR}}/../../shim/lib/DroidputterShim/src/dp_m5pins.h{virtual_extra}
 """
 
 
@@ -324,10 +357,18 @@ def committed_sketch(src: Path, name: str) -> Path | None:
     return hit[0] if hit else None
 
 
-def preflight(slug: str, name: str, src: Path, env_src: str | None):
+def preflight(slug: str, name: str, src: Path, env_src: str | None, build_env: str | None = None):
     """Decide BEFORE PlatformIO runs whether the repo can be a shim build at all, and fail() with a class when
     not -- 75 of the 174 failed proxy builds (2026-09-04..10-08) were repos that could never build, retried
     blind. Returns (ini, env name) for a PlatformIO repo, (None, sketch path) for an Arduino-IDE one."""
+    # A known TFT_eSPI recipe decides first: ESP32Marauder's root platformio.ini only runs its native unit tests,
+    # the firmware is the Arduino-IDE sketch the recipe names.
+    recipe = TFT_RECIPES.get(slug.lower())
+    if recipe and (src / recipe["sketch"]).is_file() and foreign_graphics(src, "") == "TFT_eSPI":
+        if build_env != VIRTUAL_ENV:
+            fail("unsupported-graphics", f"{slug} draws with TFT_eSPI, which the shim mirrors on a bare ESP32-S3 only; "
+                 f"build it for the bare ESP32-S3, or {PREBUILT_HINT}")
+        return None, src / recipe["sketch"]
     cp = read_ini(src / "platformio.ini")
     if cp:
         env = pick_env(cp, env_src)
@@ -358,10 +399,13 @@ def preflight(slug: str, name: str, src: Path, env_src: str | None):
     return None, inos[0]
 
 
-def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict:
+def generate(slug: str, name: str, env_src: str | None, ref: str | None, build_env: str | None = None) -> dict:
     src = clone(slug, name, ref)
     app = APPS / name
-    cp, target = preflight(slug, name, src, env_src)
+    cp, target = preflight(slug, name, src, env_src, build_env)
+    recipe = TFT_RECIPES.get(slug.lower())
+    if cp or not recipe or target != src / recipe["sketch"]:
+        recipe = None   # a TFT_eSPI recipe applies only when preflight picked its sketch (virtual env)
     info = {"name": name, "repo": slug, "src": str(src), "upstream_commit": upstream_commit(src)}
     lib_deps, flags, extra_board, src_dir, extra_lib_dirs, src_filter, ldf_mode = [], [], [], None, [], "", "deep+"
     sketch_dir: Path | None = None
@@ -441,6 +485,13 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
         # Plain deep: deep+ evaluates #if guards with the S3 config and then drops FS for the
         # framework's SD_MMC library, which audio libraries include unconditionally (WebRadio).
         ldf_mode = "deep"
+        if recipe:   # the recipe's dependency list is the app's own CI list: no inference, no libraries/ copies
+            lib_deps, extra_lib_dirs, ldf_mode = list(recipe["lib_deps"]), [], "deep+"
+            info["inferred_deps"] = []
+            info.pop("unresolved_includes", None)
+            info["recipe"] = "tft_espi"
+            flags += recipe["flags"] + ["-DUSER_SETUP_LOADED", f"-include {anchored(src / recipe['user_setup'], app)}"]
+            extra_board.append(f"board_build.partitions = {recipe['partitions']}")
     src_dir_abs = sketch_dir or src / src_dir
     if not src_dir_abs.exists():
         fail("src-dir-missing", f"{slug}: src_dir {src_dir} does not exist in the repo")
@@ -500,7 +551,12 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
             if not link.exists():
                 link.symlink_to(lib.resolve())
     lib_extra = "lib_extra_dirs = _vendored\n" if vendored_dir.is_dir() else ""
-    lib_deps = [M5UNIFIED] + lib_deps + ["symlink://../../shim/lib/DroidputterShim"]
+    # A TFT_eSPI recipe app never uses M5Unified; leaving it out keeps the firmware inside its own partition plan.
+    lib_deps = ([] if recipe else [M5UNIFIED]) + lib_deps + ["symlink://../../shim/lib/DroidputterShim"]
+    virtual_extra = ""
+    if recipe and recipe.get("kbd_matrix"):
+        virtual_extra = ("\n    -DDROIDPUTTER_KBD_MATRIX\n"
+                         "    -include ${PROJECT_DIR}/../../shim/lib/DroidputterShim/src/dp_kbdmatrix.h")
 
     app.mkdir(parents=True, exist_ok=True)
     ini = ENV_TEMPLATE.format(
@@ -509,6 +565,7 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
         src_filter=src_filter, ldf_mode=ldf_mode, lib_extra=lib_extra,
         lib_deps="\n".join(f"    {d}" for d in lib_deps),
         build_flags="\n".join(f"    {f}" for f in flags),
+        virtual_extra=virtual_extra,
     )
     (app / "platformio.ini").write_text(ini)
     info.update(app=str(app.relative_to(REPO_ROOT)), src_dir=str(src_dir_abs), lib_deps=lib_deps)
@@ -517,6 +574,9 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None) -> dict
         # them once if absent), so no libdeps dir is passed any more.
         r = subprocess.run(["bash", str(REPO_ROOT / "shim" / "apply.sh"), str(app)], capture_output=True, text=True)
         info["apply"] = "ok" if r.returncode == 0 else (r.stdout + r.stderr)[-800:]
+    if recipe:
+        r = subprocess.run(["bash", str(REPO_ROOT / "shim" / "apply-tft.sh"), str(app)], capture_output=True, text=True)
+        info["apply_tft"] = "ok" if r.returncode == 0 else (r.stdout + r.stderr)[-800:]
     return info
 
 
@@ -581,7 +641,7 @@ def main() -> int:
     a = ap.parse_args()
     slug = slug_of(a.repo)
     name = a.name or slug.split("/")[1].lower()
-    info = generate(slug, name, a.env_src, a.ref)
+    info = generate(slug, name, a.env_src, a.ref, a.env)
     if a.build or a.upload:
         info.update(build(REPO_ROOT / info["app"], a.upload, a.env))
         # Arduino-IDE repos straddle the NimBLE 1.x -> 2.x API break: try the other major once.

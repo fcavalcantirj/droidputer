@@ -1,0 +1,223 @@
+diff --color -ruN a/TFT_eSPI/Processors/TFT_eSPI_Droidputter.c b/TFT_eSPI/Processors/TFT_eSPI_Droidputter.c
+--- a/TFT_eSPI/Processors/TFT_eSPI_Droidputter.c	1969-12-31 21:00:00
++++ b/TFT_eSPI/Processors/TFT_eSPI_Droidputter.c	2026-10-09 22:25:10
+@@ -0,0 +1,119 @@
++// DROIDPUTTER virtual processor implementation, #included by TFT_eSPI.cpp like every TFT_eSPI processor file.
++// Default DPT_MODE 2. Mode 1 is the 2026-10-09 coverage diagnostic (M4 spike): it proved that teeing only
++// setWindow/pushBlock/pushPixels/drawPixel misses TFT_eSPI's direct tft_Write_* paths (drawChar fast path, pushColor).
++// DPT_MODE 1 = function tee: setWindow/drawPixel (TFT_eSPI.cpp) + pushBlock/pushPixels (here) feed dp::, the bus
++//              decoder below only COUNTS pixels -> coverage = dpv_tee_px / dpv_bus_px.
++// DPT_MODE 2 = virtual bus: the decoder itself feeds dp:: (CASET/PASET -> window at RAMWR, RAMWR data -> pixels),
++//              plus pushBlock/pushPixels -> every pixel TFT_eSPI emits reaches the shadow by construction.
++#include <droidputter.h>
++// TFT_eSPI.cpp only: on a bare S3 module with octal PSRAM the Cardputer TFT pins 33..37 ARE the PSRAM bus,
++// so TFT_eSPI must never pinMode/digitalWrite them. The app still sees its own pin macros.
++#undef TFT_CS
++#undef TFT_DC
++#undef TFT_RST
++#undef TFT_MOSI
++#undef TFT_SCLK
++#undef TFT_MISO
++#undef TFT_WR
++#undef TFT_RD
++#undef TOUCH_CS
++#undef TFT_SDA_READ
++#undef CGRAM_OFFSET   // logical coordinates on the bus: no panel-RAM offsets to undo
++#define TFT_MISO -1
++#define TFT_RD -1
++#ifndef DPT_MODE
++#define DPT_MODE 2
++#endif
++
++uint32_t dpv_bus_px = 0, dpv_tee_px = 0, dpv_windows = 0, dpv_cmds = 0, dpv_odd = 0;
++static uint8_t dpv_data = 0, dpv_cmd = 0, dpv_n = 0, dpv_hi = 0, dpv_have_hi = 0;
++static uint16_t dpv_par[2], dpv_x0, dpv_x1, dpv_y0, dpv_y1;
++
++static inline uint32_t dpv_raw(uint16_t c) { return (uint32_t)((c >> 8) | ((c & 0xFF) << 8)); }  // wire order: MSB first
++
++void dpv_dc(uint8_t data) { dpv_data = data; }
++
++static void dpv_word(uint16_t v) {
++  if (dpv_cmd == TFT_RAMWR) {
++    dpv_bus_px++;
++#if DPT_MODE == 2
++    dp::repeat(dpv_raw(v), 1);
++#endif
++    return;
++  }
++  if (dpv_cmd == TFT_CASET || dpv_cmd == TFT_PASET) {
++    if (dpv_n < 2) dpv_par[dpv_n] = v;
++    if (++dpv_n == 2) {
++      if (dpv_cmd == TFT_CASET) { dpv_x0 = dpv_par[0]; dpv_x1 = dpv_par[1]; }
++      else { dpv_y0 = dpv_par[0]; dpv_y1 = dpv_par[1]; }
++    }
++  }
++}
++
++void dpv_w8(uint8_t b) {
++  if (!dpv_data) {   // command byte
++    dpv_cmd = b; dpv_n = 0; dpv_have_hi = 0; dpv_cmds++;
++    if (b == TFT_RAMWR) {
++      dpv_windows++;
++#if DPT_MODE == 2
++      dp::window(dpv_x0, dpv_y0, dpv_x1, dpv_y1);
++#endif
++    }
++    return;
++  }
++  if (!dpv_have_hi) { dpv_hi = b; dpv_have_hi = 1; return; }   // data bytes pair up big-endian
++  dpv_have_hi = 0;
++  dpv_word((uint16_t)((dpv_hi << 8) | b));
++}
++
++void dpv_w16(uint16_t v) {
++  if (!dpv_data) { dpv_w8((uint8_t)v); return; }
++  if (dpv_have_hi) { dpv_odd++; dpv_have_hi = 0; }
++  dpv_word(v);
++}
++
++// The `spi` object every TFT_eSPI.cpp path talks to: a no-op stand-in, never the real SPIClass (an un-begun
++// SPIClass asserts on its NULL param mutex in beginTransaction).
++struct DpvSpi {
++  template <typename... A> void begin(A...) {}
++  void end() {}
++  template <typename S> void beginTransaction(S) {}
++  void endTransaction() {}
++  void setFrequency(uint32_t) {}
++  template <typename... A> void pins(A...) {}
++  void setHwCs(bool) {}
++  uint8_t transfer(uint8_t b) { dpv_w8(b); return 0; }
++  uint16_t transfer16(uint16_t v) { dpv_w16(v); return 0; }
++};
++static DpvSpi dpv_spi;
++#define spi dpv_spi
++
++void TFT_eSPI::pushBlock(uint16_t color, uint32_t len) {
++  dpv_bus_px += len; dpv_tee_px += len;
++  dp::repeat(dpv_raw(color), len);
++}
++
++void TFT_eSPI::pushPixels(const void* data_in, uint32_t len) {
++  dpv_bus_px += len; dpv_tee_px += len;
++  const uint16_t* d = (const uint16_t*)data_in;
++  if (!_swapBytes) { dp::bytes((const uint8_t*)d, len * 2); return; }   // already wire order in memory
++  uint8_t buf[128];
++  while (len) {
++    uint32_t k = len < 64 ? len : 64;
++    for (uint32_t i = 0; i < k; i++) { buf[2 * i] = d[i] >> 8; buf[2 * i + 1] = d[i] & 0xFF; }
++    dp::bytes(buf, k * 2);
++    d += k; len -= k;
++  }
++}
++
++void TFT_eSPI::pushSwapBytePixels(const void* data_in, uint32_t len) {
++  bool s = _swapBytes; _swapBytes = true; pushPixels(data_in, len); _swapBytes = s;
++}
++
++bool TFT_eSPI::initDMA(bool) { return false; }
++void TFT_eSPI::deInitDMA(void) {}
++bool TFT_eSPI::dmaBusy(void) { return false; }
++void TFT_eSPI::dmaWait(void) {}
++void TFT_eSPI::pushPixelsDMA(uint16_t* image, uint32_t len) { pushPixels(image, len); }
++void TFT_eSPI::pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t const* image) { pushImage(x, y, w, h, image); }
++void TFT_eSPI::pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t* image, uint16_t*) { pushImage(x, y, w, h, image); }
+diff --color -ruN a/TFT_eSPI/Processors/TFT_eSPI_Droidputter.h b/TFT_eSPI/Processors/TFT_eSPI_Droidputter.h
+--- a/TFT_eSPI/Processors/TFT_eSPI_Droidputter.h	1969-12-31 21:00:00
++++ b/TFT_eSPI/Processors/TFT_eSPI_Droidputter.h	2026-10-09 22:25:10
+@@ -0,0 +1,36 @@
++// DROIDPUTTER virtual processor for TFT_eSPI (shim/patches/TFT_eSPI-2.5.43-droidputter.patch), selected by
++// -DDROIDPUTTER_VIRTUAL: no SPI peripheral, no GPIO; every byte TFT_eSPI would put on the bus goes to dpv_*
++// (decoded into the phone mirror in TFT_eSPI_Droidputter.c). The phone is the app's only screen.
++// Pins stay defined for the APP (Marauder writes TFT_CS itself); TFT_eSPI.cpp loses them in the .c (no pinMode ever).
++#ifndef _TFT_eSPI_DROIDPUTTERH_
++#define _TFT_eSPI_DROIDPUTTERH_
++#include <stdint.h>
++
++#define PROCESSOR_ID 0x0D70
++#define SET_BUS_WRITE_MODE
++#define SET_BUS_READ_MODE
++#define DMA_BUSY_CHECK
++#define INIT_TFT_DATA_BUS
++#define SPI_BUSY_CHECK
++
++
++void dpv_dc(uint8_t data);
++void dpv_w8(uint8_t b);
++void dpv_w16(uint16_t v);
++
++#define DC_C dpv_dc(0)
++#define DC_D dpv_dc(1)
++#define CS_L
++#define CS_H
++#define T_CS_L
++#define T_CS_H
++#define tft_Write_8(C)     dpv_w8((uint8_t)(C))
++#define tft_Write_16(C)    dpv_w16((uint16_t)(C))
++#define tft_Write_16N(C)   dpv_w16((uint16_t)(C))
++#define tft_Write_16S(C)   dpv_w16((uint16_t)((((uint16_t)(C)) >> 8) | (((uint16_t)(C)) << 8)))
++#define tft_Write_32(C)    dpv_w16((uint16_t)((C) >> 16)); dpv_w16((uint16_t)(C))
++#define tft_Write_32C(C,D) dpv_w16((uint16_t)(C)); dpv_w16((uint16_t)(D))
++#define tft_Write_32D(C)   dpv_w16((uint16_t)(C)); dpv_w16((uint16_t)(C))
++#define tft_Read_8()       0
++
++#endif
+diff --color -ruN a/TFT_eSPI/TFT_eSPI.cpp b/TFT_eSPI/TFT_eSPI.cpp
+--- a/TFT_eSPI/TFT_eSPI.cpp	2026-10-09 22:24:56
++++ b/TFT_eSPI/TFT_eSPI.cpp	2026-10-09 22:24:56
+@@ -15,7 +15,9 @@
+ 
+ #include "TFT_eSPI.h"
+ 
+-#if defined (ESP32)
++#if defined (DROIDPUTTER_VIRTUAL)
++  #include "Processors/TFT_eSPI_Droidputter.c"
++#elif defined (ESP32)
+   #if defined(CONFIG_IDF_TARGET_ESP32S3)
+     #include "Processors/TFT_eSPI_ESP32_S3.c" // Tested with SPI and 8-bit parallel
+   #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+@@ -3360,6 +3362,9 @@
+   //begin_tft_write(); // Must be called before setWindow
+   addr_row = 0xFFFF;
+   addr_col = 0xFFFF;
++#if defined (DROIDPUTTER_VIRTUAL) && DPT_MODE == 1
++  dp::window(x0, y0, x1, y1);
++#endif
+ 
+ #if defined (ILI9225_DRIVER)
+   if (rotation & 0x01) { transpose(x0, y0); transpose(x1, y1); }
+@@ -3586,6 +3591,9 @@
+ 
+   // Range checking
+   if ((x < _vpX) || (y < _vpY) ||(x >= _vpW) || (y >= _vpH)) return;
++#if defined (DROIDPUTTER_VIRTUAL) && DPT_MODE == 1
++  dp::pixel(x, y, dpv_raw((uint16_t)color)); dpv_tee_px++;
++#endif
+ 
+ #ifdef CGRAM_OFFSET
+   x+=colstart;
+@@ -5942,7 +5950,11 @@
+ #if !defined (TFT_PARALLEL_8_BIT) && !defined (RP2040_PIO_INTERFACE)
+ SPIClass& TFT_eSPI::getSPIinstance(void)
+ {
++#if defined (DROIDPUTTER_VIRTUAL)
++  return SPI;
++#else
+   return spi;
++#endif
+ }
+ #endif
+ 
+diff --color -ruN a/TFT_eSPI/TFT_eSPI.h b/TFT_eSPI/TFT_eSPI.h
+--- a/TFT_eSPI/TFT_eSPI.h	2026-10-09 22:24:55
++++ b/TFT_eSPI/TFT_eSPI.h	2026-10-09 22:24:56
+@@ -93,7 +93,9 @@
+ #endif
+ 
+ // Include the processor specific drivers
+-#if defined(CONFIG_IDF_TARGET_ESP32S3)
++#if defined(DROIDPUTTER_VIRTUAL)
++  #include "Processors/TFT_eSPI_Droidputter.h"
++#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+   #include "Processors/TFT_eSPI_ESP32_S3.h"
+ #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+   #include "Processors/TFT_eSPI_ESP32_C3.h"
