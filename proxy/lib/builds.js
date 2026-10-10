@@ -1,4 +1,4 @@
-// Build orchestration against build-app.yml: resolve the shim commit, reuse a fresh successful run or
+// Build orchestration against build-app.yml: resolve the build identity (content key + commit), reuse a fresh successful run or
 // dispatch a new one, and map a run to the v1 status object the phone polls.
 //
 // Correlation is by the run's display_title, which GitHub sets to the workflow's run-name:
@@ -57,7 +57,7 @@ export function countInFlight(runs) {
   return runs.filter((r) => IN_FLIGHT_STATUSES.has(r.status)).length;
 }
 
-/** @type {Map<string, {sha: string, at: number}>} keyed by repo */
+/** @type {Map<string, {commit: string, key: string, at: number}>} keyed by repo */
 const shimCache = new Map();
 
 export function _resetShimCache() {
@@ -65,17 +65,20 @@ export function _resetShimCache() {
 }
 
 /**
- * Short sha of the newest commit touching shim/ on main, cached 60 s per repo.
+ * The build identity, cached 60 s per repo: `key` = the content of shim/ + tools/overlay.py on main (run name shim=,
+ * the cache key: a revert or no-op commit keeps it), `commit` = the newest commit touching them (shim_commit).
  * @param {import("./github.js").GitHub} gh
  * @param {() => number} [now]
+ * @returns {Promise<{commit: string, key: string}>}
  */
-export async function resolveShimCommit(gh, now = Date.now) {
+export async function resolveShim(gh, now = Date.now) {
   const hit = shimCache.get(gh.repo);
   const t = now();
-  if (hit && t - hit.at < SHIM_TTL_MS) return hit.sha;
-  const sha = await gh.latestShimCommit();
-  shimCache.set(gh.repo, { sha, at: t });
-  return sha;
+  if (hit && t - hit.at < SHIM_TTL_MS) return hit;
+  const [commit, key] = await Promise.all([gh.latestShimCommit(), gh.shimContentKey()]);
+  const v = { commit, key, at: t };
+  shimCache.set(gh.repo, v);
+  return v;
 }
 
 /** @typedef {{status: number, body: Record<string, unknown>}} Result */
@@ -88,11 +91,11 @@ export async function resolveShimCommit(gh, now = Date.now) {
  * @returns {Promise<Result>}
  */
 export async function createBuild(gh, input, { now = Date.now, uuid = randomUUID } = {}) {
-  const shim = await resolveShimCommit(gh, now);
+  const { commit, key: shim } = await resolveShim(gh, now);
   const runs = await gh.listRuns();
   const prefix = titlePrefix({ repo: input.repo, ref: input.ref, env: input.env, shim });
   const same = runs.filter((r) => titleOf(r).startsWith(prefix) && requestIdOf(titleOf(r)));
-  const echo = { repo: input.repo, ref: input.ref, name: input.name, env: input.env, shim_commit: shim };
+  const echo = { repo: input.repo, ref: input.ref, name: input.name, env: input.env, shim_commit: commit };
 
   const fresh = same.find(
     (r) => r.status === "completed" && r.conclusion === "success" && now() - Date.parse(r.created_at) < CACHE_MAX_AGE_MS,

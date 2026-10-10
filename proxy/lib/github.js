@@ -4,7 +4,7 @@
 const API_VERSION = "2022-11-28";
 const USER_AGENT = "droidputter-proxy";
 
-/** Paths on main whose newest commit is the build's "shim" identity (run-name shim=, cache key). */
+/** Paths on main that shape a build: their content is the cache key (run-name shim=), their newest commit is shim_commit. */
 export const SHIM_PATHS = Object.freeze(["shim", "tools/overlay.py"]);
 
 export class GitHubError extends Error {
@@ -97,6 +97,36 @@ export function createGitHub({ token, repo, workflow, apiBase = "https://api.git
       }
       if (!best) throw new GitHubError(`no commit touching ${SHIM_PATHS.join(" or ")} on main`, 502, `${base}/commits`);
       return best.sha.slice(0, 7);
+    },
+
+    /**
+     * The build CONTENT on main, "<shim/ tree>.<tools/overlay.py blob>" (7 hex each, one part per SHIM_PATHS entry):
+     * the cache key. Two commits with the same content build the same firmware, so a revert or a no-op commit reuses
+     * the cache (2026-10-10: reverting f381e44 rebuilt every app although main's content was d2cd447's again).
+     * Main's root tree plus one subtree per nested path, each fetched once.
+     */
+    async shimContentKey() {
+      /** @type {Map<string, any[]>} */
+      const trees = new Map();
+      const entries = async (sha) => {
+        if (!trees.has(sha)) {
+          const j = await api(`${base}/git/trees/${sha}`);
+          trees.set(sha, Array.isArray(j && j.tree) ? j.tree : []);
+        }
+        return /** @type {any[]} */ (trees.get(sha));
+      };
+      const parts = [];
+      for (const path of SHIM_PATHS) {
+        let at = "main";
+        let entry = null;
+        for (const name of path.split("/")) {
+          entry = (await entries(at)).find((e) => e && e.path === name);
+          if (!entry || typeof entry.sha !== "string") throw new GitHubError(`main has no ${path}`, 502, `${base}/git/trees/main`);
+          at = entry.sha;
+        }
+        parts.push(at.slice(0, 7));
+      }
+      return parts.join(".");
     },
 
     /**

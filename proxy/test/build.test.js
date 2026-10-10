@@ -3,7 +3,7 @@ import { beforeEach, describe, test } from "node:test";
 import { handle } from "../api/build.js";
 import { vercel } from "../lib/http.js";
 import { IN_FLIGHT_LIMIT, _resetShimCache, envOf, nameOf, runTitle, titlePrefix } from "../lib/builds.js";
-import { SHIM, TOKEN, UPSTREAM, ctxWith, fakeGitHub, invoke, makeRun, parse, req } from "./helpers.js";
+import { SHIM, SHIM_COMMIT, OVERLAY_BLOB, SHIM_TREE, TOKEN, UPSTREAM, ctxWith, fakeGitHub, invoke, makeRun, parse, req } from "./helpers.js";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const VIRTUAL = "m5cardputer-virtual";
@@ -38,7 +38,7 @@ describe("POST /api/build", () => {
     const fake = fakeGitHub({ runs: [makeRun({ id: 501, title: title({ requestId: "req-501" }), ageMs: 3 * 3600e3 })] });
     const res = await handle(post({ repo: UPSTREAM }), ctxWith(fake));
     assert.equal(res.status, 200);
-    assert.deepEqual(parse(res), { request_id: "req-501", repo: UPSTREAM, ref: "", name: "stellar-map", env: "m5cardputer", shim_commit: SHIM, cached: true, run_id: "501" });
+    assert.deepEqual(parse(res), { request_id: "req-501", repo: UPSTREAM, ref: "", name: "stellar-map", env: "m5cardputer", shim_commit: SHIM_COMMIT, cached: true, run_id: "501" });
     assert.equal(fake.dispatches.length, 0);
   });
 
@@ -48,7 +48,7 @@ describe("POST /api/build", () => {
     assert.equal(res.status, 202);
     const body = parse(res);
     assert.match(body.request_id, UUID_RE);
-    assert.deepEqual(body, { request_id: body.request_id, repo: UPSTREAM, ref: "", name: "stellar-map", env: "m5cardputer", shim_commit: SHIM, cached: false });
+    assert.deepEqual(body, { request_id: body.request_id, repo: UPSTREAM, ref: "", name: "stellar-map", env: "m5cardputer", shim_commit: SHIM_COMMIT, cached: false });
     assert.equal(fake.dispatches.length, 1);
     assert.deepEqual(fake.dispatches[0], { ref: "main", inputs: { repo: UPSTREAM, name: "stellar-map", ref: "", env: "m5cardputer", request_id: body.request_id, shim: SHIM } });
   });
@@ -58,7 +58,7 @@ describe("POST /api/build", () => {
     const res = await handle(post({ repo: UPSTREAM, env: VIRTUAL }), ctxWith(fake));
     assert.equal(res.status, 202);
     const body = parse(res);
-    assert.deepEqual(body, { request_id: body.request_id, repo: UPSTREAM, ref: "", name: "stellar-map", env: VIRTUAL, shim_commit: SHIM, cached: false });
+    assert.deepEqual(body, { request_id: body.request_id, repo: UPSTREAM, ref: "", name: "stellar-map", env: VIRTUAL, shim_commit: SHIM_COMMIT, cached: false });
     assert.deepEqual(fake.dispatches[0].inputs, { repo: UPSTREAM, name: "stellar-map", ref: "", env: VIRTUAL, request_id: body.request_id, shim: SHIM });
   });
 
@@ -85,8 +85,8 @@ describe("POST /api/build", () => {
     assert.equal(fake.dispatches[0].inputs.env, "m5cardputer");
 
     fake = fakeGitHub({ runs: [adv, virt] });
-    assert.deepEqual(parse(await handle(post({ repo: UPSTREAM, env: VIRTUAL }), ctxWith(fake))), { request_id: "virt-fresh", repo: UPSTREAM, ref: "", name: "stellar-map", env: VIRTUAL, shim_commit: SHIM, cached: true, run_id: "602" });
-    assert.deepEqual(parse(await handle(post({ repo: UPSTREAM }), ctxWith(fake))), { request_id: "adv-fresh", repo: UPSTREAM, ref: "", name: "stellar-map", env: "m5cardputer", shim_commit: SHIM, cached: true, run_id: "601" });
+    assert.deepEqual(parse(await handle(post({ repo: UPSTREAM, env: VIRTUAL }), ctxWith(fake))), { request_id: "virt-fresh", repo: UPSTREAM, ref: "", name: "stellar-map", env: VIRTUAL, shim_commit: SHIM_COMMIT, cached: true, run_id: "602" });
+    assert.deepEqual(parse(await handle(post({ repo: UPSTREAM }), ctxWith(fake))), { request_id: "adv-fresh", repo: UPSTREAM, ref: "", name: "stellar-map", env: "m5cardputer", shim_commit: SHIM_COMMIT, cached: true, run_id: "601" });
     assert.equal(fake.dispatches.length, 0);
 
     fake = fakeGitHub({ runs: [makeRun({ id: 603, title: title({ requestId: "adv-running" }), status: "in_progress" })] });
@@ -122,7 +122,7 @@ describe("POST /api/build", () => {
     const fake = fakeGitHub({ runs: [makeRun({ id: 77, title: title({ requestId: "req-77" }), status: "in_progress" })] });
     const res = await handle(post({ repo: UPSTREAM }), ctxWith(fake));
     assert.equal(res.status, 202);
-    assert.deepEqual(parse(res), { request_id: "req-77", repo: UPSTREAM, ref: "", name: "stellar-map", env: "m5cardputer", shim_commit: SHIM, cached: false, run_id: "77" });
+    assert.deepEqual(parse(res), { request_id: "req-77", repo: UPSTREAM, ref: "", name: "stellar-map", env: "m5cardputer", shim_commit: SHIM_COMMIT, cached: false, run_id: "77" });
     assert.equal(fake.dispatches.length, 0);
   });
 
@@ -130,7 +130,7 @@ describe("POST /api/build", () => {
     const fake = fakeGitHub({ runs: [makeRun({ id: 78, title: title({ env: VIRTUAL, requestId: "req-78" }), status: "queued" })] });
     const res = await handle(post({ repo: UPSTREAM, env: VIRTUAL }), ctxWith(fake));
     assert.equal(res.status, 202);
-    assert.deepEqual(parse(res), { request_id: "req-78", repo: UPSTREAM, ref: "", name: "stellar-map", env: VIRTUAL, shim_commit: SHIM, cached: false, run_id: "78" });
+    assert.deepEqual(parse(res), { request_id: "req-78", repo: UPSTREAM, ref: "", name: "stellar-map", env: VIRTUAL, shim_commit: SHIM_COMMIT, cached: false, run_id: "78" });
     assert.equal(fake.dispatches.length, 0);
   });
 
@@ -203,6 +203,49 @@ describe("POST /api/build", () => {
 
   test("other methods -> 405", async () => {
     assert.equal((await handle(req({ method: "DELETE", path: "/api/build" }), ctxWith(fakeGitHub()))).status, 405);
+  });
+});
+
+describe("build identity = content of shim/ + tools/overlay.py, not the newest commit", () => {
+  test("the key is <shim tree 7>.<overlay.py blob 7> of main, dispatched as the shim input", async () => {
+    const fake = fakeGitHub();
+    const body = parse(await handle(post({ repo: UPSTREAM }), ctxWith(fake)));
+    assert.equal(SHIM, `${SHIM_TREE.slice(0, 7)}.${OVERLAY_BLOB.slice(0, 7)}`);
+    assert.equal(fake.dispatches[0].inputs.shim, SHIM);
+    assert.equal(body.shim_commit, SHIM_COMMIT);   // the response still names the commit main is at
+  });
+
+  test("a revert or no-op commit (new sha, same content) reuses the fresh build", async () => {
+    // d7ec544 reverted f381e44: newest commit changed, shim/ tree and overlay.py blob are d2cd447's again.
+    const built = makeRun({ id: 950, title: runTitle({ repo: UPSTREAM, shim: SHIM, requestId: "before-revert" }), ageMs: 3600e3 });
+    const fake = fakeGitHub({ shimSha: "d7ec544000000000000000000000000000000000", runs: [built] });
+    const res = await handle(post({ repo: UPSTREAM }), ctxWith(fake));
+    assert.equal(res.status, 200);
+    assert.deepEqual(parse(res), { request_id: "before-revert", repo: UPSTREAM, ref: "", name: "stellar-map", env: "m5cardputer", shim_commit: "d7ec544", cached: true, run_id: "950" });
+    assert.equal(fake.dispatches.length, 0);
+  });
+
+  test("different content is a different build, even when it is the same newest commit", async () => {
+    const built = makeRun({ id: 951, title: runTitle({ repo: UPSTREAM, shim: SHIM, requestId: "old-content" }) });
+    const fake = fakeGitHub({ runs: [built], overlayBlob: "0ve4a7e000000000000000000000000000000009" });
+    const res = await handle(post({ repo: UPSTREAM }), ctxWith(fake));
+    assert.equal(res.status, 202);
+    assert.equal(fake.dispatches[0].inputs.shim, `${SHIM_TREE.slice(0, 7)}.0ve4a7e`);
+  });
+
+  test("the key is cached 60 s with the commit; a tree failure surfaces as 502 without the token", async () => {
+    let t = 2_000_000;
+    const fake = fakeGitHub();
+    const ctx = ctxWith(fake, { now: () => t });
+    await handle(post({ repo: UPSTREAM }), ctx);
+    t += 59_000;
+    await handle(post({ repo: UPSTREAM }), ctx);
+    assert.equal(fake.calls.filter((c) => c.url.includes("/git/trees/main")).length, 1);
+    await assert.rejects(handle(post({ repo: UPSTREAM }), ctxWith(fakeGitHub({ failTrees: true }))), (e) => {
+      assert.equal(e.status, 502);
+      assert.ok(!e.message.includes(TOKEN));
+      return true;
+    });
   });
 });
 

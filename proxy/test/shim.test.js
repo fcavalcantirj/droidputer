@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { beforeEach, describe, test } from "node:test";
 import { handle } from "../api/shim.js";
 import { _resetShimCache, runTitle } from "../lib/builds.js";
-import { SHIM, ctxWith, fakeGitHub, makeRun, parse, req } from "./helpers.js";
+import { SHIM, SHIM_COMMIT, OVERLAY_BLOB, SHIM_TREE, ctxWith, fakeGitHub, makeRun, parse, req } from "./helpers.js";
 
 beforeEach(() => _resetShimCache());
 
@@ -16,7 +16,7 @@ describe("GET /api/shim", () => {
     ];
     const res = await handle(req({ path: "/api/shim" }), ctxWith(fakeGitHub({ runs })));
     assert.equal(res.status, 200);
-    assert.deepEqual(parse(res), { shim_commit: SHIM, repo: "fcavalcantirj/droidputter", workflow: "build-app.yml", builds_in_flight: 2 });
+    assert.deepEqual(parse(res), { shim_commit: SHIM_COMMIT, repo: "fcavalcantirj/droidputter", workflow: "build-app.yml", builds_in_flight: 2 });
   });
 
   test("shim commit cached 60 s, runs always fresh", async () => {
@@ -52,7 +52,7 @@ describe("shim identity = newest of shim/ and tools/overlay.py", () => {
       return parse(res).shim_commit;
     };
     assert.equal(await ask({ sha: "0v3r1ay0000000000000000000000000000000000", date: "2026-09-05T16:00:00Z" }), "0v3r1ay");
-    assert.equal(await ask({ sha: "01d0000000000000000000000000000000000000", date: "2026-09-01T00:00:00Z" }), SHIM.slice(0, 7));
-    assert.equal(await ask(null), SHIM.slice(0, 7));
+    assert.equal(await ask({ sha: "01d0000000000000000000000000000000000000", date: "2026-09-01T00:00:00Z" }), SHIM_COMMIT);
+    assert.equal(await ask(null), SHIM_COMMIT);
   });
 });

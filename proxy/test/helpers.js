@@ -10,7 +10,14 @@ export const API = "https://gh.test";
 export const BLOB = "https://blob.test";
 export const TOKEN = "ghp_test_token_never_leaks";
 export const SHIM_SHA = "abc1234def5678901234567890abcdef12345678";
-export const SHIM = SHIM_SHA.slice(0, 7);
+/** The newest commit touching shim/ or tools/overlay.py: what responses echo as shim_commit. */
+export const SHIM_COMMIT = SHIM_SHA.slice(0, 7);
+/** main's shim/ tree and tools/overlay.py blob: the build CONTENT. */
+export const SHIM_TREE = "5a5a5a5000000000000000000000000000000001";
+export const TOOLS_TREE = "7007007000000000000000000000000000000002";
+export const OVERLAY_BLOB = "0b0b0b0000000000000000000000000000000003";
+/** The build identity in run names (shim=) and the cache key: the content, not the commit. */
+export const SHIM = `${SHIM_TREE.slice(0, 7)}.${OVERLAY_BLOB.slice(0, 7)}`;
 export const UPSTREAM = "wisnc/stellar-map";
 
 /** @param {Uint8Array} bytes */
@@ -94,7 +101,8 @@ export function makeArtifact(id, { name = "stellar-map-m5cardputer", expired = f
  */
 export const SHIM_DATE = "2026-09-04T20:00:00Z";
 
-export function fakeGitHub({ shimSha = SHIM_SHA, runs = [], runsPage2 = [], artifacts = {}, zips = {}, failCommits = false, issueStatuses = [], overlayCommit = null } = {}) {
+export function fakeGitHub({ shimSha = SHIM_SHA, runs = [], runsPage2 = [], artifacts = {}, zips = {}, failCommits = false, issueStatuses = [], overlayCommit = null,
+  shimTree = SHIM_TREE, overlayBlob = OVERLAY_BLOB, failTrees = false } = {}) {
   /** @type {{method: string, url: string, headers: Record<string, string>, body?: string}[]} */
   const calls = [];
   /** @type {any[]} */
@@ -137,6 +145,21 @@ export function fakeGitHub({ shimSha = SHIM_SHA, runs = [], runsPage2 = [], arti
         return jsonRes(200, [{ sha: overlayCommit.sha, commit: { committer: { date: overlayCommit.date } } }]);
       }
       return jsonRes(200, [{ sha: shimSha, commit: { committer: { date: SHIM_DATE } } }]);
+    }
+    // git trees: main's root lists shim/ and tools/ (plus noise), tools/ lists overlay.py.
+    if (p === `${base}/git/trees/main`) {
+      if (failTrees) return jsonRes(500, { message: "boom" });
+      return jsonRes(200, { sha: "r00t", truncated: false, tree: [
+        { path: "README.md", type: "blob", sha: "1111111000000000000000000000000000000000" },
+        { path: "shim", type: "tree", sha: shimTree },
+        { path: "tools", type: "tree", sha: TOOLS_TREE },
+      ] });
+    }
+    if (p === `${base}/git/trees/${TOOLS_TREE}`) {
+      return jsonRes(200, { sha: TOOLS_TREE, truncated: false, tree: [
+        { path: "fold_verdict.py", type: "blob", sha: "2222222000000000000000000000000000000000" },
+        { path: "overlay.py", type: "blob", sha: overlayBlob },
+      ] });
     }
     if (p === `${base}/actions/workflows/build-app.yml/runs`) {
       const page = Number(u.searchParams.get("page") || "1");

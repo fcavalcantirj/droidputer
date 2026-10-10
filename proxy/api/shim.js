@@ -63,7 +63,7 @@
 // GitHub 422s the label and the proxy retries without it).
 // ------------------------------------------------------------------------------------------------------
 
-import { countInFlight, resolveShimCommit } from "../lib/builds.js";
+import { countInFlight, resolveShim } from "../lib/builds.js";
 import { error, githubOf, json, vercel } from "../lib/http.js";
 
 /**
@@ -73,7 +73,7 @@ import { error, githubOf, json, vercel } from "../lib/http.js";
 export async function handle(request, ctx) {
   if (request.method !== "GET") return error(405, "method not allowed");
   const gh = githubOf(ctx);
-  const [shim, runs] = await Promise.all([resolveShimCommit(gh, ctx.now), gh.listRuns()]);
+  const [{ commit: shim }, runs] = await Promise.all([resolveShim(gh, ctx.now), gh.listRuns()]);
   return json(200, { shim_commit: shim, repo: gh.repo, workflow: gh.workflow, builds_in_flight: countInFlight(runs) });
 }
 
