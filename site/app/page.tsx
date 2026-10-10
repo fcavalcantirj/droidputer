@@ -1,5 +1,5 @@
 import { Dashboard } from "@/components/dashboard/dashboard";
-import { getStats } from "@/lib/stats-server";
+import { peekStats } from "@/lib/stats-server";
 import type { Stats, View } from "@/lib/telemetry";
 
 const views: View[] = [
@@ -21,17 +21,10 @@ export default async function Page({
   const view = views.includes(params.view as View)
     ? (params.view as View)
     : "overview";
-  let data: Stats | undefined;
-  try {
-    // Built in-process (no HTTP round trip to ourselves), shared 60 s cache with /api/stats. Capped at 12 s so a slow
-    // upstream never blocks the first paint; the client's SWR poll of /api/stats fills in.
-    const body = (await Promise.race([
-      getStats(),
-      new Promise((resolve) => setTimeout(() => resolve(undefined), 12000)),
-    ])) as Stats | undefined;
-    if (body?.generated_at && body.github && body.posthog) data = body;
-  } catch {
-    // The client can retry independently if the upstream feed is slow during server rendering.
-  }
+  // Only a fresh build this instance already holds (shared 60 s cache with /api/stats): the page never waits on the
+  // upstreams, so the first paint is immediate; otherwise the skeletons show and the client's SWR poll of /api/stats
+  // (edge-cached) fills in.
+  const body = peekStats() as Stats | undefined;
+  const data = body?.generated_at && body.github && body.posthog ? body : undefined;
   return <Dashboard initialData={data} view={view} celebrate={!!params.celebrate} />;
 }

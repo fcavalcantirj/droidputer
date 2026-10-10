@@ -427,3 +427,10 @@ export async function getStats() {
     .finally(() => { statsPending = null; });
   return statsPending;
 }
+
+// The server-rendered page never waits on PostHog / GitHub / Play (a cold build measured 0.7 s to over 12 s, and the
+// page was blank that whole time): it embeds the stats only when this instance already holds a fresh build. Never
+// stale: the client's first poll would then celebrate burns that are minutes old as if they just landed.
+export function peekStats() {
+  return statsCache && Date.now() - statsCache.at < STATS_TTL_MS ? statsCache.body : undefined;
+}

@@ -66,11 +66,12 @@ export function HardwareHero({ onInstall, burns }: { onInstall: () => void; burn
       </div>
       <div className="hero-hardware">
         <Image
-          src="/images/droidputer-hardware.png"
+          src="/images/droidputer-hardware.webp"
           alt="Product illustration of an Android phone connected to an ESP32-S3 development board over USB"
           width={1264}
           height={848}
-          priority
+          preload
+          fetchPriority="high"
           sizes="(max-width: 640px) 90vw, (max-width: 1024px) 42vw, 480px"
         />
         <div className="hardware-caption">
