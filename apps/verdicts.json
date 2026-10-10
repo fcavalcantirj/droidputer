@@ -951,5 +951,16 @@
     "note": "auto: linked, 3 frames in 20 s",
     "date": "2026-10-10",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "pigtail",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "c1b7f830c94dd90789e03f1904c3f1f934608a89d88402fcc6bf146ab272d1d6",
+    "shim_commit": "c09487b",
+    "board": "cardputer-adv",
+    "result": "broken",
+    "note": "auto: boots=8 hello=true frames=4",
+    "date": "2026-10-10",
+    "reporter": "device-337a90f7"
   }
 ]
