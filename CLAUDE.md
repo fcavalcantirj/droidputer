@@ -13,6 +13,15 @@ API at runtime). What stays true (SPEC.md finding B): only open-source apps rebu
 on the phone. M5GFX/M5Unified-based apps work today; TFT_eSPI-based apps need the TFT_eSPI shim (M4).
 Bruce is prior art only, never a milestone.
 
+## Scope (Felipe, 2026-10-10)
+
+Droidputter is a **tool for running ESP32 / Cardputer apps on Android**: an ESP32-S3 on the phone's USB-OTG port,
+the phone as its screen, keyboard and GPS. Many of the most-requested catalog firmwares are security / pentest
+tools (Marauder, Bruce, PORKCHOP, ...) because that is what people search for. Our work on any firmware is
+**compatibility only**: it builds against the shim, flashes from the phone, mirrors, and takes phone input
+(verified = boots, mirrors, menus navigate). We do **not** do pentesting: never operate, test or extend an app's
+attack / radio features, and never modify its sources.
+
 ## Read first
 
 `AGENTS.md` (layout, golden rules, gates), `docs/GROUND_RULES.md`, `progress.txt` (append-only journal),
