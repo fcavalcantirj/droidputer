@@ -117,11 +117,6 @@ MARAUDER = {
     "kbd_matrix": True,
 }
 TFT_RECIPES = {"justcallmekoko/esp32marauder": MARAUDER, "marivaaldo/esp32marauder": MARAUDER, "serialgeist/esp32marauder": MARAUDER}
-# Per-repo library pins (data only, like TFT_RECIPES): one app vs one library release, every other overlay untouched.
-# EXPERIMENT 2026-10-10 (roadmap 5): Pigtail boot-loops in ROM BLE init on our builds but upstream 1.0.11 (same
-# source, 2f3e262, built 2026-05-14 when ^2.3.7 resolved to 2.5.0) runs on the same devkit; ours resolve 2.5.1.
-# Kept only if the phone shows Pigtail booting with it.
-LIB_PINS = {"benbaker76/pigtail": {"h2zero/nimble-arduino": "h2zero/NimBLE-Arduino@2.5.0"}}
 
 
 def fail(cls: str, reason: str):
@@ -557,10 +552,6 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None, build_e
                 link.symlink_to(lib.resolve())
     lib_extra = "lib_extra_dirs = _vendored\n" if vendored_dir.is_dir() else ""
     # A TFT_eSPI recipe app never uses M5Unified; leaving it out keeps the firmware inside its own partition plan.
-    pins = LIB_PINS.get(slug.lower(), {})
-    if pins:
-        lib_deps = [pins.get(re.split(r"[@=]", d, 1)[0].strip().lower(), d) for d in lib_deps]
-        info["lib_pins"] = sorted(pins.values())
     lib_deps = ([] if recipe else [M5UNIFIED]) + lib_deps + ["symlink://../../shim/lib/DroidputterShim"]
     virtual_extra = ""
     if recipe and recipe.get("kbd_matrix"):
