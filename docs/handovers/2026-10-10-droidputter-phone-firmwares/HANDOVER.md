@@ -1,7 +1,7 @@
 ---
 slug: droidputter-phone-firmwares
 date: 2026-10-10
-status: open
+status: approved
 round: 0
 author_session: 2026-10-09/10 Claude Code session in ~/dev/droidputter (context ~97%): stats-site redesign, burn counter + toast, M4 (TFT_eSPI) for Marauder, phone driven over wireless ADB
 ---
