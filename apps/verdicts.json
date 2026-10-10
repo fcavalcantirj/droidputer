@@ -1116,5 +1116,16 @@
     "note": "auto: boots=8 hello=true frames=4",
     "date": "2026-10-10",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "m5cardputer_audiospectrum",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "1725ae764c54afa6a9bce942ef03ab5f4f81b36509b26383390a6c39e827e9fa",
+    "shim_commit": "f381e44",
+    "board": "cardputer-adv",
+    "result": "works",
+    "note": "auto: linked, 58 frames in 20 s",
+    "date": "2026-10-10",
+    "reporter": "device-d70da9c7"
   }
 ]
