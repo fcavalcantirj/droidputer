@@ -91,6 +91,9 @@ jobs:
 
       - name: Release notes = annotated tag message + fixed footer
         run: |
+          # actions/checkout re-creates the pushed tag as a LIGHTWEIGHT ref, so %(contents) gave the commit message
+          # (v0.0.7 and v0.0.8 notes, checked); fetching the tag itself brings the annotated object (and its message) back.
+          git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
           git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > dist/RELEASE_NOTES.md
           if [ ! -s dist/RELEASE_NOTES.md ]; then
             echo "Droidputer ${GITHUB_REF_NAME}" > dist/RELEASE_NOTES.md
