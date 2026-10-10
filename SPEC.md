@@ -195,9 +195,24 @@ same need without depending on a second firmware.
   Further peripherals (time sync, notifications, phone-as-uplink) are the open remainder.
 - **M4 — More boards / more libraries.** StickS3 built (`env:m5stack-sticks3[-virtual]`); bare
   ESP32-S3 devkit proven via the virtual panel; ESP32-C5 blocked on an arduino-esp32 3.x toolchain
-  bump (real gap, not a design limitation). Open: a TFT_eSPI-based shim (Bruce and many other
-  Cardputer apps use TFT_eSPI, not M5GFX/LovyanGFX — same tee pattern, different library to patch)
-  and LovyanGFX-only apps that don't go through M5GFX.
+  bump (real gap, not a design limitation). TFT_eSPI shim BUILT for the bare S3 (2026-10-10): a TFT_eSPI 2.5.43
+  virtual processor + Cardputer GPIO keyboard-matrix emulation + output-only app Serial, overlay `TFT_RECIPES`
+  (Marauder and 2 forks) — Marauder builds, flashes from the phone, mirrors, arrows navigate. Bruce still needs the
+  arduino-esp32 3.x track too. Open: LovyanGFX-only apps that don't go through M5GFX.
+- **Next session (from 2026-10-10, builder's journal order; phone runs need a hands-off window).**
+  1. Re-test Marauder enter on d2cd447 on the phone: a 120 ms hold and a tap on two top-level entries, fn off and
+     latched, back once each. Expect the submenu to stay, and one level back per tap.
+  2. stellar-map + M5PORKCHOP on d2cd447: the shared `dp_keys` path must keep its 2-poll tap visibility.
+  3. Ultimate-Remote + BT Keyboard/Mouse: both proxy builds succeeded and are cached, so flash from the phone.
+  4. VolosR Cardputer, Tiny-Journal, System Monitor, audiospectrum, WebRadio: build, flash, auto-verdict, one
+     navigation key.
+  5. Pigtail (#98): an interrupt-watchdog boot loop inside the BT controller init (`btdm_controller_task` …
+     `r_rwip_reset`, from logcat + CI ELF addr2line). Measure it first (compare the BT keyboard app's BLE init on the
+     same devkit), then fix. A refusal is Felipe's call.
+  6. Felipe's calls, pending:
+     - Ultimate-Remote's 22:47 build exceeds the app's 20 min poll limit (`BuildFlow.kt` `MAX_POLL_MS`).
+     - The phone flasher gave up on one `FLASH_DEFL_BEGIN` timeout; one automatic retry would have saved the run.
+  7. GPIO over OTG assessment (Felipe offered an LED or a sensor): not started.
 
 ## Open questions
 
