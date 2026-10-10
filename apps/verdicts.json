@@ -973,5 +973,16 @@
     "note": "auto: linked, 222 frames in 20 s",
     "date": "2026-10-10",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "cardputer-iss-tracker",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "4af5946ab22a13bad7902521a21459d6dd8b92d43fccac728b73d2637159dc52",
+    "shim_commit": "c09487b",
+    "board": "cardputer-adv",
+    "result": "works",
+    "note": "auto: linked, 5 frames in 20 s",
+    "date": "2026-10-10",
+    "reporter": "device-337a90f7"
   }
 ]
