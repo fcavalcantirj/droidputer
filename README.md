@@ -15,6 +15,8 @@ The ESP32-S3 runs the app; the phone adds screen, keys, location and a flasher. 
 <a href="#ways-to-flash">Ways to flash</a> ·
 <a href="#under-the-hood">Under the hood</a> ·
 <a href="#tested-boards-and-phones">Tested boards</a> ·
+<a href="https://play.google.com/store/apps/details?id=com.droidputter">Google Play</a> ·
+<a href="https://droidputer.vercel.app">Live stats</a> ·
 <a href="https://github.com/fcavalcantirj/droidputer/releases">Releases</a>
 </p>
 
@@ -48,6 +50,13 @@ Actions through a small proxy, the phone flashes the result itself, and the same
 display, keyboard, GPS and app launcher. A real Cardputer ADV is only used in development because its
 own TFT shows the same frames next to the phone.
 
+Apps that draw with **TFT_eSPI** instead of M5GFX (ESP32Marauder's Cardputer build and its forks) run on a bare
+ESP32-S3 too, through a TFT_eSPI 2.5.43 virtual display processor and an emulation of the Cardputer's GPIO
+keyboard matrix ([The shim](#tft_espi-apps-bare-esp32-s3-only), 2026-10-10).
+
+Droidputer's work on any app in the catalog is **compatibility only**: it builds against the shim, flashes from
+the phone, mirrors, and takes the phone's keys. It never changes an app's sources or adds features to it.
+
 <table>
 <tr>
 <td align="center"><img src="docs/img/stellar-map-phone-keys.jpg" width="440" alt="star map with the soft keyboard, the overlay buttons in the corners and no system bars"><br><sub>The soft keyboard is the Cardputer's own 4x14 matrix, fn and shift layers included.</sub></td>
@@ -65,7 +74,8 @@ own TFT shows the same frames next to the phone.
 
 ## How to use
 
-1. Install the release APK from https://github.com/fcavalcantirj/droidputer/releases
+1. Install **Droidputer from Google Play**: https://play.google.com/store/apps/details?id=com.droidputter
+   (v0.0.7, 2026-10-10). Or install the release APK from https://github.com/fcavalcantirj/droidputer/releases
    (`adb install droidputer-<tag>.apk`, e.g. `droidputer-v0.0.7.apk` (named `droidputter-…` up to v0.0.6), or open the file on the
    phone). Android 8+ with USB-OTG host support.
 2. Plug an ESP32-S3 into the phone's USB-C port with an OTG cable, into the board's native USB port.
@@ -385,6 +395,29 @@ updates, `DP_KEYS_MIN_SEEN`). GPS is the one place an app opts in: the phone's
 plus CRLF in a 1 KB ring, and the app reads `droidputter_gps()` -- an Arduino `Stream` -- exactly
 where it would read its GPS UART (`apps/gps-demo`).
 
+### TFT_eSPI apps (bare ESP32-S3 only)
+
+Some of the most-requested Cardputer apps draw with TFT_eSPI and read the keyboard straight from GPIO instead of going
+through M5GFX and M5Cardputer. Three pieces cover them, again without touching the app:
+
+- **Display.** `shim/apply-tft.sh` copies pristine `bodmer/TFT_eSPI` 2.5.43 into the overlay's `lib/` and applies
+  `shim/patches/TFT_eSPI-2.5.43-droidputter.patch`. The patch adds a `DROIDPUTTER` virtual processor
+  (`Processors/TFT_eSPI_Droidputter.{h,c}`). Built with `-DDROIDPUTTER_VIRTUAL`, it decodes the ST7789 command stream
+  (CASET / PASET / RAMWR) into the same `dp::` calls the M5GFX tee uses. It uses no SPI and no pins: on an
+  octal-PSRAM S3, pins 33-37 belong to the PSRAM. The same patch applies to 2.5.34 (Marauder's own CI pin).
+- **Keys.** `dp_kbdmatrix.h` is force-included and overrides `gpio_get_level`. The app's own scan drives the row
+  through pins 8 / 9 / 11 and reads the columns on pins 13, 15, 3, 4, 5, 6, 7. The shim reads the row from
+  `GPIO_OUT_REG` and answers each column from the keys the phone holds (`dp_kbdmap.h`). It takes one snapshot
+  of the phone's keys per scan, so a tap counts once.
+- **Serial.** `dp_appserial.h`, compiled into the app's sources only (`build_src_flags`), makes the app's `Serial`
+  output-only. The app's own command line then never swallows the phone's KEY frames on the shared USB link.
+
+`tools/overlay.py` builds these apps from `TFT_RECIPES` (`justcallmekoko/ESP32Marauder`, `marivaaldo/esp32marauder`,
+`serialgeist/esp32marauder`) in the `m5cardputer-virtual` env only. The `m5cardputer` env refuses them. Every other
+overlay's generated `platformio.ini` is byte-identical to before. Marauder builds, flashes from the phone, mirrors,
+and its menus move with the phone's arrows (2026-10-10, verdicts #92-#102). One issue is open: enter on a menu item
+returns to the top menu (being worked on).
+
 ### Build on demand
 
 ```
@@ -560,17 +593,48 @@ the phone's screen. Build env = the PlatformIO env the proxy builds (`m5cardpute
 |---|---|---|---|---|---|---|
 | M5Stack Cardputer ADV | ESP32-S3 (StampS3, no PSRAM) | `m5cardputer` | yes (13 s for 1.1 MB, compressed) | yes, plus GPS feed | 2026-09-05 | Desk oracle: its own TFT shows the same frames. 19 recipes + any GitHub Cardputer app via the proxy. |
 | M5Stack StickS3 | ESP32-S3-PICO-1 (octal PSRAM) | `m5cardputer-virtual` | yes (8 s for 470 KB) | yes, own screen dark | 2026-09-16 | Pense-Bem and stellar-map played from the phone. First flash over a UiFlow2/MicroPython firmware needs BOOT held while replugging (software CDC ignores the DTR/RTS reset); afterwards the phone resets it alone. |
-| Bare ESP32-S3-N16R8 devkit (ESP32-S3-DevKitC-1) | ESP32-S3-WROOM-1 (octal PSRAM) | `m5cardputer-virtual` | yes (15 s for 1.07 MB) | yes, no display at all | 2026-09-16 | stellar-map built by the proxy from GitHub, star map on the phone. Use the USB-labeled port (native USB-Serial/JTAG), never the COM/UART bridge port (shows as "USB Single Serial"). |
+| Bare ESP32-S3-N16R8 devkit (ESP32-S3-DevKitC-1) | ESP32-S3-WROOM-1 (octal PSRAM) | `m5cardputer-virtual` | yes (15 s for 1.07 MB) | yes, no display at all | 2026-10-10 | stellar-map built by the proxy from GitHub, star map on the phone. 2026-10-10: the apps in the table below, flashed from Droidputter v0.0.7 installed from Google Play. Use the USB-labeled port (native USB-Serial/JTAG), never the COM/UART bridge port (shows as "USB Single Serial"). |
 | ESP32-C5-DevKitC-1 | ESP32-C5 (RISC-V) | — | refused | — | 2026-09-16 | The phone flasher reads the chip magic (0x30e1706f) and stops before writing: S3 only. |
 | LilyGO / any board on a CH9102, CH343 or CP210x bridge | ESP32 or ESP32-S3 | — | no | no | 2026-09-05 (tried) | The shim links over the S3's native USB-Serial/JTAG only; a UART bridge never carries it, and a classic ESP32 cannot run the S3 build. |
 
 | Phone | OS | Role | Last [REAL] | Notes |
 |---|---|---|---|---|
-| Poco X7 Pro | Android 16 / HyperOS | screen, keyboard, GPS, flasher | 2026-09-16 | 16 KB USB reads; the link's foreground service keeps GPS flowing with the screen off. Wireless debugging for triage (the USB-C port is the ESP's). |
+| Poco X7 Pro | Android 16 / HyperOS | screen, keyboard, GPS, flasher | 2026-10-10 | v0.0.7 from Google Play. 16 KB USB reads; the link's foreground service keeps GPS flowing with the screen off. Wireless debugging for triage (the USB-C port is the ESP's). |
+
+Apps built by the proxy and flashed from the phone onto the bare devkit (`m5cardputer-virtual`), 2026-10-10. "Works" is
+the app's 20 s auto-verdict (boot report, HELLO, frames). The verdict issues are public, and `apps/verdicts.json` is
+the live list.
+
+| App | Repo | Result | Verdict |
+|---|---|---|---|
+| stellar-map | [wisnc/stellar-map](https://github.com/wisnc/stellar-map) | works, 710 frames in 20 s; keys type a date | [#96](https://github.com/fcavalcantirj/droidputer/issues/96) |
+| M5Cardputer example | [m5stack/M5Cardputer](https://github.com/m5stack/M5Cardputer) | works | [#97](https://github.com/fcavalcantirj/droidputer/issues/97) |
+| miniacid | [urtubia/miniacid](https://github.com/urtubia/miniacid) | works | [#99](https://github.com/fcavalcantirj/droidputer/issues/99) |
+| ISS tracker | [adammelancon/cardputer-iss-tracker](https://github.com/adammelancon/cardputer-iss-tracker) | works | [#100](https://github.com/fcavalcantirj/droidputer/issues/100) |
+| M5PORKCHOP | [0ct0sec/M5PORKCHOP](https://github.com/0ct0sec/M5PORKCHOP) | works; its menu opens with the backtick key | [#93](https://github.com/fcavalcantirj/droidputer/issues/93) |
+| ESP32Marauder | [justcallmekoko/ESP32Marauder](https://github.com/justcallmekoko/ESP32Marauder) | works, through TFT_eSPI; arrows move one row per tap; enter on a menu item is an open issue | [#102](https://github.com/fcavalcantirj/droidputer/issues/102) |
+| Pigtail | [benbaker76/Pigtail](https://github.com/benbaker76/Pigtail) | broken: reboots every ~2.7 s (interrupt watchdog) after its first frames; under investigation | [#98](https://github.com/fcavalcantirj/droidputer/issues/98) |
 
 Rule learned on the StickS3: a virtual build must use the generic `esp32-s3-devkitc-1` variant, the octal-PSRAM memory type and
 the M5GFX board hint 26 (`board_M5StickS3`); with the StampS3 variant and the Cardputer ADV hint the same app booted to the
 ROM banner and hung before any console. `tools/overlay.py` writes that env for every recipe.
+
+## Privacy and public stats
+
+The app asks once before it sends anything. Anonymous usage and crash reports (PostHog Cloud) stay off until you tap
+**Send**, and sharing verdicts stays off until you agree. Reports can be turned off again on the Connection screen. Pixels,
+keys and GPS sentences never leave the USB cable. The full policy is at https://droidputer.vercel.app/privacy
+([docs/PRIVACY.md](./docs/PRIVACY.md)).
+
+**Live stats:** https://droidputer.vercel.app shows aggregates only, never single events or identifiers:
+- firmware burned from phones (it celebrates each new one);
+- phones reporting;
+- builds requested;
+- successful mirrors;
+- APK downloads;
+- Google Play errors.
+
+It refreshes every 30 s, and the raw data is a JSON export.
 
 ## Repo layout
 
@@ -578,7 +642,8 @@ ROM banner and hung before any console. `tools/overlay.py` writes that env for e
 `tools/` (host-side Python receiver/renderer/catalog scripts), `fixtures/`
 (captured real streams, committed), `apps/` (build recipes per app +
 `catalog.json`), `android/` (Gradle project: `core` pure-JVM Kotlin +
-`app` Android/Compose shell), `docs/`.
+`app` Android/Compose shell), `proxy/` (the Vercel build proxy), `site/` (the public stats dashboard,
+Next.js), `docs/`.
 
 Ground rules and golden rules: [docs/GROUND_RULES.md](./docs/GROUND_RULES.md).
 Roadmap: [SPEC.md](./SPEC.md).
