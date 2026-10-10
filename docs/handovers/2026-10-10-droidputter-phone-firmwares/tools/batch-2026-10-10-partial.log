@@ -1,0 +1,11 @@
+=== wisnc/stellar-map (02:40:41) battery 31%
+02:41:13 build requested: wisnc/stellar-map
+02:43:38 ready
+02:43:38 shim 8c79bc8 firmware.bin  1070496 B
+02:43:41 flashing
+02:44:00 done: stellar-map flashed and verified
+02:44:19 auto-verdict works (auto: linked, 710 frames in 20 s) sent (#96) — thank you
+02:44:33 screenshot b-stellar; status: LINKED
+exit=0
+=== m5stack/M5Cardputer (02:44:36) battery 30%
+02:45:07 build requested: m5stack/M5Cardputer
