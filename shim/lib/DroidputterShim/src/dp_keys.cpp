@@ -39,6 +39,12 @@ uint8_t dp_keys_snapshot(uint8_t* rows, uint8_t* cols, uint8_t max) {
 }
 
 uint8_t dp_keys_snapshot_min(uint8_t* rows, uint8_t* cols, uint8_t max, uint8_t min_seen) {
+  // A release deferred by dp_keys_push (it counts against DP_KEYS_MIN_SEEN) is due already for a consumer that needs
+  // fewer snapshots: a finger tap whose up lands after one level poll must not be reported to the next one
+  // (Marauder's enter selected twice, 2026-10-10). No-op when min_seen == DP_KEYS_MIN_SEEN.
+  for (uint8_t i = 0; i < nheld;) {
+    if (held_pending[i] && held_seen[i] >= min_seen) removeAt(i); else i++;
+  }
   uint8_t n = nheld < max ? nheld : max;
   for (uint8_t i = 0; i < n; i++) { rows[i] = held_r[i]; cols[i] = held_c[i]; }
   for (uint8_t i = 0; i < nheld; i++) if (held_seen[i] < 255) held_seen[i]++;

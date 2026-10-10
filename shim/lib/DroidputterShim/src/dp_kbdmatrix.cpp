@@ -3,10 +3,6 @@
 #if defined(ARDUINO) && defined(DROIDPUTTER_KBD_MATRIX)
 #include "droidputter.h"
 #include "dp_kbdmap.h"
-#include "dp_internal.h"
-#include <Arduino.h>
-#include <stdio.h>
-#include <string.h>
 #include "driver/gpio.h"
 #include "soc/gpio_reg.h"
 #undef gpio_get_level
@@ -26,21 +22,7 @@ extern "C" int dp_gpio_get_level(gpio_num_t pin) {
   // scan starts at row 0 / column 0), and a tap reported to exactly one scan: the original Cardputer driver's apps
   // act on the key LEVEL every scan (Marauder: one select per scan), so a tap kept for two scans selected twice.
   static uint8_t ys[16], xs[16], held = 0;
-  if (row == 0 && column == 0) {
-    static uint32_t scans = 0;
-    static uint8_t lastYs[16], lastXs[16], lastHeld = 0;
-    scans++;
-    held = dp::injectedKeysOnce(ys, xs, 16);
-    // Key-trace LOG frame (0x07) whenever the scanned key set changes: which scan saw which phone keys, so one tap
-    // can be counted scan by scan on the phone (adb logcat, tag Droidputter). Silent while nothing changes.
-    if (held != lastHeld || memcmp(ys, lastYs, held) || memcmp(xs, lastXs, held)) {
-      char msg[96];
-      int k = snprintf(msg, sizeof msg, "kbd scan=%lu t=%lu keys=", (unsigned long)scans, (unsigned long)millis());
-      for (uint8_t i = 0; i < held && k < (int)sizeof msg - 8; i++) k += snprintf(msg + k, sizeof msg - k, "%u,%u;", xs[i], ys[i]);
-      if (k > 0) dp::internal::send(dp::LOG, (const uint8_t*)msg, (size_t)(k < (int)sizeof msg ? k : (int)sizeof msg - 1));
-      memcpy(lastYs, ys, held); memcpy(lastXs, xs, held); lastHeld = held;
-    }
-  }
+  if (row == 0 && column == 0) held = dp::injectedKeysOnce(ys, xs, 16);
   return dp::kbdmapColumnLow(row, column, ys, xs, held) ? 0 : 1;   // a held key pulls its column low; idle = pulled up
 }
 #endif

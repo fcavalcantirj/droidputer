@@ -87,6 +87,29 @@ static void test_level_polled_tap_is_seen_exactly_once(void) {
   TEST_ASSERT_EQUAL_UINT8(0, dp::dp_keys_snapshot_min(r, c, 4, 1));
 }
 
+// A finger tap on the phone (129 ms, 2026-10-10) whose up lands AFTER the first poll: Marauder waits 200 ms after a
+// select, so its next scan comes after the up -- and must not see enter again (it selected the submenu's first item).
+static void test_level_polled_tap_released_after_first_poll(void) {
+  dp::dp_keys_release_all();
+  uint8_t r[4], c[4];
+  dp::dp_keys_push(2, 13, 1);
+  TEST_ASSERT_EQUAL_UINT8(1, dp::dp_keys_snapshot_min(r, c, 4, 1));    // poll 1: enter is down
+  dp::dp_keys_push(2, 13, 0);                                          // the finger lifts before poll 2
+  TEST_ASSERT_EQUAL_UINT8(0, dp::dp_keys_snapshot_min(r, c, 4, 1));    // poll 2: already up -- one select
+  TEST_ASSERT_EQUAL_UINT8(0, dp::dp_keys_held_count());
+}
+
+// The same tap for apps that poll CHANGES keeps its 2-poll visibility (stellar-map lost 8 of 10 taps without it).
+static void test_change_polled_tap_released_after_first_poll_keeps_two_polls(void) {
+  dp::dp_keys_release_all();
+  uint8_t r[4], c[4];
+  dp::dp_keys_push(2, 13, 1);
+  TEST_ASSERT_EQUAL_UINT8(1, dp::dp_keys_snapshot(r, c, 4));           // update 1
+  dp::dp_keys_push(2, 13, 0);
+  TEST_ASSERT_EQUAL_UINT8(1, dp::dp_keys_snapshot(r, c, 4));           // update 2: still reported
+  TEST_ASSERT_EQUAL_UINT8(0, dp::dp_keys_snapshot(r, c, 4));           // update 3: released
+}
+
 int main(int argc, char** argv) {
   UNITY_BEGIN();
   RUN_TEST(test_down_up_ordering);
@@ -95,5 +118,7 @@ int main(int argc, char** argv) {
   RUN_TEST(test_link_down_releases_all);
   RUN_TEST(test_fast_tap_stays_visible_for_min_seen_snapshots);
   RUN_TEST(test_level_polled_tap_is_seen_exactly_once);
+  RUN_TEST(test_level_polled_tap_released_after_first_poll);
+  RUN_TEST(test_change_polled_tap_released_after_first_poll_keeps_two_polls);
   return UNITY_END();
 }
