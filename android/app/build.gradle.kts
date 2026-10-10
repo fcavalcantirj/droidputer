@@ -111,6 +111,9 @@ android {
         debug {
             applicationIdSuffix = ".dev"
             manifestPlaceholders["appLabel"] = "Droidputer dev"
+            // A dev build never feeds the public stats (a consented dev install = one more phone, its test flashes = burns);
+            // -PposthogKey=<token> still turns it on for telemetry work.
+            buildConfigField("String", "POSTHOG_KEY", "\"${project.findProperty("posthogKey") ?: "off"}\"")
         }
         release {
             isMinifyEnabled = true
