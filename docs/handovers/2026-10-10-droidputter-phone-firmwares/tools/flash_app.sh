@@ -46,11 +46,11 @@ done
 echo "$t" | grep -q "Flash from phone" || { echo "$(ts) build timeout"; exit 3; }
 echo "$(ts) $(echo "$t" | grep -oE 'shim [0-9a-f]{7}' | head -1) $(echo "$t" | grep -oE 'firmware.bin  [0-9]+ B' | head -1)"
 ph tap "Flash from phone" >/dev/null
-echo "$(ts) flashing"
+echo "$(ts) flashing"; sleep 6   # the previous run's FAILED: line stays on screen until the new flash replaces it
 for i in $(seq 1 60); do
   t=$(ph texts 2>/dev/null | tr '\n' '|')
   if echo "$t" | grep -qE "done: .*flashed and verified"; then echo "$(ts) $(echo "$t" | grep -oE 'done: [^|]*' | head -1)"; break; fi
-  if echo "$t" | grep -qiE "flash failed|error:"; then echo "$(ts) FLASH FAILED: $(echo "$t" | grep -oiE '[^|]*(failed|error)[^|]*' | head -2)"; exit 4; fi
+  if echo "$t" | grep -qiE "flash failed|error:|FAILED:"; then echo "$(ts) FLASH FAILED: $(echo "$t" | grep -oiE '[^|]*(failed|error)[^|]*' | head -2)"; exit 4; fi
   sleep 3
 done
 for i in $(seq 1 12); do
