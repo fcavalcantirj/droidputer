@@ -605,19 +605,34 @@ the phone's screen. Build env = the PlatformIO env the proxy builds (`m5cardpute
 |---|---|---|---|---|
 | Poco X7 Pro | Android 16 / HyperOS | screen, keyboard, GPS, flasher | 2026-10-10 | v0.0.7 from Google Play. 16 KB USB reads; GPS runs while the app is on screen (screen-off GPS left the Play build on 2026-09-17). Wireless debugging for triage (the USB-C port is the ESP's). |
 
-Apps built by the proxy and flashed from the phone onto the bare devkit (`m5cardputer-virtual`), 2026-10-10. "Works" is
-the app's 20 s auto-verdict (boot report, HELLO, frames). The verdict issues are public, and `apps/verdicts.json` is
-the live list.
+Tested firmware x board, flashed from the phone (Poco X7 Pro, Android 16), the release matrix of
+[v0.0.8](https://github.com/fcavalcantirj/droidputer/releases/tag/v0.0.8). "Works" = the app's 20 s check after
+flashing (one boot, the ESP's HELLO, frames on the phone) plus one key from the phone where the app reads keys. The
+verdict issues are public and `apps/verdicts.json` is the live list; their "cardputer-adv" board label is a known
+bug, so the board below comes from the build target.
 
-| App | Repo | Result | Verdict |
-|---|---|---|---|
-| stellar-map | [wisnc/stellar-map](https://github.com/wisnc/stellar-map) | works, 710 frames in 20 s; keys type a date | [#96](https://github.com/fcavalcantirj/droidputer/issues/96) |
-| M5Cardputer example | [m5stack/M5Cardputer](https://github.com/m5stack/M5Cardputer) | works | [#97](https://github.com/fcavalcantirj/droidputer/issues/97) |
-| miniacid | [urtubia/miniacid](https://github.com/urtubia/miniacid) | works | [#99](https://github.com/fcavalcantirj/droidputer/issues/99) |
-| ISS tracker | [adammelancon/cardputer-iss-tracker](https://github.com/adammelancon/cardputer-iss-tracker) | works | [#100](https://github.com/fcavalcantirj/droidputer/issues/100) |
-| M5PORKCHOP | [0ct0sec/M5PORKCHOP](https://github.com/0ct0sec/M5PORKCHOP) | works; its menu opens with the backtick key | [#93](https://github.com/fcavalcantirj/droidputer/issues/93) |
-| ESP32Marauder | [justcallmekoko/ESP32Marauder](https://github.com/justcallmekoko/ESP32Marauder) | works, through TFT_eSPI; arrows move one row per tap; enter opens a submenu, back returns one level (shim d2cd447) | [#102](https://github.com/fcavalcantirj/droidputer/issues/102) |
-| Pigtail | [benbaker76/Pigtail](https://github.com/benbaker76/Pigtail) | broken: reboots every ~2.7 s (interrupt watchdog) after its first frames; under investigation | [#98](https://github.com/fcavalcantirj/droidputer/issues/98) |
+**Bare ESP32-S3-N16R8 devkit**, "bare ESP32-S3" target (the phone is the only screen), 2026-10-10:
+
+| App | Repo | Result | Phone keys | Shim | Verdict |
+|---|---|---|---|---|---|
+| ESP32Marauder | [justcallmekoko/ESP32Marauder](https://github.com/justcallmekoko/ESP32Marauder) | works, through TFT_eSPI | arrows move one row per tap; enter opens a submenu, back goes up one level | d2cd447 | [#102](https://github.com/fcavalcantirj/droidputer/issues/102) |
+| stellar-map | [wisnc/stellar-map](https://github.com/wisnc/stellar-map) | works | the date is typed, each key once | d2cd447 | [#103](https://github.com/fcavalcantirj/droidputer/issues/103) |
+| M5PORKCHOP | [0ct0sec/M5PORKCHOP](https://github.com/0ct0sec/M5PORKCHOP) | works | backtick opens its menu | d2cd447 | [#104](https://github.com/fcavalcantirj/droidputer/issues/104) |
+| VolosR Cardputer (SpaceWars) | [VolosR/Cardputer](https://github.com/VolosR/Cardputer) | works | the ship moves | d2cd447 | [#105](https://github.com/fcavalcantirj/droidputer/issues/105) |
+| Bluetooth Keyboard/Mouse Emulator | [geo-tp/Bluetooth-Keyboard-Mouse-Emulator](https://github.com/geo-tp/Bluetooth-Keyboard-Mouse-Emulator) | works | the mode menu moves | d2cd447 | [#106](https://github.com/fcavalcantirj/droidputer/issues/106) |
+| Ultimate-Remote | [geo-tp/Ultimate-Remote](https://github.com/geo-tp/Ultimate-Remote) | works | the menu moves one row | d2cd447 | [#107](https://github.com/fcavalcantirj/droidputer/issues/107) |
+| Tiny-Journal | [joejee90/Tiny-Journal](https://github.com/joejee90/Tiny-Journal) | works | text is typed | d2cd447 | [#108](https://github.com/fcavalcantirj/droidputer/issues/108) |
+| Cardputer System Monitor | [gdantas04/Cardputer-System-Monitor](https://github.com/gdantas04/Cardputer-System-Monitor) | works | the app reads no keys | d2cd447 | [#109](https://github.com/fcavalcantirj/droidputer/issues/109) |
+| audiospectrum | [cyberwisk/m5Cardputer_audiospectrum](https://github.com/cyberwisk/m5Cardputer_audiospectrum) | works | the app reads no keys | d2cd447 | [#110](https://github.com/fcavalcantirj/droidputer/issues/110) |
+| WebRadio | [cyberwisk/M5Cardputer_WebRadio](https://github.com/cyberwisk/M5Cardputer_WebRadio) | works | not shown: its Wi-Fi list was empty (it hides networks below -80 dBm) | d2cd447 | [#111](https://github.com/fcavalcantirj/droidputer/issues/111) |
+| ISS tracker | [adammelancon/cardputer-iss-tracker](https://github.com/adammelancon/cardputer-iss-tracker) | works | 'c' opens its config menu | c09487b | [#100](https://github.com/fcavalcantirj/droidputer/issues/100) |
+| M5Cardputer example | [m5stack/M5Cardputer](https://github.com/m5stack/M5Cardputer) | works | not checked | c09487b | [#97](https://github.com/fcavalcantirj/droidputer/issues/97) |
+| miniacid | [urtubia/miniacid](https://github.com/urtubia/miniacid) | works | not checked | c09487b | [#99](https://github.com/fcavalcantirj/droidputer/issues/99) |
+| Pigtail | [benbaker76/Pigtail](https://github.com/benbaker76/Pigtail) | **broken**: boot loop (interrupt watchdog in the BLE init); its own prebuilt runs on the same board, cause not found yet | - | d2cd447 | [#112](https://github.com/fcavalcantirj/droidputer/issues/112) |
+
+**Cardputer ADV**, "Cardputer ADV" target (its own screen plus the phone), last run 2026-09-03..05 on older shims:
+stellar-map [#4](https://github.com/fcavalcantirj/droidputer/issues/4), audiospectrum [#3](https://github.com/fcavalcantirj/droidputer/issues/3), ISS tracker [#8](https://github.com/fcavalcantirj/droidputer/issues/8), [geo-tp/M5-Card-Computer-I2C-Scanner](https://github.com/geo-tp/M5-Card-Computer-I2C-Scanner) [#5](https://github.com/fcavalcantirj/droidputer/issues/5) and
+Pense-Bem [#1](https://github.com/fcavalcantirj/droidputer/issues/1) work; Pigtail is broken there too [#9](https://github.com/fcavalcantirj/droidputer/issues/9).
 
 Rule learned on the StickS3: a virtual build must use the generic `esp32-s3-devkitc-1` variant, the octal-PSRAM memory type and
 the M5GFX board hint 26 (`board_M5StickS3`); with the StampS3 variant and the Cardputer ADV hint the same app booted to the
