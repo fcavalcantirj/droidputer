@@ -1072,5 +1072,16 @@
     "note": "auto: linked, 6 frames in 20 s",
     "date": "2026-10-10",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "cardputer-system-monitor",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "b39db6dde7f725ab686c633496c38214cda7fb9aeeb8f428f4bd4db626ad5575",
+    "shim_commit": "d2cd447",
+    "board": "cardputer-adv",
+    "result": "works",
+    "note": "auto: linked, 4 frames in 20 s",
+    "date": "2026-10-10",
+    "reporter": "device-337a90f7"
   }
 ]
