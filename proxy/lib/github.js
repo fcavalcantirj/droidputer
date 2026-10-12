@@ -190,13 +190,14 @@ export function createGitHub({ token, repo, workflow, apiBase = "https://api.git
      * @returns {Promise<{number: number, html_url: string}>}
      */
     /**
-     * Every issue (open and closed) carrying one label, newest first, first page of 100 (enough for a per-kind label).
-     * @param {string} label
+     * Issues matching a search query (first 100, any state), e.g. `repo:o/r is:issue in:title flash-failed`. Search, not
+     * a label filter: this token cannot set labels (GitHub drops them silently without push access).
+     * @param {string} q
      * @returns {Promise<any[]>}
      */
-    async listIssuesByLabel(label) {
-      const j = await api(`${base}/issues?labels=${encodeURIComponent(label)}&state=all&per_page=100`);
-      return Array.isArray(j) ? j.filter((i) => !i.pull_request) : [];
+    async searchIssues(q) {
+      const j = await api(`/search/issues?q=${encodeURIComponent(q)}&per_page=100`);
+      return Array.isArray(j && j.items) ? j.items.filter((i) => !i.pull_request) : [];
     },
 
     /** @param {number} number @param {string} body */

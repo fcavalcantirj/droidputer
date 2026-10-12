@@ -13,6 +13,7 @@ const ev = (ts, o = {}) => ({ ts, app: "stellar-map", env: "m5cardputer-virtual"
 function fakes({ events = [], issues = [] } = {}) {
   const calls = [];
   const writes = [];
+  const searches = [];
   const jsonRes = (status, body) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
   let nextNumber = 500;
   /** @type {typeof fetch} */
@@ -28,7 +29,13 @@ function fakes({ events = [], issues = [] } = {}) {
     }
     if (url.origin !== API || auth !== `Bearer ${TOKEN}`) return jsonRes(401, { message: "Bad credentials" });
     const base = `/repos/${REPO}`;
-    if (url.pathname === `${base}/issues` && method === "GET") return jsonRes(200, issues);
+    // Issues are found by SEARCH on the title: the proxy's token cannot set labels (GitHub drops them silently
+    // without push access -- #115/#116 and every verdict issue carry none), so a label lookup would find nothing.
+    if (url.pathname === "/search/issues" && method === "GET") {
+      searches.push(url.searchParams.get("q"));
+      return jsonRes(200, { total_count: issues.length, items: issues });
+    }
+    if (url.pathname === `${base}/issues` && method === "GET") return jsonRes(200, []);   // labels never stick
     if (url.pathname === `${base}/issues` && method === "POST") {
       const b = JSON.parse(init.body);
       writes.push({ kind: "create", ...b });
@@ -41,7 +48,7 @@ function fakes({ events = [], issues = [] } = {}) {
     if (m && method === "PATCH") { writes.push({ kind: "update", number: Number(m[1]), ...JSON.parse(init.body) }); return jsonRes(200, { number: Number(m[1]) }); }
     return jsonRes(404, { message: "Not Found" });
   };
-  return { fetch: fetchImpl, calls, writes };
+  return { fetch: fetchImpl, calls, writes, searches };
 }
 
 const ctxOf = (f, { cronSecret = SECRET } = {}) => ({
@@ -102,6 +109,7 @@ describe("GET /api/flash-failures", () => {
     const f = fakes({ issues: [issue], events: [ev("2026-10-10T14:25:56Z"), ev("2026-10-11T08:00:00Z", { version: "0.0.8" })] });
     const body = parse(await handle(cron(), ctxOf(f)));
     assert.equal(body.updated, 1);
+    assert.match(f.searches[0], new RegExp(`repo:${REPO} is:issue in:title flash-failed`));
     const comment = f.writes.find((w) => w.kind === "comment");
     assert.equal(comment.number, 120);
     assert.match(comment.body, /1 more failed flash/);

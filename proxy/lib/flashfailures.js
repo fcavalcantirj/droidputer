@@ -100,7 +100,7 @@ export async function syncFlashFailures(gh, events) {
     groups.get(k).push(e);
   }
   const known = new Map();
-  for (const issue of groups.size ? await gh.listIssuesByLabel(LABEL) : []) {
+  for (const issue of groups.size ? await gh.searchIssues(`repo:${gh.repo} is:issue in:title ${LABEL}`) : []) {
     const m = MARKER.exec(String(issue.body || ""));
     if (!m) continue;
     const key = Buffer.from(m[1], "base64url").toString();
