@@ -75,8 +75,8 @@ the phone, mirrors, and takes the phone's keys. It never changes an app's source
 ## How to use
 
 1. Install **Droidputer from Google Play**: https://play.google.com/store/apps/details?id=com.droidputter
-   (v0.0.7, 2026-10-10). Or install the release APK from https://github.com/fcavalcantirj/droidputer/releases
-   (`adb install droidputer-<tag>.apk`, e.g. `droidputer-v0.0.7.apk` (named `droidputter-…` up to v0.0.6), or open the file on the
+   (v0.0.8 was submitted for review on 2026-10-10; v0.0.7 until it is live). Or install the release APK from
+   https://github.com/fcavalcantirj/droidputer/releases (`adb install droidputer-<tag>.apk`, e.g. `droidputer-v0.0.8.apk` (named `droidputter-…` up to v0.0.6), or open the file on the
    phone). Android 8+ with USB-OTG host support.
 2. Plug an ESP32-S3 into the phone's USB-C port with an OTG cable, into the board's native USB port.
    Use a known-good data cable: one cable gave "no Type-C partner" (2026-09-02).
@@ -311,9 +311,16 @@ with the library's 64 B default the reader took 1,670 chunks/s, the framer resyn
 TX watchdog and flushes the shadow, so an app that never calls `M5Cardputer.update()` still links.
 Outbound frames go whole-or-nothing into the 32,768 B HWCDC TX ring (`DROIDPUTTER_TXBUF`); a
 full 240x135 frame is 64,800 B raw, so a flush sends as many whole dirty rows as the ring has room
-for (capped by a 32 KB RLE stage), RLE when that is shorter than raw, and leaves the rest dirty
+for (capped by the RLE stage), RLE when that is shorter than raw, and leaves the rest dirty
 for the next tick (`dp_display.cpp`, band splitting since 2026-09-04). Inbound frames are capped
 at 120 B of payload (`rx[128]`); held keys live in 16 slots, NMEA in a 1 KB ring.
+
+The RLE stage is sized to leave the app its internal RAM (shim 7e5303d, 2026-10-12): a 4 KB static floor from boot,
+swapped once, at the first HELLO_ACK, for a 32 KB internal-RAM stage only when the largest free internal block is at
+least 152 KB (32 KB plus the ~120 KB that Wi-Fi + BLE took at init, measured). Pigtail boot-looped with the old
+static 32 KB stage because its radios found too little internal DMA-capable RAM; on the floor it boots, while
+stellar-map gets the boost and keeps its full throughput (-0.09 %). The measurements and the dead ends are in
+[docs/research/psram-article-notes.md](./docs/research/psram-article-notes.md).
 
 Measured: the raw ceiling is 13.8 fps / 873 KB/s of uncompressed full frames (2026-09-02; the
 TX-ring sweep gave 11.0 fps at 8 KB, 14.7 fps at 64 KB, so the ceiling is USB full speed, not the
@@ -597,21 +604,23 @@ the phone's screen. Build env = the PlatformIO env the proxy builds (`m5cardpute
 |---|---|---|---|---|---|---|
 | M5Stack Cardputer ADV | ESP32-S3 (StampS3, no PSRAM) | `m5cardputer` | yes (13 s for 1.1 MB, compressed) | yes, plus GPS feed | 2026-09-05 | Desk oracle: its own TFT shows the same frames. 19 recipes + any GitHub Cardputer app via the proxy. |
 | M5Stack StickS3 | ESP32-S3-PICO-1 (octal PSRAM) | `m5cardputer-virtual` | yes (8 s for 470 KB) | yes, own screen dark | 2026-09-16 | Pense-Bem and stellar-map played from the phone. First flash over a UiFlow2/MicroPython firmware needs BOOT held while replugging (software CDC ignores the DTR/RTS reset); afterwards the phone resets it alone. |
-| Bare ESP32-S3-N16R8 devkit (ESP32-S3-DevKitC-1) | ESP32-S3-WROOM-1 (octal PSRAM) | `m5cardputer-virtual` | yes (15 s for 1.07 MB) | yes, no display at all | 2026-10-10 | stellar-map built by the proxy from GitHub, star map on the phone. 2026-10-10: the apps in the table below, flashed from Droidputter v0.0.7 installed from Google Play. Use the USB-labeled port (native USB-Serial/JTAG), never the COM/UART bridge port (shows as "USB Single Serial"). |
+| Bare ESP32-S3-N16R8 devkit (ESP32-S3-DevKitC-1) | ESP32-S3-WROOM-1 (octal PSRAM) | `m5cardputer-virtual` | yes (15 s for 1.07 MB) | yes, no display at all | 2026-10-12 | stellar-map built by the proxy from GitHub, star map on the phone. 2026-10-10: the apps in the table below, flashed from Droidputter v0.0.7 installed from Google Play. Use the USB-labeled port (native USB-Serial/JTAG), never the COM/UART bridge port (shows as "USB Single Serial"). |
 | ESP32-C5-DevKitC-1 | ESP32-C5 (RISC-V) | — | refused | — | 2026-09-16 | The phone flasher reads the chip magic (0x30e1706f) and stops before writing: S3 only. |
 | LilyGO / any board on a CH9102, CH343 or CP210x bridge | ESP32 or ESP32-S3 | — | no | no | 2026-09-05 (tried) | The shim links over the S3's native USB-Serial/JTAG only; a UART bridge never carries it, and a classic ESP32 cannot run the S3 build. |
 
 | Phone | OS | Role | Last [REAL] | Notes |
 |---|---|---|---|---|
-| Poco X7 Pro | Android 16 / HyperOS | screen, keyboard, GPS, flasher | 2026-10-10 | v0.0.7 from Google Play. 16 KB USB reads; GPS runs while the app is on screen (screen-off GPS left the Play build on 2026-09-17). Wireless debugging for triage (the USB-C port is the ESP's). |
+| Poco X7 Pro | Android 16 / HyperOS | screen, keyboard, GPS, flasher | 2026-10-12 | v0.0.7 from Google Play. 16 KB USB reads; GPS runs while the app is on screen (screen-off GPS left the Play build on 2026-09-17). Wireless debugging for triage (the USB-C port is the ESP's). |
 
 Tested firmware x board, flashed from the phone (Poco X7 Pro, Android 16), the release matrix of
 [v0.0.8](https://github.com/fcavalcantirj/droidputer/releases/tag/v0.0.8). "Works" = the app's 20 s check after
 flashing (one boot, the ESP's HELLO, frames on the phone) plus one key from the phone where the app reads keys. The
-verdict issues are public and `apps/verdicts.json` is the live list; their "cardputer-adv" board label is a known
-bug, so the board below comes from the build target.
+verdict issues are public and `apps/verdicts.json` is the live list. Verdicts before 2026-10-12 carry the old constant
+"cardputer-adv" board label, so the board below comes from the build target; since shims 532d92e/dfa344b the board
+is the true one: `cardputer` / `cardputer-adv` from M5GFX's autodetect, else the chip's facts (`s3-f16` = 16 MB
+flash, `-p<MB>` only when the build maps PSRAM).
 
-**Bare ESP32-S3-N16R8 devkit**, "bare ESP32-S3" target (the phone is the only screen), 2026-10-10:
+**Bare ESP32-S3-N16R8 devkit**, "bare ESP32-S3" target (the phone is the only screen), 2026-10-10..12:
 
 | App | Repo | Result | Phone keys | Shim | Verdict |
 |---|---|---|---|---|---|
@@ -628,11 +637,12 @@ bug, so the board below comes from the build target.
 | ISS tracker | [adammelancon/cardputer-iss-tracker](https://github.com/adammelancon/cardputer-iss-tracker) | works | 'c' opens its config menu | c09487b | [#100](https://github.com/fcavalcantirj/droidputer/issues/100) |
 | M5Cardputer example | [m5stack/M5Cardputer](https://github.com/m5stack/M5Cardputer) | works | not checked | c09487b | [#97](https://github.com/fcavalcantirj/droidputer/issues/97) |
 | miniacid | [urtubia/miniacid](https://github.com/urtubia/miniacid) | works | not checked | c09487b | [#99](https://github.com/fcavalcantirj/droidputer/issues/99) |
-| Pigtail | [benbaker76/Pigtail](https://github.com/benbaker76/Pigtail) | **broken**: boot loop (interrupt watchdog in the BLE init); its own prebuilt runs on the same board, cause not found yet | - | d2cd447 | [#112](https://github.com/fcavalcantirj/droidputer/issues/112) |
+| Pigtail | [benbaker76/Pigtail](https://github.com/benbaker76/Pigtail) | works since the stage fix: BLE up, 5 min without a reset (it boot-looped before, #112) | not checked | 7e5303d | [#123](https://github.com/fcavalcantirj/droidputer/issues/123) |
+| Game-Station Emulators | [geo-tp/Cardputer-Game-Station-Emulators](https://github.com/geo-tp/Cardputer-Game-Station-Emulators) | boots and mirrors (builds since 984fb1d) | not shown: it waits on its "insert SD card" screen, and the devkit has no SD slot | 532d92e | [#117](https://github.com/fcavalcantirj/droidputer/issues/117) |
 
 **Cardputer ADV**, "Cardputer ADV" target (its own screen plus the phone), last run 2026-09-03..05 on older shims:
 stellar-map [#4](https://github.com/fcavalcantirj/droidputer/issues/4), audiospectrum [#3](https://github.com/fcavalcantirj/droidputer/issues/3), ISS tracker [#8](https://github.com/fcavalcantirj/droidputer/issues/8), [geo-tp/M5-Card-Computer-I2C-Scanner](https://github.com/geo-tp/M5-Card-Computer-I2C-Scanner) [#5](https://github.com/fcavalcantirj/droidputer/issues/5) and
-Pense-Bem [#1](https://github.com/fcavalcantirj/droidputer/issues/1) work; Pigtail is broken there too [#9](https://github.com/fcavalcantirj/droidputer/issues/9).
+Pense-Bem [#1](https://github.com/fcavalcantirj/droidputer/issues/1) work; Pigtail was broken there [#9](https://github.com/fcavalcantirj/droidputer/issues/9), before the 2026-10-12 stage fix (not re-tested on an ADV since).
 
 Rule learned on the StickS3: a virtual build must use the generic `esp32-s3-devkitc-1` variant, the octal-PSRAM memory type and
 the M5GFX board hint 26 (`board_M5StickS3`); with the StampS3 variant and the Cardputer ADV hint the same app booted to the
