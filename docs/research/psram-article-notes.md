@@ -29,3 +29,22 @@ and what the workarounds gain and cost. Append as findings land. Label every lin
   the board label therefore reports PSRAM only when the build maps it ("s3-f16", dfa344b).
 - [REAL] An interrupt-watchdog (IWDT) reset means interrupts stayed off too long on one CPU: a timing/concurrency
   failure that can look like a memory problem from the outside.
+- [REAL] The cause, by one variable (Pigtail, virtual env with the shim, bare S3 devkit, 2026-10-12, scratch builds with
+  a heap probe: LOG frames of heap_caps free / largest block for MALLOC_CAP_8BIT and MALLOC_CAP_DMA, 1 s apart):
+  | build | change | boots/min | internal DMA free before the radios (largest block) | BLE |
+  |---|---|---|---|---|
+  | P0 | today's shim | ~24 (crash loop, 8 boots / 20 s) | 91,816 B (81,908) | never starts |
+  | P1 | dp::stage 32 KB -> 4 KB | 0 resets | 120,488 B (110,580) | starts; the shim links and mirrors |
+  | P1b | TX ring 32 KB -> 8 KB, stage 32 KB | ~24 (crash loop) | 91,816 B (81,908) | never starts |
+  In P1, Wi-Fi + BLE init then take about 117 KB of internal DMA-capable RAM: 3,308 B left at t=2 s, 2,680 B at
+  t=19 s. So the radios need ~117 KB of INTERNAL DMA RAM at init and P0 had ~92 KB: the BLE controller cannot
+  get it and the failure surfaces as an interrupt watchdog [the alloc-failure -> IWDT step INFERRED].
+- [REAL] The 32 KB TX ring is heap and lands in PSRAM when PSRAM is mapped (P1b: total free +24.6 KB, internal DMA
+  free unchanged), so it does not compete; a .bss buffer (dp::stage) always sits in internal RAM.
+- [REAL] Confirmed the BOARD_HAS_PSRAM inference: Pigtail's virtual builds (-DBOARD_HAS_PSRAM=0) report ~8.4 MB total
+  free (PSRAM mapped), while internal DMA-capable free is ~92 KB. "Free heap" said 8 MB while the crash was a
+  92-vs-117 KB internal-RAM shortfall.
+- [REAL] Operational: a firmware that crash-loops (or a half-written image) reboots the ESP32-S3 every ~2.5 s, and each
+  reboot drops its USB-Serial/JTAG device, so flashing over USB fails mid-write (FLASH_DEFL_DATA timed out, "Error
+  writing 64 bytes", "USB get_status request failed"). Recovery: hold BOOT, tap RST (download mode stays put), flash,
+  then tap RST to start the new image.
