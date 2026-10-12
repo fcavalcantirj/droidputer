@@ -11,6 +11,8 @@ flashed from the phone, mirrored on the phone, driven from the phone's keyboard 
 The ESP32-S3 runs the app; the phone adds screen, keys, location and a flasher. No display needed on the board.</p>
 
 <p>
+<a href="#firmware-status-2026-10-12">Firmware status</a> ·
+<a href="#psram-and-our-memory-trick">PSRAM</a> ·
 <a href="#how-to-use">How to use</a> ·
 <a href="#ways-to-flash">Ways to flash</a> ·
 <a href="#under-the-hood">Under the hood</a> ·
@@ -71,6 +73,36 @@ the phone, mirrors, and takes the phone's keys. It never changes an app's source
 <td align="center"><img src="docs/img/stellar-map-phone.png" width="440" alt="the mirror without the keyboard"><br><sub>Hide keys: the mirror takes the whole phone screen.</sub></td>
 </tr>
 </table>
+
+## Firmware status (2026-10-12)
+
+15 Cardputer apps are verified on a bare ESP32-S3 devkit, built by the proxy, flashed from the phone and driven from
+its keys (the [tested firmware matrix](#tested-boards-and-phones)): ESP32Marauder, stellar-map, M5PORKCHOP, VolosR
+SpaceWars, Bluetooth Keyboard/Mouse Emulator, Ultimate-Remote, Tiny-Journal, Cardputer System Monitor,
+audiospectrum, WebRadio, the ISS tracker, the M5Cardputer example, miniacid, Pigtail and the Game-Station Emulators.
+Of the 79 app x target pairs ever requested from the build proxy, 44 build, 30 are refused by design (ESP-IDF /
+MicroPython apps, or graphics libraries the shim does not cover yet; the app then offers the working prebuilt) and
+5 wait for the arduino-esp32 3.x track. Every one, with its cause and next step:
+[docs/FIRMWARES-TO-FIX.md](./docs/FIRMWARES-TO-FIX.md).
+
+## PSRAM, and our memory trick
+
+- **RAM on the chip.** The ESP32-S3 has about 512 KB of RAM on the chip itself; code data, task stacks, the Wi-Fi and
+  Bluetooth buffers and the app all share it. **PSRAM** is an optional extra RAM chip (2-8 MB) next to it: much
+  bigger, slower, and some things (Wi-Fi's own buffers among them) must stay in the on-chip RAM anyway. The
+  Cardputer's StampS3 (ESP32-S3FN8) has no PSRAM at all.
+- **What mirroring costs.** The shim keeps a copy of the screen (240x135 x 2 bytes = 64,800 B) and a staging buffer
+  that compresses frames for USB. Wi-Fi + Bluetooth take about 120 KB of on-chip DMA-capable RAM when they start.
+  With the old fixed 32 KB staging buffer, a radio-heavy app (Pigtail) had ~92 KB left for ~117 KB of radio needs and
+  crash-looped.
+- **The trick (shim 7e5303d, 2026-10-12).** Every app gets a 4 KB staging buffer from boot. When the phone connects,
+  the shim upgrades it to 32 KB, once, only if the largest free block of on-chip RAM is at least 152 KB (32 KB plus
+  the measured 120 KB radio intake). Pigtail stays on 4 KB and now boots; stellar-map gets the boost and keeps its full
+  speed (-0.09 %). An app that gets the boost holds at most 4 KB more than before, and only with >= 120 KB left.
+- **How we found it**, dead ends included, every number measured:
+  [docs/research/psram-article-notes.md](./docs/research/psram-article-notes.md). Background reading:
+  [an AI research report on the no-PSRAM techniques in BreezyBox's `claw`](./docs/research/2026-10-12-no-psram-memory-engineering-breezybox-claw.md)
+  (its citations do not resolve).
 
 ## How to use
 
@@ -686,6 +718,10 @@ Roadmap: [SPEC.md](./SPEC.md).
 - [fixtures/README.md](./fixtures/README.md): captured real USB streams replayed by the Kotlin tests
   and the app's offline demo mode.
 - [progress.txt](./progress.txt): the append-only build journal every number in this README comes from.
+- [docs/FIRMWARES-TO-FIX.md](./docs/FIRMWARES-TO-FIX.md): every app x target pair that does not build or run yet,
+  with its cause and next step.
+- [docs/research/psram-article-notes.md](./docs/research/psram-article-notes.md): PSRAM, the shim's memory budget and
+  the stage fix, measured (raw material for an article).
 
 ## Credits and license
 
