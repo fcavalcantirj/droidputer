@@ -1171,5 +1171,16 @@
     "note": "auto: boots=0 hello=false frames=0",
     "date": "2026-10-12",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "stellar-map",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "17ecf8691dc6883057b74bc53a19cf7edd1554ef4ef1e65518f321c23a00f9ec",
+    "shim_commit": "7e5303d",
+    "board": "s3-f16",
+    "result": "works",
+    "note": "auto: linked, 760 frames in 20 s",
+    "date": "2026-10-12",
+    "reporter": "device-337a90f7"
   }
 ]
