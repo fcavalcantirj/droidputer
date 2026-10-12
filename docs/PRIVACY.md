@@ -1,6 +1,6 @@
 # Droidputer privacy policy
 
-Effective 2026-10-09 (app version 0.0.7 and later; earlier versions collect no usage data). Applies to the
+Effective 2026-10-09, updated 2026-10-12 (failed flashes as public GitHub issues) (app version 0.0.7 and later; earlier versions collect no usage data). Applies to the
 Droidputer Android app (`com.droidputter`).
 
 ## What the app does with data
@@ -29,7 +29,8 @@ Droidputer Android app (`com.droidputter`).
   model and Android version. Never location, contacts, accounts, key presses or screen contents. While
   reports are on, build requests to the build proxy also carry that identifier so builds can be counted per
   phone. Aggregated numbers (never individual events or identifiers) are published on the public statistics
-  page.
+  page and, for failed flashes, in public GitHub issues in the Droidputter repository: the error message, the app,
+  the app version and the phone model, as counts.
 - **Catalog and feeds.** The app downloads the public catalog and verdict files from GitHub, the
   LauncherHub firmware list from `api.launcherhub.net`, and firmware binaries from the build proxy or from
   M5Stack's M5Burner CDN when you flash them. These are ordinary HTTPS downloads.
