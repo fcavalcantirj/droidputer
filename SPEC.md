@@ -255,6 +255,15 @@ same need without depending on a second firmware.
      When a firmware runs BECAUSE of this diet (measured before/after: boots, heap min, largest free block, DMA free),
      write it up as a Solvr blog post so others learn it (Felipe, 2026-10-12): `solvr.sh blog ... --status draft`,
      Felipe reviews, then publish. Only [REAL] numbers; credit the source report; compatibility framing only.
+  11. NEXT MILESTONE after Pigtail (Felipe, 2026-10-12): make chrisdiana/breezybox-cardputer (MIT; a shell/terminal OS
+     with the `claw` AI agent, built for the PSRAM-less Cardputer) run on Droidputter. It is ESP-IDF (idf.py/CMake), not
+     Arduino, so the proxy refuses it today (not-arduino). Needs an ESP-IDF shim. SPIKE FIRST, in a scratch build:
+     - screen: catch its esp_lcd ST7789 strip writes (draw_bitmap) into dp::;
+     - keys: its keyboard read path (GPIO matrix vs the ADV's TCA8418; does dp_kbdmatrix carry over?);
+     - console: where its console goes (it must stay off our USB-Serial/JTAG link);
+     - build lane: an IDF build in CI, its IDF version pinned;
+     - RAM headroom with the shim on a no-PSRAM target (ties to item 10: the shim must stay lean or it breaks claw).
+     End goal: an article on PSRAM, the no-PSRAM workarounds and their measured gains/losses (with item 10's blog post).
 
 ## Open questions
 
