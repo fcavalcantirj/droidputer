@@ -121,3 +121,6 @@ Kept so the article can tell how we got there, not only where. Commits named whe
   only when >= 120 KB stays free; every other app gains 28 KB. Limit: the check runs at link-up, and an app that
   allocates a lot after link-up (Marauder: 131 KB -> 78 KB within 3 s) eats into the 120 KB before any on-demand radio
   starts -- not measured (radio features are out of scope).
+- [REAL + design] Near-threshold apps are non-deterministic but safe: Marauder's largest internal block at link-up was
+  106,484 B on one boot and 155,636 B on another (12 B under the 155,648 B boost threshold), so such an app may boost on
+  one boot and not the next. Both outcomes are safe by construction: the boost is taken only when >= 120 KB stays free.
