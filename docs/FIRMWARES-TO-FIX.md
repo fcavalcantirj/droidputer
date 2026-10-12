@@ -8,27 +8,29 @@ GitHub runs after it with each failed run's `failure.json`; `apps/verdicts.json`
 PostHog `flash_finished` failures (the proxy's daily `/api/flash-failures` files them as `flash-failed` issues).
 "Tries" = build attempts for that repo and target, our own catalog rebuilds included, so it is only a rough demand signal.
 
-Status today: 79 repo × target pairs ever built; **45 build now**; 34 fail on their latest attempt — **7 fixable**,
-27 refused by design (the app offers the LauncherHub prebuilt).
+Status (validator's recount, 2026-10-12): 78 real repo × target pairs; **43 build now**; 35 do not — **7 fixable**,
+28 refused by design (the app offers the LauncherHub prebuilt). "Built" = the run has parts and no `failure.json`:
+since 07d6701 a designed refusal ends with a GREEN run plus `failure.json` (flock-you is one), so a green run alone
+no longer means built.
 
 ## 1. Flashes, then fails on the board (runtime)
 
 | App | Target | Evidence | Next step |
 |---|---|---|---|
 | **Pigtail** (benbaker76/Pigtail) | both | Boot loop: interrupt watchdog on CPU0 in ROM BLE link-layer init (#98, #112; ADV #9). Upstream 1.0.11 prebuilt runs Wi-Fi promiscuous + BLE on the same devkit; our build of the same source and esp-idf loops. NimBLE 2.5.1 refuted (pinned 2.5.0, still loops). | Single variable next: the same overlay libs **without the shim** (needs a scratch build path; the proxy always links the shim). If that boots, bisect the shim; if it loops, M5Unified 0.2.20 → 0.2.14. |
-| stellar-map | Cardputer ADV | 2 of 4 verdicts broken (latest 2026-09-22): `boots=0 hello=false frames=0`, from other people's phones, board unknown. | Find out whether those were ADV-target builds flashed onto a non-ADV board [INFERRED]. If so, the fix is in the app: warn when the target doesn't match the board. |
-| Cardputer System Monitor | Cardputer ADV | Latest verdict broken (2026-09-22), same `no HELLO` signature; works on the bare devkit (#109). | Same check as stellar-map. |
+| stellar-map | Cardputer ADV | 2 of 4 verdicts broken (latest 2026-09-22): `boots=0 hello=false frames=0`, from other people's phones, board unknown. The same firmware has "works" verdicts beside the "broken" ones, so these look like a wrong board or a transient, not a firmware bug [INFERRED by the validator from the same-firmware works/broken pairs]. | Idea (needs a spike first): the flasher reads the flash size from the ROM and warns when the target doesn't match the board. SPEC 8 (true board in HELLO) makes future verdicts say which board they ran on. |
+| Cardputer System Monitor | Cardputer ADV | Latest verdict broken (2026-09-22), same `no HELLO` signature; works on the bare devkit (#109). Likely board mismatch or transient, as for stellar-map [INFERRED]. | Same as stellar-map. |
 | M5PORKCHOP | Cardputer ADV | Manual "broken" (2026-09-25); works on the bare devkit (#93, #104). | Re-test the ADV target on a real ADV. |
-| `droidputter` | bare ESP32-S3 | One broken verdict 2026-09-19 (`no HELLO`), app name `droidputter`, repo unknown. | Look up what was built under that name. Probably a test build, then nothing to fix [INFERRED]. |
+| `droidputter` | bare ESP32-S3 | One broken verdict 2026-09-19 (`no HELLO`), app name `droidputter`, repo unknown. Likely board mismatch or transient, as for stellar-map [INFERRED]. | Look up what was built under that name. Probably a test build, then nothing to fix [INFERRED]. |
 
 ## 2. Build fails we can fix (latest attempt failed, not a refusal)
 
-| Repo | Target | Tries | Error (latest) | Likely fix [INFERRED until spiked] |
+| Repo | Target | Tries | Error (latest) | Cause and fix |
 |---|---|---|---|---|
-| 7h30th3r0n3/Evil-M5Core2 | both | 11 + 11 | `'function' does not name a type; did you mean 'union'?` | `std::function` without `<functional>` / C++ standard. Overlay flag or force-include for this repo. |
-| geo-tp/Cardputer-Game-Station-Emulators | bare S3 | 10 | `'Wire' was not declared in this scope` | Missing `#include <Wire.h>` that an older core pulled in. Overlay force-include. |
-| marivaaldo/ESP32Marauder | bare S3 | 5 | `missing-header: …/User_Setup_marauder_m5cardputer.h` | Our TFT_RECIPES entry didn't apply (`env_src "(ino)"`): the fork's layout differs. SPIKED 2026-10-12: the fork is Marauder v1.1.0 (last commit 2024-11-19), no MARAUDER_CARDPUTER anywhere, no m5cardputer User_Setup -> it can never build for the Cardputer: DROP it from TFT_RECIPES (then it refuses like any TFT_eSPI app and offers the prebuilt); ini identity check for the others. |
-| n0xa/m5stick-nemo | bare S3 | 4 | `no matching function for call to 'BLEAdvertisementData::addData(String)'` | BLE library API version. Pin the BLE lib the app expects. |
+| 7h30th3r0n3/Evil-M5Core2 | both | 11 + 11 | `'function' does not name a type; did you mean 'union'?` | SPIKED 2026-10-12 [REAL]: not `std::function`. PlatformIO's `.ino` converter (`pioino.py` `PROTOTYPE_RE`) matches 16 JavaScript functions (`function send(key)`, `async function fetchFrame()`, ...) inside 9 raw strings of the 56,213-line sketch and emits them as C++ prototypes. Upstream asks for M5Stack core <= 2.1.4 (a 2.x app). Fix: overlay-only, a PlatformIO pre-script that ignores prototype matches inside raw strings, for sketches that need it. |
+| geo-tp/Cardputer-Game-Station-Emulators | bare S3 | 10 | `'Wire' was not declared in this scope` | SPIKED 2026-10-12 [REAL chain]: gnu++17 deduction-guide clash -> the gnu++14 retry -> `'Wire' was not declared` in `src/share/input.cpp`, which reaches Wire only through M5Cardputer.h -> M5Unified -> M5GFX `common.hpp` `#if __has_include(<Wire.h>)`. Cause [INFERRED]: our `lib_ldf_mode = deep+` evaluates that `#if` as false, so the Wire library never reaches the include path (upstream uses PlatformIO's default chain mode). A blanket Wire.h force-include is REFUTED (fix/compat-retry: specreg.h's `#define PS 230` breaks the Atari core). Fix: Wire on the overlay's lib_deps for this case. |
+| marivaaldo/ESP32Marauder | bare S3 | 5 | `missing-header: …/User_Setup_marauder_m5cardputer.h` | Our TFT_RECIPES entry didn't apply (`env_src "(ino)"`): the fork's layout differs. SPIKED 2026-10-12: the fork is Marauder v1.1.0 (last commit 2024-11-19), no MARAUDER_CARDPUTER anywhere, no m5cardputer User_Setup -> it can never build for the Cardputer: DROP it from TFT_RECIPES (then it refuses like any TFT_eSPI app and offers the prebuilt); ini identity check for the others. serialgeist/ESP32Marauder (also in TFT_RECIPES, never built for the bare S3) is the same [REAL]: last push 2024-02-15, 0 `CARDPUTER` in configs.h, no m5cardputer User_Setup -> drop it too. |
+| n0xa/m5stick-nemo | bare S3 | 4 | `no matching function for call to 'BLEAdvertisementData::addData(String)'` | SPIKED 2026-10-12 [REAL]: not a lib pin. nemo's own CI builds on `m5stack:esp32@3.2.5` (arduino-esp32 3.x) with `-DCARDPUTER`; `addData(String)` is the 3.x BLE API. 3.x track, like the two below. |
 | geo-tp/ESP32-Bus-Pirate | bare S3 | 6 | `'RMT_MEM_NUM_BLOCKS_2' was not declared` (an arduino-esp32 3.x app) | Needs the 3.x toolchain track; not fixable on 2.0.17. Classify as refusal "needs core 3.x" so it stops looking fixable. |
 | therezor/cardputer-ai | bare S3 | 3 | `ambiguating new declaration of 'uint32_t millis()'` (3.x app) | Same as above: 3.x track. |
 
