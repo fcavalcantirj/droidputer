@@ -27,7 +27,7 @@ Status today: 79 repo × target pairs ever built; **45 build now**; 34 fail on t
 |---|---|---|---|---|
 | 7h30th3r0n3/Evil-M5Core2 | both | 11 + 11 | `'function' does not name a type; did you mean 'union'?` | `std::function` without `<functional>` / C++ standard. Overlay flag or force-include for this repo. |
 | geo-tp/Cardputer-Game-Station-Emulators | bare S3 | 10 | `'Wire' was not declared in this scope` | Missing `#include <Wire.h>` that an older core pulled in. Overlay force-include. |
-| marivaaldo/ESP32Marauder | bare S3 | 5 | `missing-header: …/User_Setup_marauder_m5cardputer.h` | Our TFT_RECIPES entry didn't apply (`env_src "(ino)"`): the fork's layout differs. Spike its tree, then fix the recipe or drop the fork from TFT_RECIPES. |
+| marivaaldo/ESP32Marauder | bare S3 | 5 | `missing-header: …/User_Setup_marauder_m5cardputer.h` | Our TFT_RECIPES entry didn't apply (`env_src "(ino)"`): the fork's layout differs. SPIKED 2026-10-12: the fork is Marauder v1.1.0 (last commit 2024-11-19), no MARAUDER_CARDPUTER anywhere, no m5cardputer User_Setup -> it can never build for the Cardputer: DROP it from TFT_RECIPES (then it refuses like any TFT_eSPI app and offers the prebuilt); ini identity check for the others. |
 | n0xa/m5stick-nemo | bare S3 | 4 | `no matching function for call to 'BLEAdvertisementData::addData(String)'` | BLE library API version. Pin the BLE lib the app expects. |
 | geo-tp/ESP32-Bus-Pirate | bare S3 | 6 | `'RMT_MEM_NUM_BLOCKS_2' was not declared` (an arduino-esp32 3.x app) | Needs the 3.x toolchain track; not fixable on 2.0.17. Classify as refusal "needs core 3.x" so it stops looking fixable. |
 | therezor/cardputer-ai | bare S3 | 3 | `ambiguating new declaration of 'uint32_t millis()'` (3.x app) | Same as above: 3.x track. |
