@@ -189,6 +189,26 @@ export function createGitHub({ token, repo, workflow, apiBase = "https://api.git
      * @param {{title: string, body: string, labels?: string[]}} issue labels omitted = none requested
      * @returns {Promise<{number: number, html_url: string}>}
      */
+    /**
+     * Every issue (open and closed) carrying one label, newest first, first page of 100 (enough for a per-kind label).
+     * @param {string} label
+     * @returns {Promise<any[]>}
+     */
+    async listIssuesByLabel(label) {
+      const j = await api(`${base}/issues?labels=${encodeURIComponent(label)}&state=all&per_page=100`);
+      return Array.isArray(j) ? j.filter((i) => !i.pull_request) : [];
+    },
+
+    /** @param {number} number @param {string} body */
+    async commentIssue(number, body) {
+      await api(`${base}/issues/${number}/comments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body }) });
+    },
+
+    /** @param {number} number @param {{body?: string, state?: "open" | "closed"}} fields */
+    async updateIssue(number, fields) {
+      await api(`${base}/issues/${number}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fields) });
+    },
+
     async createIssue({ title, body, labels }) {
       const path = `${base}/issues`;
       const j = await api(path, {

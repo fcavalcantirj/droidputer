@@ -10,6 +10,10 @@
  * @property {string} apiBase   GITHUB_API   -- GitHub REST origin (tests point it at a fake)
  * @property {string} posthogKey  POSTHOG_KEY  -- PostHog project token for usage events (public by design; "" = off)
  * @property {string} posthogHost POSTHOG_HOST -- PostHog ingestion origin (default the US cloud)
+ * @property {string} cronSecret  CRON_SECRET  -- Vercel cron's bearer for /api/flash-failures (secret; "" = the endpoint refuses)
+ * @property {string} posthogApiHost     POSTHOG_API_HOST     -- PostHog app origin for queries (default https://us.posthog.com)
+ * @property {string} posthogProjectId   POSTHOG_PROJECT_ID   -- the project whose events /api/flash-failures reads
+ * @property {string} posthogPersonalKey POSTHOG_PERSONAL_KEY -- PostHog personal API key, query read (secret)
  */
 
 /**
@@ -28,5 +32,9 @@ export function loadConfig(env = process.env) {
     apiBase: (env.GITHUB_API || "https://api.github.com").replace(/\/+$/, ""),
     posthogKey: env.POSTHOG_KEY || "",
     posthogHost: (env.POSTHOG_HOST || "https://us.i.posthog.com").replace(/\/+$/, ""),
+    cronSecret: env.CRON_SECRET || "",
+    posthogApiHost: (env.POSTHOG_API_HOST || "https://us.posthog.com").replace(/\/+$/, ""),
+    posthogProjectId: env.POSTHOG_PROJECT_ID || "",
+    posthogPersonalKey: env.POSTHOG_PERSONAL_KEY || "",
   };
 }

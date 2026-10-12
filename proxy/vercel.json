@@ -6,7 +6,19 @@
     }
   },
   "rewrites": [
-    { "source": "/api/build/:id", "destination": "/api/build/[id]?id=:id" },
-    { "source": "/api/artifact/:run/:file", "destination": "/api/artifact/[run]/[file]?run=:run&file=:file" }
+    {
+      "source": "/api/build/:id",
+      "destination": "/api/build/[id]?id=:id"
+    },
+    {
+      "source": "/api/artifact/:run/:file",
+      "destination": "/api/artifact/[run]/[file]?run=:run&file=:file"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/flash-failures",
+      "schedule": "0 9 * * *"
+    }
   ]
 }
