@@ -11,7 +11,7 @@ const SECRET = "cron-secret-never-leaks";
 const ev = (ts, o = {}) => ({ ts, app: "stellar-map", env: "m5cardputer-virtual", source: "proxy", error: "FLASH_DEFL_BEGIN timed out", model: "2412DPC0AG", version: "0.0.7", device: "device-1a2b3c4d", ...o });
 
 /** Fake PostHog query API + GitHub issues API; records every write. */
-function fakes({ events = [], issues = [] } = {}) {
+function fakes({ events = [], issues = [], phStatuses = [] } = {}) {
   const calls = [];
   const writes = [];
   const searches = [];
@@ -27,6 +27,7 @@ function fakes({ events = [], issues = [] } = {}) {
     if (url.origin === INGEST) { tracked.push(JSON.parse(init.body)); return jsonRes(200, { status: 1 }); }
     if (url.origin === PH) {
       if (auth !== "Bearer phx_read") return jsonRes(401, { detail: "bad key" });
+      if (phStatuses.length) { const st = phStatuses.shift(); if (st !== 200) return jsonRes(st, { detail: "busy" }); }
       const cols = ["ts", "app", "env", "source", "error", "model", "version"];
       return jsonRes(200, { columns: cols, results: events.map((e) => cols.map((c) => e[c])) });
     }
@@ -58,6 +59,7 @@ const ctxOf = (f, { cronSecret = SECRET } = {}) => ({
   config: { token: TOKEN, repo: REPO, workflow: "build-app.yml", baseUrl: "", apiBase: API, cronSecret, posthogApiHost: PH, posthogProjectId: "42", posthogPersonalKey: "phx_read", posthogKey: "phc_capture", posthogHost: INGEST },
   fetch: f.fetch,
   now: () => Date.parse("2026-10-12T09:00:00Z"),
+  sleep: async () => {},
 });
 const cron = (secret = SECRET, ua = "") => req({ path: "/api/flash-failures", headers: { ...(secret ? { authorization: `Bearer ${secret}` } : {}), ...(ua ? { "user-agent": ua } : {}) } });
 
@@ -79,6 +81,19 @@ describe("GET /api/flash-failures", () => {
     assert.equal(runs[0].properties.trigger, "cron");
     assert.equal(runs[0].properties.created, 1);
     assert.equal(runs[0].properties.events, 1);
+  });
+
+  test("PostHog busy (429 / 5xx) is retried; still failing -> 502, and the failed run is still tracked with its error", async () => {
+    // 2026-10-12 09:00:47 UTC: the first scheduled run reached the function and answered 502 (cause not logged).
+    const busy = fakes({ events: [ev("2026-10-10T14:25:56Z")], phStatuses: [429, 503] });
+    const ok = await handle(cron(SECRET, "vercel-cron/1.0"), ctxOf(busy));
+    assert.equal(ok.status, 200);
+    assert.equal(busy.calls.filter((c) => c.url.startsWith(PH)).length, 3);
+    const down = fakes({ phStatuses: [500, 500, 500] });
+    await assert.rejects(handle(cron(SECRET, "vercel-cron/1.0"), ctxOf(down)), (e) => e.status === 502 && /posthog 500/.test(e.message));
+    const run = down.tracked.find((t) => t.event === "flash_failures_run");
+    assert.equal(run.properties.trigger, "cron");
+    assert.match(run.properties.error, /posthog 500/);
   });
 
   test("error kinds ignore the numbers that change per run", () => {

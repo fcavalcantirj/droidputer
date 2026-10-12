@@ -25,8 +25,9 @@ const iso = (ts) => {
  * Failed flashes of the last week from PostHog (Android app installs, emulators excluded like the stats site).
  * @param {{posthogApiHost: string, posthogProjectId: string, posthogPersonalKey: string}} config
  * @param {typeof fetch} fetchImpl
+ * @param {{sleep?: (ms: number) => Promise<void>}} [o] retry pause (tests pass a no-op)
  */
-export async function queryFailures(config, fetchImpl) {
+export async function queryFailures(config, fetchImpl, { sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
   const sql = `
     SELECT toString(timestamp) AS ts, toString(properties.app) AS app, toString(properties.env) AS env,
       toString(properties.source) AS source, toString(properties.error) AS error,
@@ -35,11 +36,18 @@ export async function queryFailures(config, fetchImpl) {
     WHERE event = 'flash_finished' AND properties.result != 'ok' AND properties.$lib = 'posthog-android'
       AND NOT (coalesce(properties.$device_model, '') LIKE 'sdk_gphone%') AND timestamp > now() - ${WINDOW}
     ORDER BY timestamp LIMIT 2000`;
-  const res = await fetchImpl(`${config.posthogApiHost}/api/projects/${config.posthogProjectId}/query/`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${config.posthogPersonalKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ query: { kind: "HogQLQuery", query: sql } }),
-  });
+  // PostHog answers 429 while the project's 3 concurrent queries are taken (the stats site runs 7 per refresh) and 5xx
+  // on a bad moment: retried twice with a pause, so one busy second does not lose the day's run.
+  let res;
+  for (const pause of [0, 2000, 5000]) {
+    if (pause) await sleep(pause);
+    res = await fetchImpl(`${config.posthogApiHost}/api/projects/${config.posthogProjectId}/query/`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${config.posthogPersonalKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ query: { kind: "HogQLQuery", query: sql } }),
+    });
+    if (res.status !== 429 && res.status < 500) break;
+  }
   if (!res.ok) {
     const e = new Error(`posthog ${res.status} on the flash-failure query`);
     /** @type {any} */ (e).status = 502;

@@ -30,12 +30,20 @@ export async function handle(request, ctx) {
   const auth = String((request.headers && request.headers.authorization) || "");
   if (!same(auth, `Bearer ${c.cronSecret}`)) return error(401, "cron only");
   if (!c.posthogPersonalKey || !c.posthogProjectId) throw refuse("POSTHOG_PERSONAL_KEY / POSTHOG_PROJECT_ID are not set on the proxy");
-  const events = await queryFailures(c, ctx.fetch);
-  const result = await syncFlashFailures(githubOf(ctx), events);
-  // Every run leaves a trace (a run with nothing new writes nothing on GitHub): Vercel cron sends vercel-cron/1.0.
+  // Every run leaves a trace, failed ones too (a run with nothing new writes nothing on GitHub; the first scheduled run,
+  // 2026-10-12 09:00:47 UTC, answered 502 with no cause in the logs). Vercel cron sends user-agent vercel-cron/1.0.
   const trigger = /vercel-cron/i.test(String((request.headers && request.headers["user-agent"]) || "")) ? "cron" : "manual";
-  await track(ctx, "flash_failures_run", { ...result, trigger });
-  return json(200, result);
+  try {
+    const events = await queryFailures(c, ctx.fetch, ctx.sleep ? { sleep: ctx.sleep } : {});
+    const result = await syncFlashFailures(githubOf(ctx), events);
+    await track(ctx, "flash_failures_run", { ...result, trigger });
+    return json(200, result);
+  } catch (e) {
+    const why = String((e && e.message) || e).slice(0, 160);   // GitHubError / posthog messages carry no token
+    console.error(`flash-failures ${trigger}: ${(e && e.status) || 500} ${why}`);
+    await track(ctx, "flash_failures_run", { trigger, error: why });
+    throw e;
+  }
 }
 
 export default vercel(handle);
