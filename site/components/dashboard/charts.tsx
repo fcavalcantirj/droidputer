@@ -194,7 +194,7 @@ export function BuildActivity({
       action={
         <span className="chart-legend">
           <i />
-          Build requests
+          Builds run
         </span>
       }
       footer={

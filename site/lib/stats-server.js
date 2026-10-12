@@ -32,6 +32,7 @@ export const QUERIES = {
     SELECT toDate(timestamp) AS day,
       uniqIf(distinct_id, ${APP}) AS devices,
       countIf(event IN ${BUILD_REQUEST_EVENTS}) AS build_requests,
+      countIf(event = 'build_dispatched') AS builds_dispatched,
       countIf(event = 'flash_finished' AND properties.result = 'ok' AND ${APP}) AS flashes,
       countIf(event = 'link_up' AND ${APP}) AS links,
       round(sumIf(toFloat(properties.seconds), event = 'mirror_session' AND ${APP}) / 60, 1) AS mirror_minutes
@@ -114,8 +115,86 @@ async function posthog() {
   return out;
 }
 
+// An app install reporting: the anonymous per-install id the app mints ("device-" + 8 hex). A GitHub user's manual
+// verdict (reporter = the issue author) is a verdict, not a phone; one phone can also be several installs.
+export const isInstall = (r) => /^device-[0-9a-f]{8}$/.test(String(r || ""));
+
+/** apps/verdicts.json -> the verdict, behaviour and automatic-report aggregates (pure; ids never leave). */
+export function verdictStats(v) {
+  const byApp = new Map();
+  for (const x of v) {
+    const a = byApp.get(x.name) || { app: x.name, works: 0, broken: 0 };
+    if (x.result === "works") a.works++; else a.broken++;
+    byApp.set(x.name, a);
+  }
+  // Day by day: verdicts filed and phones voting for the first time (reporter = anonymous per-install id).
+  const seen = new Set(), days = new Map();
+  for (const x of [...v].sort((a, b) => String(a.date).localeCompare(String(b.date)))) {
+    const d = days.get(x.date) || { day: x.date, verdicts: 0, new_phones: 0 };
+    d.verdicts++;
+    if (isInstall(x.reporter) && !seen.has(x.reporter)) { seen.add(x.reporter); d.new_phones++; }
+    days.set(x.date, d);
+  }
+  // What phones did after flashing, from the app's AUTOMATIC verdicts: for 20 s after a flash from the phone it
+  // counts boots, whether the ESP said HELLO and how many mirrored frames arrived ("auto: linked, 296 frames in 20 s",
+  // "auto: boots=0 hello=false frames=0"). Real phones, anonymous per-install ids (the developer's own test
+  // installs included).
+  const auto = v.filter((x) => String(x.note || "").startsWith("auto:"));
+  const frames = auto.map((x) => Number((/(\d+) frames/.exec(x.note) || [])[1] || 0));
+  const perPhone = new Map();
+  for (const x of v) if (isInstall(x.reporter)) perPhone.set(x.reporter, (perPhone.get(x.reporter) || new Set()).add(x.name));
+  const bucket = (n) => (n >= 5 ? "5+" : n >= 3 ? "3-4" : String(n));
+  const appsPerPhone = {};
+  for (const s of perPhone.values()) appsPerPhone[bucket(s.size)] = (appsPerPhone[bucket(s.size)] || 0) + 1;
+  const flashedBy = new Map();
+  for (const x of auto) if (isInstall(x.reporter)) flashedBy.set(x.name, (flashedBy.get(x.name) || new Set()).add(x.reporter));
+  const behaviour = {
+    flashes_observed: auto.length,
+    phones_that_flashed: new Set(auto.map((x) => x.reporter).filter(isInstall)).size,
+    mirror_up: auto.filter((x) => /linked/.test(x.note)).length,
+    no_hello: auto.filter((x) => /hello=false/.test(x.note)).length,
+    hello_no_frames: auto.filter((x) => /hello=true/.test(x.note) && !/linked/.test(x.note)).length,
+    frames_in_20s: frames.filter((n) => n > 0).sort((a, b) => a - b),
+    apps_per_phone: appsPerPhone,
+    most_flashed: [...flashedBy.entries()].map(([app, s]) => ({ app, phones: s.size })).sort((a, b) => b.phones - a.phones).slice(0, 10),
+    envs: v.reduce((m, x) => ((m[x.env] = (m[x.env] || 0) + 1), m), {}),
+  };
+  let cum = 0;
+  const verdicts = {
+    total: v.length,
+    reporters: new Set(v.map((x) => x.reporter).filter(isInstall)).size,
+    by_app: [...byApp.values()].sort((a, b) => b.works + b.broken - (a.works + a.broken)),
+    timeline: [...days.values()].map((d) => ({ ...d, phones_cumulative: (cum += d.new_phones) })),
+  };
+  return { verdicts, behaviour, auto };
+}
+
+/** GitHub's own total of build-app runs (every build that ran, all time), or null. */
+export function buildsRunTotal(j) {
+  const n = j && Number(j.total_count);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Every build that ran: GitHub's own total of build-app runs, all time (cancelled ones included, as GitHub counts
+// them). The unauthenticated API allows 60 calls/h per IP, so one call per 10 min per warm instance.
+const BUILDS_CACHE_MS = 10 * 60 * 1000;
+let buildsCache = null; // { at, body }
+async function buildsRun() {
+  if (buildsCache && Date.now() - buildsCache.at < BUILDS_CACHE_MS) return buildsCache.body;
+  try {
+    const j = await fetchJson(`https://api.github.com/repos/${REPO}/actions/workflows/build-app.yml/runs?per_page=1`, { headers: { "User-Agent": "droidputer-stats", Accept: "application/vnd.github+json" } });
+    const total = buildsRunTotal(j);
+    if (total === null) return buildsCache ? buildsCache.body : null;
+    buildsCache = { at: Date.now(), body: { total, source: "GitHub Actions build-app.yml runs, all time" } };
+    return buildsCache.body;
+  } catch {
+    return buildsCache ? buildsCache.body : null;
+  }
+}
+
 async function github() {
   const out = {};
+  out.builds_run = await buildsRun();
   try {
     const rel = await fetchJson(`https://api.github.com/repos/${REPO}/releases?per_page=100`, { headers: { "User-Agent": "droidputer-stats", Accept: "application/vnd.github+json" } });
     out.releases = rel.map((r) => ({
@@ -128,54 +207,11 @@ async function github() {
   }
   try {
     const v = await fetchJson(`https://raw.githubusercontent.com/${REPO}/main/apps/verdicts.json`);
-    const byApp = new Map();
-    for (const x of v) {
-      const a = byApp.get(x.name) || { app: x.name, works: 0, broken: 0 };
-      if (x.result === "works") a.works++; else a.broken++;
-      byApp.set(x.name, a);
-    }
-    // Day by day: verdicts filed and phones voting for the first time (reporter = anonymous per-install id).
-    const seen = new Set(), days = new Map();
-    for (const x of [...v].sort((a, b) => String(a.date).localeCompare(String(b.date)))) {
-      const d = days.get(x.date) || { day: x.date, verdicts: 0, new_phones: 0 };
-      d.verdicts++;
-      if (x.reporter && !seen.has(x.reporter)) { seen.add(x.reporter); d.new_phones++; }
-      days.set(x.date, d);
-    }
-    // What phones did after flashing, from the app's AUTOMATIC verdicts: for 20 s after a flash from the phone it
-    // counts boots, whether the ESP said HELLO and how many mirrored frames arrived ("auto: linked, 296 frames in 20 s",
-    // "auto: boots=0 hello=false frames=0"). Real phones, anonymous per-install ids (the developer's own test
-    // installs included).
-    const auto = v.filter((x) => String(x.note || "").startsWith("auto:"));
+    const vs = verdictStats(v);
     // Internal only: the burn count de-duplicates against analytics by (phone, app, day); never serialised.
-    Object.defineProperty(out, "autoReports", { value: auto, enumerable: false });
-    const frames = auto.map((x) => Number((/(\d+) frames/.exec(x.note) || [])[1] || 0));
-    const perPhone = new Map();
-    for (const x of v) if (x.reporter) perPhone.set(x.reporter, (perPhone.get(x.reporter) || new Set()).add(x.name));
-    const bucket = (n) => (n >= 5 ? "5+" : n >= 3 ? "3-4" : String(n));
-    const appsPerPhone = {};
-    for (const s of perPhone.values()) appsPerPhone[bucket(s.size)] = (appsPerPhone[bucket(s.size)] || 0) + 1;
-    const flashedBy = new Map();
-    for (const x of auto) if (x.reporter) flashedBy.set(x.name, (flashedBy.get(x.name) || new Set()).add(x.reporter));
-    const behaviour = {
-      flashes_observed: auto.length,
-      phones_that_flashed: new Set(auto.map((x) => x.reporter).filter(Boolean)).size,
-      mirror_up: auto.filter((x) => /linked/.test(x.note)).length,
-      no_hello: auto.filter((x) => /hello=false/.test(x.note)).length,
-      hello_no_frames: auto.filter((x) => /hello=true/.test(x.note) && !/linked/.test(x.note)).length,
-      frames_in_20s: frames.filter((n) => n > 0).sort((a, b) => a - b),
-      apps_per_phone: appsPerPhone,
-      most_flashed: [...flashedBy.entries()].map(([app, s]) => ({ app, phones: s.size })).sort((a, b) => b.phones - a.phones).slice(0, 10),
-      envs: v.reduce((m, x) => ((m[x.env] = (m[x.env] || 0) + 1), m), {}),
-    };
-    let cum = 0;
-    out.behaviour = behaviour;
-    out.verdicts = {
-      total: v.length,
-      reporters: new Set(v.map((x) => x.reporter).filter(Boolean)).size,
-      by_app: [...byApp.values()].sort((a, b) => b.works + b.broken - (a.works + a.broken)),
-      timeline: [...days.values()].map((d) => ({ ...d, phones_cumulative: (cum += d.new_phones) })),
-    };
+    Object.defineProperty(out, "autoReports", { value: vs.auto, enumerable: false });
+    out.behaviour = vs.behaviour;
+    out.verdicts = vs.verdicts;
   } catch (e) {
     out.verdicts = null; out.verdicts_error = String(e.message || e).slice(0, 160);
   }

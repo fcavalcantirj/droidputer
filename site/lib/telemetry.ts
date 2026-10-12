@@ -13,6 +13,7 @@ export type DailyActivity = {
   day: string;
   devices: number;
   build_requests: number;
+  builds_dispatched?: number;
   flashes: number;
   links: number;
   mirror_minutes: number | null;
@@ -38,6 +39,7 @@ export type Stats = {
   generated_at: string;
   burns?: Burns;
   github: {
+    builds_run?: { total: number; source: string } | null;
     releases?:
       { tag: string; published: string; apk_downloads: number }[] | null;
     behaviour?: {
@@ -196,12 +198,13 @@ export function buildActivity(data: Stats, period: Period) {
   const counts = new Map<string, number>();
   for (const run of data.history?.runs ?? [])
     counts.set(run.date, (counts.get(run.date) ?? 0) + 1);
-  // Historical runs end on October 8; the proxy's daily counter starts after that boundary.
+  // Builds that ran: history.json holds every GitHub run up to 2026-10-09 19:00 UTC, where the PostHog window starts;
+  // after it, the builds the proxy dispatched (cache hits are not builds). 2026-10-09 = both halves of the day.
   for (const day of data.posthog.daily ?? []) {
     if (day.day > "2026-10-08")
       counts.set(
         day.day,
-        (counts.get(day.day) ?? 0) + Number(day.build_requests),
+        (counts.get(day.day) ?? 0) + Number(day.builds_dispatched ?? 0),
       );
   }
   if (!counts.size) return [];

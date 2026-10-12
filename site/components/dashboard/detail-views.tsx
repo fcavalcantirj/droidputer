@@ -244,9 +244,9 @@ export function AppsView({ data }: { data: Stats }) {
             note: "Public works / broken reports",
           },
           {
-            label: "Participating phones",
+            label: "Participating installs",
             value: verdicts?.reporters,
-            note: "Anonymous per-install identifiers",
+            note: "Anonymous per-install ids; a phone can be several",
           },
           {
             label: "Apps with verdicts",

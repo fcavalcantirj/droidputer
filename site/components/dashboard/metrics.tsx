@@ -88,10 +88,16 @@ export function Metrics({ data }: { data: Stats }) {
     (sum, release) => sum + release.apk_downloads,
     0,
   );
-  const builds = data.history
-    ? data.history.runs.length +
-      Number(data.posthog.totals?.[0]?.build_requests ?? 0)
-    : undefined;
+  // GitHub's own run total when it answered; else the same count from history.json + proxy dispatches since.
+  const builds =
+    data.github.builds_run?.total ??
+    (data.history
+      ? data.history.runs.length +
+        (data.posthog.daily ?? []).reduce(
+          (sum, day) => sum + Number(day.builds_dispatched ?? 0),
+          0,
+        )
+      : undefined);
   const percent = behaviour?.flashes_observed
     ? Math.round((behaviour.mirror_up / behaviour.flashes_observed) * 100)
     : 0;
@@ -115,11 +121,11 @@ export function Metrics({ data }: { data: Stats }) {
         points={burnCurve}
       />
       <Metric
-        title="Phones reporting"
+        title="App installs reporting"
         value={formatNumber(verdicts?.reporters)}
         note={
           behaviour
-            ? `${behaviour.phones_that_flashed} flashed from the app`
+            ? `${behaviour.phones_that_flashed} flashed from the app; a phone can be several installs`
             : "Public community verdicts"
         }
         source="ALL TIME"
@@ -127,9 +133,9 @@ export function Metrics({ data }: { data: Stats }) {
         points={verdicts?.timeline.map((day) => day.phones_cumulative)}
       />
       <Metric
-        title="Builds requested"
+        title="Builds run"
         value={formatNumber(builds)}
-        note="From source to firmware"
+        note="On GitHub Actions, our own catalog rebuilds included"
         source="SINCE SEP 4"
         icon={GitBranch}
         points={buildActivity(data, "all").map((day) => day.requests)}
