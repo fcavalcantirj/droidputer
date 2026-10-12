@@ -23,7 +23,7 @@ static void test_real_panel_other_board_by_number(void) { TEST_ASSERT_EQUAL_STRI
 // Autodetect found nothing: a Cardputer-target build on a board that isn't one -- the verdict's env plus the chip
 // facts say exactly that (the suspected wrong-board community reports).
 static void test_real_panel_autodetect_failed_gives_chip_facts(void) {
-  TEST_ASSERT_EQUAL_STRING("s3-f8-p0", label(0, 8u << 20, 0));
+  TEST_ASSERT_EQUAL_STRING("s3-f8", label(0, 8u << 20, 0));
 }
 static void test_real_panel_ignores_chip_facts(void) {
   TEST_ASSERT_EQUAL_STRING("cardputer-adv", label(24, 16u << 20, 8u << 20));
@@ -33,7 +33,10 @@ static void test_virtual_devkit_n16r8(void) {
   // ESP.getPsramSize() reports the PSRAM heap: a little under the chip size, so MB rounds to nearest.
   TEST_ASSERT_EQUAL_STRING("s3-f16-p8", label(-1, 16u << 20, 8386295u));
 }
-static void test_virtual_no_psram(void) { TEST_ASSERT_EQUAL_STRING("s3-f8-p0", label(-1, 8u << 20, 0)); }
+// p only when the build maps PSRAM: virtual builds don't (no BOARD_HAS_PSRAM), so a "p0" would claim an absence we
+// never measured (the devkit is an N16R8; 2026-10-12, #117 said s3-f16-p0).
+static void test_virtual_no_psram_mapped_has_no_p(void) { TEST_ASSERT_EQUAL_STRING("s3-f16", label(-1, 16u << 20, 0)); }
+static void test_psram_rounding_to_zero_mib_has_no_p(void) { TEST_ASSERT_EQUAL_STRING("s3-f16", label(-1, 16u << 20, 100000u)); }
 static void test_virtual_rounds_half_up(void) {
   TEST_ASSERT_EQUAL_STRING("s3-f4-p2", label(-1, 4u << 20, (2u << 20) - (1u << 19)));   // 1.5 MiB -> 2
   TEST_ASSERT_EQUAL_STRING("s3-f4-p1", label(-1, 4u << 20, (1u << 20) + (1u << 19) - 1));  // just under 1.5 -> 1
@@ -54,7 +57,8 @@ int main(int, char**) {
   RUN_TEST(test_real_panel_autodetect_failed_gives_chip_facts);
   RUN_TEST(test_real_panel_ignores_chip_facts);
   RUN_TEST(test_virtual_devkit_n16r8);
-  RUN_TEST(test_virtual_no_psram);
+  RUN_TEST(test_virtual_no_psram_mapped_has_no_p);
+  RUN_TEST(test_psram_rounding_to_zero_mib_has_no_p);
   RUN_TEST(test_virtual_rounds_half_up);
   RUN_TEST(test_long_labels_truncate_inside_16_bytes);
   return UNITY_END();

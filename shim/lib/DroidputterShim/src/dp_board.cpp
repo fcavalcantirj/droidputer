@@ -8,6 +8,7 @@ void dp_board_label(char out[DP_BOARD_LABEL_LEN], int m5_board, uint32_t flash_b
   if (m5_board == 14) snprintf(out, DP_BOARD_LABEL_LEN, "cardputer");
   else if (m5_board == 24) snprintf(out, DP_BOARD_LABEL_LEN, "cardputer-adv");
   else if (m5_board > 0) snprintf(out, DP_BOARD_LABEL_LEN, "m5board-%d", m5_board);
-  else snprintf(out, DP_BOARD_LABEL_LEN, "s3-f%lu-p%lu", mib(flash_bytes), mib(psram_bytes));
+  else if (mib(psram_bytes) >= 1) snprintf(out, DP_BOARD_LABEL_LEN, "s3-f%lu-p%lu", mib(flash_bytes), mib(psram_bytes));
+  else snprintf(out, DP_BOARD_LABEL_LEN, "s3-f%lu", mib(flash_bytes));   // no PSRAM mapped: claim nothing about it
 }
 }  // namespace dp
