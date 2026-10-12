@@ -219,6 +219,13 @@ same need without depending on a second firmware.
      - DONE (fb07c43, deployed + verified live): the proxy cache keys on the content of shim/ + tools/overlay.py
        ("<tree 7>.<blob 7>"), so a revert or no-op commit reuses every cached build.
   7. GPIO over OTG assessment (Felipe offered an LED or a sensor): not started.
+  7a. 2026-10-12: the firmware fix list is docs/FIRMWARES-TO-FIX.md (from the live data). Lane A (no device, CI is
+     the gate): marivaaldo Marauder recipe, Game-Station (Wire), m5stick-nemo (BLE API pin), Evil-M5Core2
+     (std::function); overlay/shim only, ini identity for every other overlay, CI <= 3. Lane B (one phone batch at
+     the end, ask Felipe): flash + mirror + one key per Lane-A build, Pigtail no-shim experiment, ADV-target re-tests
+     (need his Cardputer ADV). Skip Bus-Pirate + cardputer-ai (arduino-esp32 3.x track).
+     Failed phone flashes are filed automatically: proxy /api/flash-failures, Vercel cron daily 12:xx UTC, one
+     flash-failed issue per error kind (b8af8e5..19b5cb1); every run sends PostHog flash_failures_run.
   7b. marivaaldo/ESP32Marauder (in TFT_RECIPES) does not build (2026-10-10 18:39 run: env_src "(ino)", missing
      User_Setup_marauder_m5cardputer.h): spike the fork's tree, then fix its recipe or drop it from TFT_RECIPES.
   8. HELLO board label (shim only, after 5; a shim commit moves the proxy's shim sha): `droidputter.cpp` hardcodes
