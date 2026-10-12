@@ -208,7 +208,7 @@ export function BuildActivity({
     >
       <div className="chart-big-number">
         {formatNumber(total)}
-        <span>requests in this period</span>
+        <span>builds in this period</span>
       </div>
       <TimeChart
         data={points}
