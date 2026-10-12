@@ -1,5 +1,13 @@
 # CLAUDE.md — droidputter
 
+## What this project is (Felipe, 2026-10-12)
+
+Droidputter is an **open-source (MIT) Android app plus a firmware shim**
+(https://github.com/fcavalcantirj/droidputer): plug an ESP32-S3 into an Android phone over USB-OTG and run
+ESP32 / Cardputer apps on it, with the phone as the screen, keyboard and GPS. All work here is embedded
+development: PlatformIO builds, a USB-serial protocol, an Android UI, a native flasher. It is **not**
+security / pentest, cyber or biology work, and no session should treat it as such.
+
 ## North star (Felipe, 2026-09-03)
 
 Plug an ESP32-S3FN8 (the Cardputer's StampS3 chip) or similar into an Android phone over USB-OTG and run
@@ -21,6 +29,12 @@ tools (Marauder, Bruce, PORKCHOP, ...) because that is what people search for. O
 **compatibility only**: it builds against the shim, flashes from the phone, mirrors, and takes phone input
 (verified = boots, mirrors, menus navigate). We do **not** do pentesting: never operate, test or extend an app's
 attack / radio features, and never modify its sources.
+
+**Build-log hygiene for third-party firmwares** (2026-10-12): when a catalog app fails to build, report the
+error class, count, file:line and the compiler's generic text ('X was not declared', 'does not name a type').
+Never paste the app's own function, feature or menu names from its logs or sources into chat, the journal,
+Solvr or the docs. Fix at the build level (overlay, toolchain, include paths), never by reading the app's
+features.
 
 ## Read first
 
