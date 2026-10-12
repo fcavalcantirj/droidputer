@@ -69,6 +69,7 @@ export const QUERIES = {
       uniqIf(distinct_id, ${APP} AND timestamp > now() - INTERVAL 1 DAY) AS devices_24h,
       countIf(event IN ${BUILD_REQUEST_EVENTS}) AS build_requests,
       countIf(event = 'flash_finished' AND properties.result = 'ok' AND ${APP}) AS flashes,
+      countIf(event = 'flash_finished' AND properties.result != 'ok' AND ${APP}) AS failed_flashes,
       round(sumIf(toFloat(properties.seconds), event = 'mirror_session' AND ${APP}) / 60, 1) AS mirror_minutes,
       min(timestamp) AS first_event
     FROM events WHERE ${SINCE}`,

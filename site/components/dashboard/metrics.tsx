@@ -113,7 +113,10 @@ export function Metrics({ data }: { data: Stats }) {
         value={formatNumber(burned)}
         note={
           burns
-            ? `${formatNumber(burns.by_app?.length)} different apps, flashed from phones`
+            ? `${formatNumber(burns.by_app?.length)} different apps, flashed from phones` +
+              (data.posthog.totals?.[0]?.failed_flashes != null
+                ? ` · ${formatNumber(data.posthog.totals[0].failed_flashes)} failed, tracked as GitHub issues`
+                : "")
             : "Flashes from the app, all time"
         }
         source="LIVE · ALL TIME"

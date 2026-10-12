@@ -89,6 +89,7 @@ export type Stats = {
           devices_24h: number;
           build_requests: number;
           flashes: number;
+          failed_flashes?: number;
           mirror_minutes: number | null;
         }[]
       | null;
