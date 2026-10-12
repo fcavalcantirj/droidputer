@@ -132,7 +132,7 @@ static void onFrame(uint8_t type, const uint8_t* p, uint16_t n) {
   internal::last_rx_ms = millis();
   if (type == KEY && n >= 3) { dp_keys_push(p[0], p[1], p[2]); }
   else if (type == GPS_NMEA) { dp_gps_push(p, n); }
-  else if (type == HELLO_ACK) { internal::linked = true; sendHello(); internal::resync();
+  else if (type == HELLO_ACK) { internal::linked = true; internal::decideStage(); sendHello(); internal::resync();
 #ifdef DROIDPUTTER_BENCH
     extern void dp_display_bench(int frames);
     dp_display_bench(30);

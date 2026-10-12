@@ -23,6 +23,7 @@ extern uint32_t write_budget_ms;  // usb_write()'s blocking budget; raised only 
 // pushes them as one RECT/RECT_RLE, so a phone that HELLO_ACKs after the app has
 // already drawn its screen still sees it. Called from droidputter.cpp on HELLO_ACK.
 void resync();
+void decideStage();   // once, at the first HELLO_ACK: the RLE stage's floor or boost (dp_display.cpp, dp_stage.h)
 // Periodic flush of the coalesced shadow (dp_display.cpp); called from dp::poll() every loop.
 void flushTick();
 // Runs dp::poll() from the tee entry points at most every DP_POLL_MS, re-entrancy safe (see droidputter.cpp):

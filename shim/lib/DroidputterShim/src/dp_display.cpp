@@ -11,8 +11,11 @@
 #include "dp_internal.h"
 #include "dp_rle.h"
 #include "dp_shadow.h"
+#include "dp_stage.h"
 #ifdef ARDUINO
 #include <Arduino.h>
+#include "esp_heap_caps.h"
+#include <stdio.h>
 #include <lgfx/v1/misc/pixelcopy.hpp>
 #include <string.h>
 namespace dp {
@@ -20,7 +23,13 @@ namespace dp {
 #define DP_FLUSH_MS 16
 #endif
 static const uint16_t MAXW = DP_SHADOW_W;
-static uint8_t stage[32768];             // RLE staging for one flush
+// RLE staging for one flush: a 4 KB floor in .bss for every app, and a 32 KB internal boost taken once at the first
+// HELLO_ACK when the radios' whole intake stays free after it (decideStage, dp_stage.h). Until 2026-10-12 a static
+// 32 KB stage boot-looped Pigtail (its Wi-Fi + BLE could not get their internal RAM).
+static_assert(DP_STAGE_BYTES >= DP_SHADOW_W * 2, "the stage floor must hold at least one raw row");
+static uint8_t stage_floor[DP_STAGE_BYTES];
+static uint8_t* stage = stage_floor;
+static size_t stage_len = sizeof stage_floor;
 static uint8_t convbuf[MAXW * 2];        // pixelsConv chunk (one row of converted pixels)
 static uint32_t last_flush_ms = 0;
 #ifdef DROIDPUTTER_VIRTUAL
@@ -30,6 +39,27 @@ static bool shadow_ready = true;
 #else
 static bool shadow_ready = false;
 #endif
+
+namespace internal {
+void decideStage() {
+  static bool decided = false;   // once: a relink never retries, so a tight app cannot boost later
+  if (decided) return;
+  decided = true;
+  size_t largest = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+  size_t dma = heap_caps_get_free_size(MALLOC_CAP_DMA);
+  size_t want = dp_choose_stage(largest, DP_STAGE_BYTES, DP_STAGE_BOOST_BYTES, DP_STAGE_HEADROOM_BYTES);
+  // CPU-written into the USB FIFO: internal RAM, no DMA capability needed. Never freed.
+  uint8_t* p = want > DP_STAGE_BYTES ? (uint8_t*)heap_caps_malloc(want, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT) : nullptr;
+  {
+    LinkLock guard;
+    if (p) { stage = p; stage_len = want; }
+  }
+  char m[96];
+  int n = snprintf(m, sizeof m, "stage %u %s, largest %u, dma %u", (unsigned)stage_len, p ? "boost" : "floor",
+                   (unsigned)largest, (unsigned)dma);
+  send(LOG, (const uint8_t*)m, n > 0 ? (size_t)n : 0);
+}
+}  // namespace internal
 
 static void ensureShadow() { if (!shadow_ready) { dp_shadow_reset(); shadow_ready = true; } }
 
@@ -51,7 +81,7 @@ static bool flushDirty(bool force) {
   const uint8_t* px = dp_shadow_buffer() + (size_t)y0 * MAXW * 2;   // rows are contiguous
   size_t free_ = internal::txFree();
   size_t budget = free_ > 6 + 8 ? free_ - (6 + 8) : 0;              // frame header + RECT header + crc
-  if (budget > sizeof stage) budget = sizeof stage;
+  if (budget > stage_len) budget = stage_len;
   uint16_t rleRows = 0;
   size_t rleLen = budget ? dp_rle_encode_rows_be(px, MAXW, h, stage, budget, &rleRows) : 0;
   uint16_t rawRows = (uint16_t)(budget / ((size_t)MAXW * 2)); if (rawRows > h) rawRows = h;
