@@ -23,8 +23,9 @@ and what the workarounds gain and cost. Append as findings land. Label every lin
 - [REAL] Pigtail, virtual env with the shim (P0): crash loop ("Interrupt wdt timeout on CPU0", BLE never starts)
   while about 86-92 KB internal DMA-capable RAM is still free -> NOT a plain out-of-memory. Cause pending (P1: stage
   4 KB). Lesson either way: "free heap" alone does not explain a crash.
-- [INFERRED, to verify] Arduino 2.0.x enables PSRAM with `#ifdef BOARD_HAS_PSRAM`, i.e. by the macro's existence:
-  an app that writes -DBOARD_HAS_PSRAM=0 (Pigtail does) still gets PSRAM mapped.
+- [REAL] Arduino 2.0.x enables PSRAM with `#ifdef BOARD_HAS_PSRAM`, i.e. by the macro's existence: an app that
+  writes -DBOARD_HAS_PSRAM=0 (Pigtail does) still gets PSRAM mapped -- measured twice on the N16R8 devkit: the heap
+  probe's total free ~8.4 MB in Pigtail's virtual build, and its HELLO board label "s3-f16-p8" (2026-10-12).
 - [REAL] Our bare-S3 builds never define BOARD_HAS_PSRAM, so ESP.getPsramSize() reads 0 on an 8 MB-PSRAM devkit;
   the board label therefore reports PSRAM only when the build maps it ("s3-f16", dfa344b).
 - [REAL] An interrupt-watchdog (IWDT) reset means interrupts stayed off too long on one CPU: a timing/concurrency
