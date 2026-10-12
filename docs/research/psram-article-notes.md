@@ -14,6 +14,37 @@ and what the workarounds gain and cost. Append as findings land. Label every lin
   framebuffer; reserve big buffers early and lend them instead of free/realloc; judge memory by
   heap_caps_get_largest_free_block() and DMA-capable free memory, not total free heap; bound everything; stream to SD.
 
+## The story so far: dead ends, decisions, why (validator's record, 2026-10-12)
+Kept so the article can tell how we got there, not only where. Commits named where they exist.
+- Hardware: bare ESP32-S3-WROOM-1-N16R8 devkit (16 MB flash, 8 MB octal PSRAM) on the USB-C OTG port of a Poco X7 Pro
+  (Android 16), Droidputter from Google Play; the Cardputer ADV target is an ESP32-S3FN8 (no PSRAM).
+- Symptom: Pigtail (benbaker76, an anti-stalker BLE/Wi-Fi app) boot-loops on our builds: "Interrupt wdt timeout on
+  CPU0" inside the ROM BLE controller init (#98, #112; ADV #9); the upstream 1.0.11 prebuilt runs on the same devkit.
+- Dead end 1 [REAL]: "the BLE library is newer" -- NimBLE-Arduino pinned back to 2.5.0 (f381e44): the binary changed
+  (1,460,416 vs 1,460,496 B) and it still looped. Reverted (d7ec544).
+- Dead end 2 [REAL]: "the library versions" -- upstream's CI logs had expired (GitHub HTTP 410), so versions came from
+  release dates [INFERRED] and the binaries (identical esp_app_desc). Then measured: V1 = upstream unchanged with
+  today's libraries (M5Cardputer 1.1.1, M5Unified 0.2.25, M5GFX 0.2.32, NimBLE 2.5.1) BOOTS; V2 = our overlay's
+  libraries without the shim BOOTS. Libraries cleared; the shim is the variable.
+- Dead end 3 [REAL]: the validator's "timing, not memory" suspicion (an IWDT means interrupts off too long, and ~92 KB
+  internal DMA RAM was still free) -- refuted by P1: shrinking one buffer and nothing else fixed it.
+- Counting lesson [REAL]: "77 Guru Meditations in 60 s" was ~24 boots/min; the panic prints on two consoles (UART0 +
+  the secondary USB-Serial/JTAG), so count boots, not crash lines.
+- Measurement lesson [REAL]: frames/20 s is not a throughput metric across buffer sizes; bytes out is.
+- Why NOT "move the buffers to PSRAM": the Cardputer ADV has no PSRAM, and Pigtail loops there too (#9); and turning
+  PSRAM on for every bare-S3 build (BOARD_HAS_PSRAM) would change every app's malloc behaviour just to fix one.
+- Why NOT a per-app list (8 KB default + 4 KB for Pigtail): it only protects apps we already know, and a crash loop is a
+  far worse failure than slower animation. Felipe's rule: "best, most robust".
+- DECISION (validator, 2026-10-12): a 4 KB static stage floor for every app (Pigtail's ~9 KB headroom profile from
+  boot) + an opportunistic 32 KB boost allocated ONCE at link-up (first HELLO_ACK, after the app's own init) only when
+  the largest free internal block leaves a fixed headroom (start 64 KB): stellar-map (~280 KB free) keeps full
+  throughput, Pigtail (~9 KB) stays on the floor. Pure size-choice function, host-tested; implementation pending.
+- Label story [REAL]: the HELLO board label first said "s3-f16-p0" on an 8 MB-PSRAM devkit (our builds never map
+  PSRAM); now PSRAM is shown only when mapped: "s3-f16" (dfa344b), "s3-f16-p8" for Pigtail (which maps it).
+- Data hygiene [REAL]: a manual recovery (BOOT + RST, chip in download mode) made the app file a false public
+  "stellar-map broken" verdict (#120); removed from apps/verdicts.json (45ed681) with an explanation on the issue.
+- Open: why the devkit dropped off the phone's USB once (13:28 UTC, port power_role=no-power) -- unknown.
+
 ## Droidputter findings (2026-10-12)
 - [REAL] Our shim's fixed internal-RAM cost: 98,592 B of .bss = dp::fb 64,800 (240x135 RGB565 shadow) + dp::stage
   32,768 + dp::ring 1,024 (ELF diff, Pigtail with vs without the shim).
