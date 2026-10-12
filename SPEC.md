@@ -255,7 +255,10 @@ same need without depending on a second firmware.
      When a firmware runs BECAUSE of this diet (measured before/after: boots, heap min, largest free block, DMA free),
      write it up as a Solvr blog post so others learn it (Felipe, 2026-10-12): `solvr.sh blog ... --status draft`,
      Felipe reviews, then publish. Only [REAL] numbers; credit the source report; compatibility framing only.
-  11. NEXT MILESTONE after Pigtail (Felipe, 2026-10-12): make chrisdiana/breezybox-cardputer (MIT; a shell/terminal OS
+  ORDER after the stage boost (Felipe, 2026-10-12 -- not that day): (1) the arduino-esp32 3.x track (Bruce,
+     ESP32-Bus-Pirate, cardputer-ai, m5stick-nemo, Evil-M5Core2); (2) GPIO: the LED/sensor test, then a "GPIO via the
+     phone" feature (new link messages, a pin panel) if it holds up; (3) BreezyBox (item 11) and the PSRAM article.
+  11. THIRD MILESTONE (after the 3.x track and GPIO; Felipe, 2026-10-12): make chrisdiana/breezybox-cardputer (MIT; a shell/terminal OS
      with the `claw` AI agent, built for the PSRAM-less Cardputer) run on Droidputter. It is ESP-IDF (idf.py/CMake), not
      Arduino, so the proxy refuses it today (not-arduino). Needs an ESP-IDF shim. SPIKE FIRST, in a scratch build:
      - screen: catch its esp_lcd ST7789 strip writes (draw_bitmap) into dp::;
