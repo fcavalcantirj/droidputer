@@ -111,3 +111,13 @@ Kept so the article can tell how we got there, not only where. Commits named whe
   Link-up comes BEFORE a radio app's init (Pigtail: ~1.7 s earlier), so "the RAM looks free at link-up" is not
   "the app is done allocating". Any later grab must leave room for the app's worst case (Wi-Fi + BLE took ~117 KB
   of internal RAM here), not a guessed margin.
+- [REAL] The fix in production (7e5303d, 2026-10-12): a 4 KB static stage floor for every app plus a 32 KB internal
+  boost taken once at link-up only if 120 KB of internal RAM stays free after it. Decisions logged on the phone:
+  stellar-map "stage 32768 boost, largest 253940" (30 s bytes 11,173,273 vs 11,183,463 with the old static 32 KB,
+  same app and window: no throughput loss); Marauder "stage 4096 floor" (largest 155,636 B, 12 B under the
+  threshold); Pigtail "stage 4096 floor, largest 110580" -> boots, BLE up, 5 min clean, first "works" verdict.
+  Static RAM fell 28 KB in every app (stellar-map 125,864 -> 97,200 B).
+- [INFERRED] Robustness argument: versus the old static 32 KB, a boosted app holds at most 4 KB more stage memory and
+  only when >= 120 KB stays free; every other app gains 28 KB. Limit: the check runs at link-up, and an app that
+  allocates a lot after link-up (Marauder: 131 KB -> 78 KB within 3 s) eats into the 120 KB before any on-demand radio
+  starts -- not measured (radio features are out of scope).
