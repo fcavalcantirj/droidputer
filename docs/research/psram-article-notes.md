@@ -48,3 +48,14 @@ and what the workarounds gain and cost. Append as findings land. Label every lin
   reboot drops its USB-Serial/JTAG device, so flashing over USB fails mid-write (FLASH_DEFL_DATA timed out, "Error
   writing 64 bytes", "USB get_status request failed"). Recovery: hold BOOT, tap RST (download mode stays put), flash,
   then tap RST to start the new image.
+- [REAL] Stage size vs cost (2026-10-12, scratch builds, bare S3 devkit, dev app; ESP-side STATS for the first ~30 s
+  after boot; 0 frames dropped in every run). "Frames/20 s" is NOT a throughput measure across stage sizes (a smaller
+  stage splits an update into more, smaller frames: stellar-map 763 -> 941 frames), so bytes out is the measure:
+  | stage | stellar-map bytes out | Marauder bytes out | stellar-map internal heap free | Pigtail (virtual) |
+  |---|---|---|---|---|
+  | 32 KB | 12.9 MB | 0.52 MB | 250,956 B | crash loop (P0) |
+  | 16 KB | 13.8 MB | 0.54 MB | 267,340 B | not tested (~108 KB DMA free, computed) |
+  | 8 KB | 10.9 MB (-16 %) | 0.51 MB | 275,532 B | boots, BLE up, links |
+  | 4 KB | 7.1 MB (-45 %) | 0.51 MB | 279,628 B | boots (P1) |
+  Static RAM moves by exactly the stage delta (stellar-map 125,864 -> 97,192 B). Animated full-screen apps pay for a
+  small stage (fewer rows per flush tick, so redraws coalesce [INFERRED from the flush code]); menu apps pay nothing.
