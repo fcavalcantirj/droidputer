@@ -197,8 +197,8 @@ same need without depending on a second firmware.
   ESP32-S3 devkit proven via the virtual panel; ESP32-C5 blocked on an arduino-esp32 3.x toolchain
   bump (real gap, not a design limitation). TFT_eSPI shim BUILT for the bare S3 (2026-10-10): a TFT_eSPI 2.5.43
   virtual processor + Cardputer GPIO keyboard-matrix emulation + output-only app Serial, overlay `TFT_RECIPES`
-  (Marauder and 2 forks) — Marauder builds, flashes from the phone, mirrors, arrows navigate. Bruce still needs the
-  arduino-esp32 3.x track too. Open: LovyanGFX-only apps that don't go through M5GFX.
+  (upstream Marauder; the marivaaldo/serialgeist forks predate its Cardputer support, dropped 2026-10-12) —
+  Marauder builds, flashes from the phone, mirrors, arrows navigate. Bruce still needs the arduino-esp32 3.x track too. Open: LovyanGFX-only apps that don't go through M5GFX.
 - **Next session (from 2026-10-10, builder's journal order; phone runs need a hands-off window).**
   1. DONE 2026-10-10 (06242d8): Marauder enter fixed on the phone with d2cd447 (120 ms holds and taps, Recon and
      Device, fn off and latched; back returns one level).

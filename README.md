@@ -50,7 +50,7 @@ Actions through a small proxy, the phone flashes the result itself, and the same
 display, keyboard, GPS and app launcher. A real Cardputer ADV is only used in development because its
 own TFT shows the same frames next to the phone.
 
-Apps that draw with **TFT_eSPI** instead of M5GFX (ESP32Marauder's Cardputer build and its forks) run on a bare
+Apps that draw with **TFT_eSPI** instead of M5GFX (ESP32Marauder's Cardputer build) run on a bare
 ESP32-S3 too, through a TFT_eSPI 2.5.43 virtual display processor and an emulation of the Cardputer's GPIO
 keyboard matrix ([The shim](#tft_espi-apps-bare-esp32-s3-only), 2026-10-10).
 
@@ -415,8 +415,8 @@ through M5GFX and M5Cardputer. Three pieces cover them, again without touching t
 - **Serial.** `dp_appserial.h`, compiled into the app's sources only (`build_src_flags`), makes the app's `Serial`
   output-only. The app's own command line then never swallows the phone's KEY frames on the shared USB link.
 
-`tools/overlay.py` builds these apps from `TFT_RECIPES` (`justcallmekoko/ESP32Marauder`, `marivaaldo/esp32marauder`,
-`serialgeist/esp32marauder`) in the `m5cardputer-virtual` env only. The `m5cardputer` env refuses them. The other
+`tools/overlay.py` builds these apps from `TFT_RECIPES` (`justcallmekoko/ESP32Marauder`; the forks marivaaldo and
+serialgeist predate Marauder's Cardputer support and refuse) in the `m5cardputer-virtual` env only. The `m5cardputer` env refuses them. The other
 overlays checked (M5PORKCHOP, stellar-map, ISS tracker, miniacid, VolosR/Cardputer, and two refusals) generate a
 byte-identical `platformio.ini`. Marauder builds, flashes from the phone, mirrors,
 its menus move with the phone's arrows, enter opens a submenu, and back returns one level (2026-10-10, shim d2cd447;

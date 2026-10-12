@@ -116,7 +116,13 @@ MARAUDER = {
     "partitions": "min_spiffs.csv",
     "kbd_matrix": True,
 }
-TFT_RECIPES = {"justcallmekoko/esp32marauder": MARAUDER, "marivaaldo/esp32marauder": MARAUDER, "serialgeist/esp32marauder": MARAUDER}
+# The forks marivaaldo/serialgeist were dropped 2026-10-12: Marauder trees from before its Cardputer support (no
+# MARAUDER_CARDPUTER, no m5cardputer User_Setup), so they refuse like any TFT_eSPI app.
+TFT_RECIPES = {"justcallmekoko/esp32marauder": MARAUDER}
+# Per-repo libraries the upstream build gets without declaring them. Game-Station calls Wire through M5GFX's
+# `#if __has_include(<Wire.h>)`, which our deep+ library finder evaluates false (upstream's default chain mode
+# follows it); force-including Wire.h instead broke its Atari core (specreg.h's `#define PS`), 2026-10-09.
+EXTRA_LIB_DEPS = {"geo-tp/cardputer-game-station-emulators": ["Wire"]}
 
 
 def fail(cls: str, reason: str):
@@ -329,6 +335,29 @@ def anchor_flag(flag: str, src: Path, app: Path) -> str:
     return flag
 
 
+def src_flags_block(cp: configparser.ConfigParser, env: str, src: Path, app: Path) -> str:
+    """The upstream env's build_src_flags (flags for its own sources only) as an ini block, or "". Game-Station
+    compiles its sources at -O3, where its non-static INLINE C functions get inlined; without them, at -O2, they
+    were undefined references (2026-10-12)."""
+    flags = [anchor_flag(f, src, app) for f in (re.sub(r"\s*;.*$", "", x) for x in multiline(pio_get(cp, env, "build_src_flags") or "")) if f]
+    return "build_src_flags =\n" + "\n".join(f"    {f}" for f in flags) + "\n" if flags else ""
+
+
+def virtual_extra_block(recipe: dict | None, upstream_src_flags: bool) -> str:
+    """The virtual env's additions for a keyboard-matrix recipe app, else "". The app also reads the USB serial itself
+    (Marauder's command line): dp_appserial.h keeps it off the link's bytes -- in the app's own sources only
+    (build_src_flags), never the framework that defines the real Serial. The env's own build_src_flags would replace
+    the inherited upstream ones, so they are carried in the same key."""
+    if not (recipe and recipe.get("kbd_matrix")):
+        return ""
+    inherited = "    ${env:m5cardputer.build_src_flags}\n" if upstream_src_flags else ""
+    return ("\n    -DDROIDPUTTER_KBD_MATRIX\n"
+            "    -include ${PROJECT_DIR}/../../shim/lib/DroidputterShim/src/dp_kbdmatrix.h\n"
+            "build_src_flags =\n" + inherited +
+            "    -DDROIDPUTTER_APP_SERIAL\n"
+            "    -include ${PROJECT_DIR}/../../shim/lib/DroidputterShim/src/dp_appserial.h")
+
+
 def library_example(src: Path, name: str) -> Path | None:
     """The sketch to build from a LIBRARY repo (m5stack/M5Cardputer): the example a committed overlay of the same
     name already uses (m5-example = examples/Basic/keyboard/inputText), else the first Basic example, else the
@@ -408,6 +437,7 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None, build_e
         recipe = None   # a TFT_eSPI recipe applies only when preflight picked its sketch (virtual env)
     info = {"name": name, "repo": slug, "src": str(src), "upstream_commit": upstream_commit(src)}
     lib_deps, flags, extra_board, src_dir, extra_lib_dirs, src_filter, ldf_mode = [], [], [], None, [], "", "deep+"
+    upstream_src_flags = ""
     sketch_dir: Path | None = None
     if cp:
         env = target
@@ -432,6 +462,8 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None, build_e
         ignore = pio_get(cp, env, "lib_ignore")
         if ignore and multiline(ignore):
             src_filter += "lib_ignore =\n" + "\n".join(f"    {x}" for x in multiline(ignore)) + "\n"
+        upstream_src_flags = src_flags_block(cp, env, src, app)
+        src_filter += upstream_src_flags
         for key in ("board_build.partitions", "board_build.embed_files", "board_build.embed_txtfiles"):
             v = pio_get(cp, env, key)
             if v:
@@ -552,16 +584,9 @@ def generate(slug: str, name: str, env_src: str | None, ref: str | None, build_e
                 link.symlink_to(lib.resolve())
     lib_extra = "lib_extra_dirs = _vendored\n" if vendored_dir.is_dir() else ""
     # A TFT_eSPI recipe app never uses M5Unified; leaving it out keeps the firmware inside its own partition plan.
-    lib_deps = ([] if recipe else [M5UNIFIED]) + lib_deps + ["symlink://../../shim/lib/DroidputterShim"]
-    virtual_extra = ""
-    if recipe and recipe.get("kbd_matrix"):
-        # The app also reads the USB serial itself (Marauder's command line): dp_appserial.h keeps it off the link's
-        # bytes -- in the app's own sources only (build_src_flags), never the framework that defines the real Serial.
-        virtual_extra = ("\n    -DDROIDPUTTER_KBD_MATRIX\n"
-                         "    -include ${PROJECT_DIR}/../../shim/lib/DroidputterShim/src/dp_kbdmatrix.h\n"
-                         "build_src_flags =\n"
-                         "    -DDROIDPUTTER_APP_SERIAL\n"
-                         "    -include ${PROJECT_DIR}/../../shim/lib/DroidputterShim/src/dp_appserial.h")
+    extra = [d for d in EXTRA_LIB_DEPS.get(slug.lower(), []) if d not in lib_deps]
+    lib_deps = ([] if recipe else [M5UNIFIED]) + extra + lib_deps + ["symlink://../../shim/lib/DroidputterShim"]
+    virtual_extra = virtual_extra_block(recipe, bool(upstream_src_flags))
 
     app.mkdir(parents=True, exist_ok=True)
     ini = ENV_TEMPLATE.format(
@@ -603,7 +628,9 @@ def classify_build(out: str) -> tuple[str, str]:
     m = re.search(r"multiple definition of `([^']+)'", out)
     if m:
         return "link-error", f"link failed: multiple definition of {m.group(1)[:80]}"
-    m = re.search(r"\berror: (.+)", out)
+    # A compiler diagnostic first (file:line[:col]: error:): gcc echoes the offending source line, and a source line
+    # with "error:" in a printf string was taken for the reason (Game-Station on core 3.x, 2026-10-09).
+    m = re.search(r"^[^\s:][^:\n]*:\d+(?::\d+)?: error: (.+)$", out, re.M) or re.search(r"\berror: (.+)", out)
     if m:
         return "compile-error", m.group(1).strip()[:160]
     tail = [ln for ln in out.splitlines() if ln.strip()][-1:] or ["(no output)"]
