@@ -18,7 +18,7 @@
   "crons": [
     {
       "path": "/api/flash-failures",
-      "schedule": "0 9 * * *"
+      "schedule": "0 12 * * *"
     }
   ]
 }

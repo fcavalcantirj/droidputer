@@ -1,4 +1,4 @@
-// GET /api/flash-failures -- Vercel cron (vercel.json "crons", daily): failed phone flashes from the app's opt-in
+// GET /api/flash-failures -- Vercel cron (vercel.json "crons", daily 12:xx UTC = 09:xx in São Paulo): failed phone flashes from the app's opt-in
 // analytics become flash-failed GitHub issues (lib/flashfailures.js). Only Vercel cron may run it: it sends
 // "Authorization: Bearer $CRON_SECRET"; without CRON_SECRET configured the endpoint refuses outright.
 //

@@ -48,4 +48,4 @@ Most requested first. These are milestones, not bugs:
 | #115 `FLASH_DEFL_BEGIN timed out` (4 failures, 4 apps) | Closed: all were our own test flashes; the link-reconnect race is fixed in v0.0.8 (e3a9e71). Reopens by itself if it comes back. |
 | #116 `Error writing N bytes … rc=-N` (1) | Same as #115. |
 
-New failure kinds from real users show up as `flash-failed` issues, created daily at 09:00 UTC by the proxy.
+New failure kinds from real users show up as `flash-failed` issues, created daily between 12:00 and 12:59 UTC (09:00 in São Paulo) by the proxy.
