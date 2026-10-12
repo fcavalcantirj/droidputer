@@ -252,6 +252,9 @@ same need without depending on a second firmware.
      - reserve big buffers early and lend them, instead of freeing and reallocating them;
      - judge memory by heap_caps_get_largest_free_block() and DMA-capable free memory, not total free heap.
      The Pigtail stage-shrink proof (in progress) is the first step of this.
+     When a firmware runs BECAUSE of this diet (measured before/after: boots, heap min, largest free block, DMA free),
+     write it up as a Solvr blog post so others learn it (Felipe, 2026-10-12): `solvr.sh blog ... --status draft`,
+     Felipe reviews, then publish. Only [REAL] numbers; credit the source report; compatibility framing only.
 
 ## Open questions
 
