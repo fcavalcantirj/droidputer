@@ -219,6 +219,8 @@ same need without depending on a second firmware.
      - DONE (fb07c43, deployed + verified live): the proxy cache keys on the content of shim/ + tools/overlay.py
        ("<tree 7>.<blob 7>"), so a revert or no-op commit reuses every cached build.
   7. GPIO over OTG assessment (Felipe offered an LED or a sensor): not started.
+  7b. marivaaldo/ESP32Marauder (in TFT_RECIPES) does not build (2026-10-10 18:39 run: env_src "(ino)", missing
+     User_Setup_marauder_m5cardputer.h): spike the fork's tree, then fix its recipe or drop it from TFT_RECIPES.
   8. HELLO board label (shim only, after 5; a shim commit moves the proxy's shim sha): `droidputter.cpp` hardcodes
      "cardputer-adv" into HELLO's board for every build, and the app forwards it to link_up / esp_panic / verdicts.
      Real-panel env: the board M5GFX autodetect found (board_M5Cardputer=14 -> "cardputer", board_M5CardputerADV=24
