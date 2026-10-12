@@ -243,6 +243,15 @@ same need without depending on a second firmware.
      source: env + the journal for verdict rows before item 8 (47 virtual rows say "cardputer-adv", 22 "unknown"),
      the verdict's own board after it. m5cardputer = Cardputer ADV; m5cardputer-virtual = bare S3 devkit since
      2026-09-16 (StickS3 before).
+  10. IDEA, not scheduled (Felipe, 2026-10-12: "if the firmware is VERY used"): a shim internal-RAM diet for no-PSRAM
+     boards. Measured on Pigtail (2026-10-12): the shim adds 98,592 B of .bss (dp::fb 64,800 + dp::stage 32,768 +
+     dp::ring 1,024) and Pigtail's heap minimum fell from 48,132 to 9,376 B. The Cardputer ADV (ESP32-S3FN8) has no
+     PSRAM, so moving buffers to PSRAM cannot be the fix there. Techniques to weigh, from
+     docs/research/2026-10-12-no-psram-memory-engineering-breezybox-claw.md [UNVERIFIED source]:
+     - render in strips (2 x 8-line RGB565 DMA strips, about 7.5 KB) instead of one full 240x135 framebuffer;
+     - reserve big buffers early and lend them, instead of freeing and reallocating them;
+     - judge memory by heap_caps_get_largest_free_block() and DMA-capable free memory, not total free heap.
+     The Pigtail stage-shrink proof (in progress) is the first step of this.
 
 ## Open questions
 
