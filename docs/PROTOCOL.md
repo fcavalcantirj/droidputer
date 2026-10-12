@@ -42,7 +42,7 @@ Treat 65,535 B (the u16 ceiling) as the real max payload, not 4096.
 
 | type | name | payload |
 |------|------|---------|
-| 0x01 | HELLO | `proto u8=0, w u16, h u16, rotation u8, bpp u8(=16), board char[16], app char[32]` — 55 B total, fixed-size fields, NUL-padded strings |
+| 0x01 | HELLO | `proto u8=0, w u16, h u16, rotation u8, bpp u8(=16), board char[16], app char[32]` — 55 B total, fixed-size fields, NUL-padded strings; `board` (since 2026-10-12): the board M5GFX's autodetect found on a real-panel build (`cardputer`, `cardputer-adv`, else `m5board-<board_t>`), or the chip's facts when there is no board (autodetect found none, or a virtual / TFT_eSPI build): `s3-f<flash MB>-p<PSRAM MB>`, e.g. `s3-f16-p8`. `p` is the build's usable PSRAM (`ESP.getPsramSize()`, rounded to the nearest MiB), so a build without PSRAM enabled reports `p0` on a PSRAM chip; with the verdict's `env`, `env=m5cardputer` + `s3-…` means a Cardputer-target build on a board that isn't one. Before 2026-10-12 it was always `cardputer-adv` |
 | 0x02 | FILL | `x,y,w,h u16, color u16` — 10 B, solid-fill rect |
 | 0x03 | RECT | `x,y,w,h u16` (8 B header) then `w*h*2` bytes of raw RGB565 pixel data, row-major, in the exact byte order the panel bus receives (big-endian / MSB-first per pixel — confirmed [REAL] against the Cardputer ADV's TFT, `fixtures/pense-bem/screen-after-keys.png`) |
 | 0x04 | RECT_RLE | same 8 B header, then runs of `(count u8 <=255, color u16)` = 3 B/run, same big-endian pixel byte order as RECT; emitted only when shorter than RECT (`droidputter.cpp: flushRect`, `rle < raw`) |
@@ -116,6 +116,7 @@ sync  ty len=55 proto w=240 h=135 rot bpp  "cardputer-adv\0\0\0" (16B)          
 `app="app"` (the shim's `dp::begin()` is called lazily with `app=nullptr` from
 the first `setWindow`, so `app_name` stays its default `"app"` — real captured
 value, not a placeholder).
+(Captured before 2026-10-12, when `board` was the constant `cardputer-adv`; see the HELLO row above.)
 
 ### ESP -> phone: RECT_RLE (first run of the boot screen, full 240x135 frame)
 

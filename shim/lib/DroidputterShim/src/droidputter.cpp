@@ -19,6 +19,8 @@
 #include "hal/usb_serial_jtag_ll.h"
 #include "driver/periph_ctrl.h"
 #include "esp_system.h"
+#include "esp_flash.h"
+#include "dp_board.h"
 namespace dp {
 namespace internal {
 bool started = false;
@@ -78,10 +80,27 @@ using internal::send;
 using internal::put16;
 using internal::crc8;
 
+// HELLO's board: the board M5GFX's autodetect found (real-panel builds), else the chip's own facts (virtual and
+// TFT_eSPI builds never autodetect). Until 2026-10-12 every build said "cardputer-adv". Built once, not per HELLO
+// (HELLO is resent on every HELLO_ACK and PING_IN).
+static int m5_board = -1;
+static char board_label[DP_BOARD_LABEL_LEN];
+static bool board_label_ready = false;
+void boardDetected(int b) { m5_board = b; board_label_ready = false; }
+static const char* boardLabel() {
+  if (!board_label_ready) {
+    uint32_t flash = 0;
+    if (esp_flash_get_physical_size(esp_flash_default_chip, &flash) != ESP_OK) flash = 0;
+    dp_board_label(board_label, m5_board, flash, ESP.getPsramSize());
+    board_label_ready = true;
+  }
+  return board_label;
+}
+
 static void sendHello() {
   uint8_t h[1 + 2 + 2 + 1 + 1 + 16 + 32] = {0}; h[0] = 0;
   put16(h + 1, internal::scr_w); put16(h + 3, internal::scr_h); h[5] = internal::scr_rot; h[6] = 16;
-  strncpy((char*)h + 7, "cardputer-adv", 16); strncpy((char*)h + 23, app_name, 32); send(HELLO, h, sizeof h); last_hello = millis();
+  strncpy((char*)h + 7, boardLabel(), 16); strncpy((char*)h + 23, app_name, 32); send(HELLO, h, sizeof h); last_hello = millis();
 }
 void begin(const char* app, uint16_t w, uint16_t h, uint8_t rot) {
   if (internal::started) return;

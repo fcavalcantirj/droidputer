@@ -11,6 +11,7 @@ namespace dp {
 enum : uint8_t { HELLO = 0x01, FILL = 0x02, RECT = 0x03, RECT_RLE = 0x04, STATS = 0x05, PING = 0x06, LOG = 0x07,
                  KEY = 0x81, GPS_NMEA = 0x82, PING_IN = 0x83, HELLO_ACK = 0x84 };
 void begin(const char* app, uint16_t w, uint16_t h, uint8_t rot);   // idempotent
+void boardDetected(int m5_board);                                   // the patched M5GFX autodetect's board_t, for HELLO
 void window(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye);
 void bytes(const uint8_t* data, uint32_t nbytes);                   // pixel bytes in panel wire order
 void repeat(uint32_t rawcolor, uint32_t npixels);

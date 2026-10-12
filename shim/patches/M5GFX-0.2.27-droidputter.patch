@@ -68,17 +68,18 @@
      _bus->writeBytes(data, len, true, use_dma);
      if (_cfg.dlen_16bit && (_write_bits & 15) && (len & 1))
      {
---- a/M5GFX/src/M5GFX.cpp	2026-09-02 15:50:19
-+++ b/M5GFX/src/M5GFX.cpp	2026-09-02 15:50:28
-@@ -26,6 +26,7 @@
+--- a/M5GFX/src/M5GFX.cpp	2026-10-12 09:16:15
++++ b/M5GFX/src/M5GFX.cpp	2026-10-12 09:16:26
+@@ -26,6 +26,8 @@
  #include "lgfx/v1/panel/Panel_GDEW0154M09.hpp"
  #include "lgfx/v1/panel/Panel_GDEW0154D67.hpp"
  #include "lgfx/v1/panel/Panel_IT8951.hpp"
 +#include <dp_panel.h>
++#include <droidputter.h>
  #include "lgfx/v1/touch/Touch_CHSC6540.hpp"
  #include "lgfx/v1/touch/Touch_CSTxxx.hpp"
  #include "lgfx/v1/touch/Touch_FT5x06.hpp"
-@@ -1019,7 +1020,22 @@
+@@ -1019,7 +1021,22 @@
      if (getBoard() != board_t::board_unknown)
      {
        return true;
@@ -101,3 +102,11 @@
  
      static constexpr char NVS_KEY[] = "AUTODETECT";
      std::uint32_t nvs_board = 0;
+@@ -1083,6 +1100,7 @@
+       //ESP_LOGD(LIBRARY_NAME,"autodetect board:%d", (int)board);
+     } while (board_t::board_unknown == board && --retry >= 0);
+     _board = board;
++    dp::boardDetected((int)board);   // HELLO's board label (droidputter.cpp)
+ 
+ #if defined ( ARDUINO_M5STACK_ATOM ) || defined ( ARDUINO_M5Stack_ATOM )
+ 
