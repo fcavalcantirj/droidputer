@@ -1160,5 +1160,16 @@
     "note": "auto: linked, 752 frames in 20 s",
     "date": "2026-10-12",
     "reporter": "device-337a90f7"
+  },
+  {
+    "name": "pigtail",
+    "env": "m5cardputer",
+    "firmware_sha256": "f2d3652e0228e2934368ace4d8df1fdb68c7326ceb5b9852c9a3fc53b5fc66eb",
+    "shim_commit": "dfa344b",
+    "board": "unknown",
+    "result": "broken",
+    "note": "auto: boots=0 hello=false frames=0",
+    "date": "2026-10-12",
+    "reporter": "device-337a90f7"
   }
 ]
