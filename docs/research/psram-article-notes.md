@@ -101,3 +101,13 @@ Kept so the article can tell how we got there, not only where. Commits named whe
   headroom (largest block and minimum free roughly double from 8 KB to 4 KB).
 - [REAL] SPEC 8 label with PSRAM mapped: the Pigtail scratch build (it maps PSRAM via -DBOARD_HAS_PSRAM=0) reports
   "s3-f16-p8" on the N16R8 devkit.
+- [REAL] When could a shim size its buffers "after the app's init"? Link-up (the phone's first HELLO_ACK) vs the
+  app's own allocations, bare S3 devkit, probe every 0.5 s:
+  | app | first HELLO_ACK | largest internal block at the ack | later |
+  |---|---|---|---|
+  | stellar-map | 333 ms | 221,172 B | flat (no radios) |
+  | Marauder | 1,604 ms | 131,060 B | 77,812 B from ~3 s (its own allocations; radios start only on demand) |
+  | Pigtail | 505 ms | 110,580 B | radios start at ~2.25 s, then 7,668 B |
+  Link-up comes BEFORE a radio app's init (Pigtail: ~1.7 s earlier), so "the RAM looks free at link-up" is not
+  "the app is done allocating". Any later grab must leave room for the app's worst case (Wi-Fi + BLE took ~117 KB
+  of internal RAM here), not a guessed margin.
