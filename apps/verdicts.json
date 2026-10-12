@@ -1138,5 +1138,16 @@
     "note": "auto: linked, 764 frames in 20 s",
     "date": "2026-10-10",
     "reporter": "device-d70da9c7"
+  },
+  {
+    "name": "cardputer-game-station-emulators",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "aea94768221ee168c39d1ab0fc9727f3a3de51c2dc85124d32f4f75f68b546fc",
+    "shim_commit": "532d92e",
+    "board": "s3-f16-p0",
+    "result": "works",
+    "note": "auto: linked, 25 frames in 20 s",
+    "date": "2026-10-12",
+    "reporter": "device-337a90f7"
   }
 ]
