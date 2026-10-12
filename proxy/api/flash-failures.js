@@ -9,6 +9,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { error, githubOf, json, vercel } from "../lib/http.js";
 import { queryFailures, syncFlashFailures } from "../lib/flashfailures.js";
+import { track } from "../lib/telemetry.js";
 
 const refuse = (message) => {
   const e = new Error(message);
@@ -30,7 +31,11 @@ export async function handle(request, ctx) {
   if (!same(auth, `Bearer ${c.cronSecret}`)) return error(401, "cron only");
   if (!c.posthogPersonalKey || !c.posthogProjectId) throw refuse("POSTHOG_PERSONAL_KEY / POSTHOG_PROJECT_ID are not set on the proxy");
   const events = await queryFailures(c, ctx.fetch);
-  return json(200, await syncFlashFailures(githubOf(ctx), events));
+  const result = await syncFlashFailures(githubOf(ctx), events);
+  // Every run leaves a trace (a run with nothing new writes nothing on GitHub): Vercel cron sends vercel-cron/1.0.
+  const trigger = /vercel-cron/i.test(String((request.headers && request.headers["user-agent"]) || "")) ? "cron" : "manual";
+  await track(ctx, "flash_failures_run", { ...result, trigger });
+  return json(200, result);
 }
 
 export default vercel(handle);

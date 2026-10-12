@@ -6,6 +6,7 @@ import { errorKind } from "../lib/flashfailures.js";
 import { API, REPO, TOKEN, parse, req } from "./helpers.js";
 
 const PH = "https://ph.test";
+const INGEST = "https://ingest.test";
 const SECRET = "cron-secret-never-leaks";
 const ev = (ts, o = {}) => ({ ts, app: "stellar-map", env: "m5cardputer-virtual", source: "proxy", error: "FLASH_DEFL_BEGIN timed out", model: "2412DPC0AG", version: "0.0.7", device: "device-1a2b3c4d", ...o });
 
@@ -14,6 +15,7 @@ function fakes({ events = [], issues = [] } = {}) {
   const calls = [];
   const writes = [];
   const searches = [];
+  const tracked = [];
   const jsonRes = (status, body) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
   let nextNumber = 500;
   /** @type {typeof fetch} */
@@ -22,6 +24,7 @@ function fakes({ events = [], issues = [] } = {}) {
     const method = (init.method || "GET").toUpperCase();
     const auth = (init.headers && (init.headers.Authorization || init.headers.authorization)) || "";
     calls.push({ method, url: String(input), auth });
+    if (url.origin === INGEST) { tracked.push(JSON.parse(init.body)); return jsonRes(200, { status: 1 }); }
     if (url.origin === PH) {
       if (auth !== "Bearer phx_read") return jsonRes(401, { detail: "bad key" });
       const cols = ["ts", "app", "env", "source", "error", "model", "version"];
@@ -48,15 +51,15 @@ function fakes({ events = [], issues = [] } = {}) {
     if (m && method === "PATCH") { writes.push({ kind: "update", number: Number(m[1]), ...JSON.parse(init.body) }); return jsonRes(200, { number: Number(m[1]) }); }
     return jsonRes(404, { message: "Not Found" });
   };
-  return { fetch: fetchImpl, calls, writes, searches };
+  return { fetch: fetchImpl, calls, writes, searches, tracked };
 }
 
 const ctxOf = (f, { cronSecret = SECRET } = {}) => ({
-  config: { token: TOKEN, repo: REPO, workflow: "build-app.yml", baseUrl: "", apiBase: API, cronSecret, posthogApiHost: PH, posthogProjectId: "42", posthogPersonalKey: "phx_read" },
+  config: { token: TOKEN, repo: REPO, workflow: "build-app.yml", baseUrl: "", apiBase: API, cronSecret, posthogApiHost: PH, posthogProjectId: "42", posthogPersonalKey: "phx_read", posthogKey: "phc_capture", posthogHost: INGEST },
   fetch: f.fetch,
   now: () => Date.parse("2026-10-12T09:00:00Z"),
 });
-const cron = (secret = SECRET) => req({ path: "/api/flash-failures", headers: secret ? { authorization: `Bearer ${secret}` } : {} });
+const cron = (secret = SECRET, ua = "") => req({ path: "/api/flash-failures", headers: { ...(secret ? { authorization: `Bearer ${secret}` } : {}), ...(ua ? { "user-agent": ua } : {}) } });
 
 describe("GET /api/flash-failures", () => {
   test("only Vercel cron may run it: no secret configured -> 500, wrong or missing bearer -> 401, no upstream call", async () => {
@@ -65,6 +68,17 @@ describe("GET /api/flash-failures", () => {
     assert.equal((await handle(cron("nope"), ctxOf(f))).status, 401);
     assert.equal((await handle(cron(""), ctxOf(f))).status, 401);
     assert.equal(f.calls.length, 0);
+  });
+
+  test("every run is observable: a flash_failures_run event with its counts and who triggered it (Vercel cron or a person)", async () => {
+    const f = fakes({ events: [ev("2026-10-10T14:25:56Z")] });
+    await handle(cron(SECRET, "vercel-cron/1.0"), ctxOf(f));
+    await handle(cron(), ctxOf(fakes()));
+    const runs = f.tracked.filter((t) => t.event === "flash_failures_run");
+    assert.equal(runs.length, 1);
+    assert.equal(runs[0].properties.trigger, "cron");
+    assert.equal(runs[0].properties.created, 1);
+    assert.equal(runs[0].properties.events, 1);
   });
 
   test("error kinds ignore the numbers that change per run", () => {
