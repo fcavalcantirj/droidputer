@@ -59,3 +59,13 @@ and what the workarounds gain and cost. Append as findings land. Label every lin
   | 4 KB | 7.1 MB (-45 %) | 0.51 MB | 279,628 B | boots (P1) |
   Static RAM moves by exactly the stage delta (stellar-map 125,864 -> 97,192 B). Animated full-screen apps pay for a
   small stage (fewer rows per flush tick, so redraws coalesce [INFERRED from the flush code]); menu apps pay nothing.
+- [REAL] Margin, not just "boots" (Pigtail virtual, 5 min each, probe every 10 s; heap_caps minimum-since-boot):
+  | stage | DMA free before radios | DMA free after radios (end / min) | largest internal block (min) | internal free (min) | warnings |
+  |---|---|---|---|---|---|
+  | 8 KB | 116,392 B | 2,296 / 892 B | 3,572 B | 4,564 B | none, 0 resets |
+  | 4 KB | 120,488 B | 1,960 / 1,404 B | 7,668 B | 9,188 B | none, 0 resets |
+  The radios take nearly all internal DMA RAM that exists (~2 KB left either way): DMA headroom does not scale
+  with what we free, so "min DMA free >= 8 KB" is unreachable this way; the freed RAM shows up as general internal
+  headroom (largest block and minimum free roughly double from 8 KB to 4 KB).
+- [REAL] SPEC 8 label with PSRAM mapped: the Pigtail scratch build (it maps PSRAM via -DBOARD_HAS_PSRAM=0) reports
+  "s3-f16-p8" on the N16R8 devkit.
