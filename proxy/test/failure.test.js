@@ -61,3 +61,24 @@ describe("failure reasons (build-app.yml failure.json)", () => {
     assert.equal(selectArtifact(arts, {}), undefined);
   });
 });
+
+describe("refusals end green (build-app.yml exits 0 on a designed refusal, failure.json in the -failure artifact)", () => {
+  // 2026-10-11: every refusal (xiaozhi-esp32 = ESP-IDF, TFT_eSPI-only apps) was a red run and a "Run failed" email.
+  const refusedRun = (id, ageMs = 600e3) => makeRun({ id, title: runTitle({ repo: UPSTREAM, shim: SHIM, requestId: `req-${id}` }), conclusion: "success", ageMs });
+  const refused = (id) =>
+    fakeGitHub({
+      runs: [refusedRun(id)],
+      artifacts: { [id]: [makeArtifact(id * 10, { name: "stellar-map-m5cardputer-failure", size: 200 })] },
+      zips: { [id * 10]: failureZip({ class: "not-arduino", reason: "wisnc/stellar-map has neither a platformio.ini nor an Arduino sketch" }) },
+    });
+
+  test("a green run that carries only failure.json answers failed with its class and reason", async () => {
+    const res = await statusHandle(req({ path: "/api/build/req-701", params: { id: "req-701" } }), ctxWith(refused(701)));
+    assert.equal(res.status, 200);
+    const body = parse(res);
+    assert.equal(body.status, "failed");
+    assert.equal(body.failure_class, "not-arduino");
+    assert.match(body.reason, /neither a platformio\.ini/);
+    assert.equal(body.parts, undefined);
+  });
+});

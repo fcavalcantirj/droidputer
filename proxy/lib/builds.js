@@ -195,7 +195,18 @@ export async function buildStatus(gh, requestId, { baseUrl }) {
     return { status: 200, body: { ...desc, request_id: requestId, ...(why ? { failure_class: why.class, reason: why.reason } : {}) } };
   }
   if (desc.status !== "ready") return { status: 200, body: { ...desc, request_id: requestId } };
-  const parsed = await loadArtifact(gh, desc.run_id, { name: nameOf(titleOf(run)), env: desc.env });
+  let parsed;
+  try {
+    parsed = await loadArtifact(gh, desc.run_id, { name: nameOf(titleOf(run)), env: desc.env });
+  } catch (e) {
+    // A green run without parts can be a designed refusal (ESP-IDF repo, TFT_eSPI-only app): build-app.yml exits 0
+    // so it never mails the owner and leaves only failure.json -- the phone still gets failed + class + reason (and
+    // offers the prebuilt). Checked only when the parts are missing: a normal ready run costs no extra call.
+    const refusal = await loadFailure(gh, desc.run_id);
+    if (!refusal) throw e;
+    const { completed_at: _done, ...rest } = desc;
+    return { status: 200, body: { ...rest, status: "failed", conclusion: "refused", request_id: requestId, failure_class: refusal.class, reason: refusal.reason } };
+  }
   return {
     status: 200,
     body: {

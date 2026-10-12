@@ -92,14 +92,32 @@ jobs:
           python -m pip install --quiet "platformio==${PLATFORMIO_VERSION}"
           pio --version
 
+      # A DESIGNED refusal (the app's BuildFlow.REFUSALS: an ESP-IDF/MicroPython repo, a TFT_eSPI/Arduino_GFX-only app,
+      # a library repo) ends the run GREEN: it is the answer, not a broken build, so it must not mail the owner "Run
+      # failed" (2026-10-11: xiaozhi-esp32 twice). Its failure.json still rides in the -failure artifact, where the
+      # proxy reads it for a green run without parts. Every other failure stays red.
       - name: Overlay + build (tools/overlay.py --build)
+        id: overlay
         run: |
           set -o pipefail
           args=("$REPO" --name "$NAME" --env "$ENV" --build)
           [ -n "$REF" ] && args+=(--ref "$REF")
-          python3 tools/overlay.py "${args[@]}" | tee overlay.out
+          rc=0
+          python3 tools/overlay.py "${args[@]}" | tee overlay.out || rc=$?
+          if [ "$rc" -ne 0 ]; then
+            cls=$(python3 -c 'import json,sys
+          for l in reversed(open("overlay.out", errors="replace").read().splitlines()):
+              try: j = json.loads(l)
+              except ValueError: continue
+              print(j.get("failed", "") if isinstance(j, dict) else ""); break' 2>/dev/null || true)
+            case "$cls" in
+              not-arduino|unsupported-graphics|library-repo) echo "refused=$cls" >> "$GITHUB_OUTPUT"; echo "refused: $cls"; exit 0 ;;
+            esac
+            exit "$rc"
+          fi
 
       - name: Collect artifact
+        if: steps.overlay.outputs.refused == ''
         run: |
           B="apps/$NAME/.pio/build/$ENV"
           mkdir -p dist
@@ -111,6 +129,7 @@ jobs:
       # Named <name>-<env> (the ADV artifact keeps its old <name>-m5cardputer name); the proxy selects it by
       # that exact name and never touches the -elf one below.
       - uses: actions/upload-artifact@v4
+        if: steps.overlay.outputs.refused == ''
         with:
           name: ${{ inputs.name }}-${{ inputs.env }}
           path: dist/
@@ -122,6 +141,7 @@ jobs:
       # <name>-<env> artifact and unzips it whole in memory, so the flashable zip stays small; the ELF is for the
       # Mac's xtensa-esp32s3-elf-addr2line when the phone's PanicSniffer reports a Backtrace (Pigtail IWDT triage).
       - uses: actions/upload-artifact@v4
+        if: steps.overlay.outputs.refused == ''
         with:
           name: ${{ inputs.name }}-${{ inputs.env }}-elf
           path: apps/${{ inputs.name }}/.pio/build/${{ inputs.env }}/firmware.elf
@@ -132,7 +152,7 @@ jobs:
       # JSON line carries {failed: <class>, reason} (tools/overlay.py fail() / classify_build()); anything that died
       # before that line is "infra". Named <name>-<env>-failure: the proxy never selects it as the flashable one.
       - name: Failure reason (failure.json)
-        if: failure()
+        if: failure() || steps.overlay.outputs.refused != ''
         run: |
           mkdir -p failure
           python3 - <<'PY'
@@ -152,7 +172,7 @@ jobs:
           PY
 
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() || steps.overlay.outputs.refused != ''
         with:
           name: ${{ inputs.name }}-${{ inputs.env }}-failure
           path: failure/
