@@ -30,8 +30,11 @@ export class GitHubError extends Error {
  * @param {string} opts.workflow workflow file name (build-app.yml)
  * @param {string} [opts.apiBase]
  * @param {typeof fetch} [opts.fetch]
+ * @param {(ms: number) => Promise<void>} [opts.sleep] pause between GET retries (tests pass a no-op)
+ * @param {(line: string) => void} [opts.log] one line per retry (Vercel runtime logs)
  */
-export function createGitHub({ token, repo, workflow, apiBase = "https://api.github.com", fetch = globalThis.fetch }) {
+export function createGitHub({ token, repo, workflow, apiBase = "https://api.github.com", fetch = globalThis.fetch,
+  sleep = (ms) => new Promise((r) => setTimeout(r, ms)), log = (line) => console.warn(line) }) {
   const headers = {
     Accept: "application/vnd.github+json",
     Authorization: `Bearer ${token}`,
@@ -45,11 +48,22 @@ export function createGitHub({ token, repo, workflow, apiBase = "https://api.git
    * @returns {Promise<Response>}
    */
   async function raw(path, init = {}) {
+    // GitHub answers 5xx on a bad second (the run list, three times on 2026-10-12; each retry by hand worked): a GET is
+    // retried twice. Never a 4xx, never a POST/PATCH (a dispatch must not run twice).
+    const idempotent = !init.method || init.method === "GET";
     let res;
-    try {
-      res = await fetch(apiBase + path, { ...init, headers: { ...headers, ...(init.headers || {}) } });
-    } catch (e) {
-      throw new GitHubError(`github unreachable: ${e instanceof Error ? e.message : String(e)}`, 502, path);
+    for (const [i, pause] of (idempotent ? [0, 500, 1500] : [0]).entries()) {
+      if (pause) {
+        log(`github ${res.status} on ${path}: retry ${i}`);
+        try { await res.body?.cancel(); } catch { /* already consumed */ }
+        await sleep(pause);
+      }
+      try {
+        res = await fetch(apiBase + path, { ...init, headers: { ...headers, ...(init.headers || {}) } });
+      } catch (e) {
+        throw new GitHubError(`github unreachable: ${e instanceof Error ? e.message : String(e)}`, 502, path);
+      }
+      if (res.status < 500) break;
     }
     const redirect = init.redirect === "manual" && res.status >= 300 && res.status < 400;
     if (!res.ok && !redirect) {

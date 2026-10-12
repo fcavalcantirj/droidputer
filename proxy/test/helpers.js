@@ -193,7 +193,7 @@ export function fakeGitHub({ shimSha = SHIM_SHA, runs = [], runsPage2 = [], arti
  * @param {{token?: string, baseUrl?: string, now?: () => number}} [o]
  */
 export function ctxWith(fake, { token = TOKEN, baseUrl = "https://proxy.test", now } = {}) {
-  return { config: { token, repo: REPO, workflow: "build-app.yml", baseUrl, apiBase: API }, fetch: fake.fetch, now };
+  return { config: { token, repo: REPO, workflow: "build-app.yml", baseUrl, apiBase: API }, fetch: fake.fetch, now, sleep: async () => {} };
 }
 
 /**

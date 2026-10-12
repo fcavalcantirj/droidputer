@@ -30,6 +30,7 @@ export const CORS = Object.freeze({
  * @typedef {object} Ctx
  * @property {import("./config.js").ProxyConfig} config
  * @property {typeof fetch} fetch
+ * @property {(ms: number) => Promise<void>} [sleep] pause between GitHub GET retries (tests pass a no-op)
  * @property {() => number} [now]
  */
 
@@ -84,7 +85,7 @@ export function githubOf(ctx) {
     /** @type {any} */ (e).status = 500;
     throw e;
   }
-  return createGitHub({ ...ctx.config, fetch: ctx.fetch });
+  return createGitHub({ ...ctx.config, fetch: ctx.fetch, ...(ctx.sleep ? { sleep: ctx.sleep } : {}) });
 }
 
 /**
