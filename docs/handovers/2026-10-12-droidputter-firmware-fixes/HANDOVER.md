@@ -1,7 +1,7 @@
 ---
 slug: droidputter-firmware-fixes
 date: 2026-10-12
-status: open
+status: superseded
 round: 0
 author_session: 2026-10-10..12 builder session (Marauder enter fix, v0.0.8, stats truth, flash-failure issues) at ~96% context
 ---
@@ -64,3 +64,13 @@ Felipe (2026-10-12): fix all firmwares that need it, from `docs/FIRMWARES-TO-FIX
 
 ## next_action
 Verify the 12:xx UTC scheduled run (checklist 2), then Lane A item 1: drop marivaaldo from `TFT_RECIPES`.
+
+## SUPERSEDED (2026-10-19)
+Executed on 2026-10-12 without a PLAN/REVIEW round trip: the validator steered the builder directly. Do not execute
+this handover; its "Where things stand", "Pending edits" counts and lanes are stale.
+- Lane A is done (984fb1d): Game-Station builds; the marivaaldo/serialgeist Marauder forks are dropped from
+  `TFT_RECIPES`; m5stick-nemo and Evil-M5Core2 moved to the arduino-esp32 3.x track.
+- docs/FIRMWARES-TO-FIX.md counts are now 79 pairs: 44 build, 30 refused by design, 5 on the 3.x track.
+- Pigtail is fixed by the stage floor + boost (7e5303d, #123).
+- Current state: the `progress.txt` entries of 2026-10-12 and 2026-10-19, SPEC.md's Roadmap ORDER line, and
+  README's "Firmware status".
