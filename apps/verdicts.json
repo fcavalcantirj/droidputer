@@ -1215,5 +1215,16 @@
     "note": "",
     "date": "2026-10-20",
     "reporter": "device-4fef25ad"
+  },
+  {
+    "name": "bluetooth-keyboard-mouse-emulator",
+    "env": "m5cardputer",
+    "firmware_sha256": "849937132daa495c7f21d5b2ad9f3e25689a3c1dfd0df37ba8f53d1d8d10fda6",
+    "shim_commit": "7e5303d",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-10-20",
+    "reporter": "device-4fef25ad"
   }
 ]
