@@ -1236,5 +1236,15 @@
     "note": "",
     "date": "2026-10-22",
     "reporter": "device-8fd7f688"
+  },
+  {
+    "name": "Doom for Cardputer",
+    "env": "launcherhub",
+    "firmware_sha256": "596754b688ab6d7c48fb21d88ce31164fa63eab5c1deb416d9224842aec84f33",
+    "board": "unknown",
+    "result": "broken",
+    "note": "",
+    "date": "2026-10-22",
+    "reporter": "device-8fd7f688"
   }
 ]
