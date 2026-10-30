@@ -1267,5 +1267,15 @@
     "note": "",
     "date": "2026-10-30",
     "reporter": "device-8aaef57c"
+  },
+  {
+    "name": "Meshtastic For Cardputer-Adv",
+    "env": "launcherhub",
+    "firmware_sha256": "8b5788fb0cfe16fa16eecf5c29b7e97216eaa21c391ebe8f7fc74e56b5a22d6a",
+    "board": "unknown",
+    "result": "broken",
+    "note": "",
+    "date": "2026-10-30",
+    "reporter": "device-8aaef57c"
   }
 ]
