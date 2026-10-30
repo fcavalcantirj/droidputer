@@ -1246,5 +1246,16 @@
     "note": "",
     "date": "2026-10-22",
     "reporter": "device-8fd7f688"
+  },
+  {
+    "name": "pigtail",
+    "env": "m5cardputer",
+    "firmware_sha256": "b60fbd2e253135b9feb6a5b22b9896fc9c4ccf96a74bf9e2740eb945bd223b6c",
+    "shim_commit": "7e5303d",
+    "board": "cardputer-adv",
+    "result": "broken",
+    "note": "",
+    "date": "2026-10-30",
+    "reporter": "device-8aaef57c"
   }
 ]
