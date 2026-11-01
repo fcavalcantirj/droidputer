@@ -1287,5 +1287,15 @@
     "note": "",
     "date": "2026-11-01",
     "reporter": "device-8aaef57c"
+  },
+  {
+    "name": "xz test",
+    "env": "launcherhub",
+    "firmware_sha256": "b8c4fb7a031a13877441830192797fe4bc8532051bf1e61c4bb3d68d298c658a",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-11-01",
+    "reporter": "device-2bb369ec"
   }
 ]
