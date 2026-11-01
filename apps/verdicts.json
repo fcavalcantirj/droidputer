@@ -1277,5 +1277,15 @@
     "note": "",
     "date": "2026-10-30",
     "reporter": "device-8aaef57c"
+  },
+  {
+    "name": "ESP32Marauder ADV",
+    "env": "launcherhub",
+    "firmware_sha256": "b07c5f1b679c81f078bd1d9f83221b20c523ba6e6536cd3725c4f5bac5aed692",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-11-01",
+    "reporter": "device-8aaef57c"
   }
 ]
