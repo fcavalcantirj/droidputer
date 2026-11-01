@@ -1297,5 +1297,15 @@
     "note": "",
     "date": "2026-11-01",
     "reporter": "device-2bb369ec"
+  },
+  {
+    "name": "xiaozhi (cardputer adv + m5 launcher)",
+    "env": "launcherhub",
+    "firmware_sha256": "1209c904901a8a0d5c678f17c35dd0260a7224b5739303e1d8d111adfd55db84",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-11-01",
+    "reporter": "device-2bb369ec"
   }
 ]
