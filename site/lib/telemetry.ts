@@ -88,6 +88,17 @@ export type Stats = {
         }[]
       | null;
     builds?: { kind: string; k: string; n: number }[] | null;
+    flash_results?: {
+      result: string;
+      error: string;
+      model: string;
+      version: string;
+      source: string;
+      day: string;
+      n: number;
+      devices: number;
+      avg_seconds: number | null;
+    }[] | null;
     health?: { event: string; app: string; n: number }[] | null;
     totals?:
       | {

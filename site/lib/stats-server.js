@@ -61,6 +61,15 @@ const QUERIES = {
     UNION ALL
     SELECT 'repo' AS kind, toString(properties.repo) AS k, count() AS n
     FROM events WHERE event IN ${BUILD_REQUEST_EVENTS} AND ${SINCE} GROUP BY k ORDER BY n DESC LIMIT 40`,
+  // Flash results by error kind and phone: aggregates only, numbers in messages normalized, never an install id.
+  flash_results: `
+    SELECT toString(properties.result) AS result,
+      replaceRegexpAll(toString(properties.error), '[0-9]+', 'N') AS error,
+      coalesce(properties.$device_model, '?') AS model, toString(properties.$app_version) AS version,
+      toString(properties.source) AS source, toDate(timestamp) AS day,
+      count() AS n, uniq(distinct_id) AS devices, round(avg(toFloat(properties.seconds)), 1) AS avg_seconds
+    FROM events WHERE event = 'flash_finished' AND ${APP} AND timestamp > now() - INTERVAL 30 DAY AND ${SINCE}
+    GROUP BY result, error, model, version, source, day ORDER BY day DESC, n DESC LIMIT 400`,
   health: `
     SELECT event, coalesce(toString(properties.app), '') AS app, count() AS n
     FROM events WHERE timestamp > now() - INTERVAL 30 DAY AND ${SINCE} AND event IN ('$exception', 'esp_panic') AND ${APP}
