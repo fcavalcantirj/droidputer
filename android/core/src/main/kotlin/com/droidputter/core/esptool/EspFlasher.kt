@@ -12,7 +12,13 @@ interface RomLink {
     fun readSome(timeoutMs: Long): ByteArray
 }
 
-class EspFlashException(message: String) : Exception(message)
+/**
+ * [kind] is what telemetry and the issue filer group on. A [BLOCKED_KINDS] kind means the flash never had a chance
+ * (no board, no permission, unsupported chip), not that a flash went wrong.
+ */
+class EspFlashException(message: String, val kind: String = "error") : Exception(message)
+
+val BLOCKED_KINDS = setOf("no_board", "no_permission", "unsupported_chip")
 
 /** One image to write: [data] at flash [offset]. */
 data class FlashImage(val name: String, val offset: Long, val data: ByteArray)
@@ -56,7 +62,10 @@ class EspFlasher(
 
     fun requireEsp32s3() {
         val magic = readReg(RomProtocol.CHIP_DETECT_MAGIC_REG)
-        if (magic != RomProtocol.ESP32S3_CHIP_MAGIC) throw EspFlashException("not an ESP32-S3 ROM (chip magic 0x${magic.toString(16)})")
+        if (magic != RomProtocol.ESP32S3_CHIP_MAGIC) {
+            val chip = RomProtocol.chipName(magic) ?: "not an ESP32-S3 (chip magic 0x${magic.toString(16)})"
+            throw EspFlashException("This board is $chip. Droidputer can only flash ESP32-S3 boards.", kind = "unsupported_chip")
+        }
     }
 
     fun prepareFlash() {

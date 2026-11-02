@@ -5,9 +5,13 @@ import android.hardware.usb.UsbDeviceConnection
 import android.util.Log
 import com.droidputter.catalog.CatalogRepository
 import com.droidputter.core.catalog.CatalogEntry
+import com.droidputter.core.esptool.BLOCKED_KINDS
 import com.droidputter.core.esptool.EspFlashException
 import com.droidputter.core.esptool.EspFlasher
 import com.droidputter.core.esptool.FlashImage
+import com.droidputter.core.esptool.PortProbe
+import com.droidputter.core.esptool.openWithRetry
+import com.droidputter.core.esptool.portFailure
 import com.droidputter.usb.UsbLinkManager
 import com.hoho.android.usbserial.driver.UsbSerialDriver
 import com.hoho.android.usbserial.driver.UsbSerialPort
@@ -36,6 +40,9 @@ class PhoneFlasher(
 
     /** Flashes [entry]; success carries the sha256 of the firmware part actually written (the build's identity). */
     suspend fun flash(entry: CatalogEntry): Result<String> = withContext(Dispatchers.IO) {
+        // No board at all: say so now, before a download the user would wait through for nothing.
+        val present = openWithRetry<Unit> { if (linkManager.findDevice() != null) PortProbe.Ready(Unit) else PortProbe.NoDevice }
+        if (present !is PortProbe.Ready) return@withContext failed(portFailure(present))
         // Download (or read from the verified cache) BEFORE touching the link: a missing network or a
         // stale catalog must never take the running USB session down.
         val loaded = try {
@@ -65,16 +72,27 @@ class PhoneFlasher(
         try {
             status("stopping the link, opening the port")
             linkManager.beginRawSession(client)
-            current = openCurrent() ?: withTimeoutOrNull(5_000) { reattached.receive() }
-                ?: return@withContext Result.failure(EspFlashException("no ESP on the USB port"))
+            val opened = openWithRetry { reattached.tryReceive().getOrNull()?.let { PortProbe.Ready(it) } ?: probeCurrent() }
+            current = when (opened) {
+                is PortProbe.Ready -> opened.port
+                PortProbe.NoPermission -> {
+                    status("waiting for you to allow USB access")
+                    linkManager.findDevice()?.let { linkManager.requestRawPermission(it.device) }
+                    withTimeoutOrNull(PERMISSION_WAIT_MS) { reattached.receive() } ?: throw portFailure(opened)
+                }
+                else -> throw portFailure(opened)
+            }
             val link0 = UsbRomLink(current.port)
             status("resetting into the ROM bootloader")
-            link0.resetIntoBootloader()
+            // The port can vanish during the reset itself when the chip re-enumerates: that is the re-attach path
+            // below, not a failed flash.
+            val resetSent = runCatching { link0.resetIntoBootloader() }
+                .onFailure { Log.w(TAG, "reset dropped the port: ${it.message}") }.isSuccess
             Thread.sleep(300)
             // Same port first (enumeration usually survives the reset); else wait for the re-attach.
             var romPort = current
             var flasher = EspFlasher(UsbRomLink(romPort.port), onProgress = progress)
-            val syncedOnSamePort = runCatching { flasher.sync(attempts = 5) }.isSuccess
+            val syncedOnSamePort = resetSent && runCatching { flasher.sync(attempts = 5) }.isSuccess
             if (!syncedOnSamePort) {
                 // Two cases land here: the chip re-enumerated (a few seconds), or the running firmware's USB is a
                 // software CDC (UiFlow2 / MicroPython / TinyUSB) that never forwards DTR/RTS to the reset logic, so
@@ -96,9 +114,7 @@ class PhoneFlasher(
             UsbRomLink(romPort.port).hardReset()
             Result.success(loaded.firmwareSha256)
         } catch (e: Exception) {
-            Log.w(TAG, "flash failed: ${e.message}")
-            status("FAILED: ${e.message}")
-            Result.failure(e)
+            failed(e)
         } finally {
             runCatching { current?.port?.close() }
             linkManager.endRawSession()
@@ -107,15 +123,27 @@ class PhoneFlasher(
         }
     }
 
-    private fun openCurrent(): RawPort? {
-        val driver = linkManager.findDevice() ?: return null
-        val connection = linkManager.openDevice(driver.device) ?: return null
+    private fun probeCurrent(): PortProbe<RawPort> {
+        val driver = linkManager.findDevice() ?: return PortProbe.NoDevice
+        if (!linkManager.hasPermission(driver.device)) return PortProbe.NoPermission
+        val connection = linkManager.openDevice(driver.device) ?: return PortProbe.Busy("Android could not open the device")
         val port = driver.ports[0]
         return runCatching {
             port.open(connection)
             port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
-            RawPort(port, connection)
-        }.getOrElse { Log.w(TAG, "open current failed: ${it.message}"); null }
+            PortProbe.Ready(RawPort(port, connection))
+        }.getOrElse {
+            Log.w(TAG, "open current failed: ${it.message}")
+            runCatching { connection.close() }
+            PortProbe.Busy(it.message ?: "the port did not open")
+        }
+    }
+
+    private fun failed(e: Exception): Result<String> {
+        Log.w(TAG, "flash failed: ${e.message}")
+        val blocked = (e as? EspFlashException)?.kind in BLOCKED_KINDS
+        status((if (blocked) "CAN'T FLASH: " else "FAILED: ") + e.message)
+        return Result.failure(e)
     }
 
     private fun status(s: String) {
@@ -130,5 +158,7 @@ class PhoneFlasher(
         const val TAG = "Droidputter"
         /** Long enough for a human to hold BOOT and replug; a real re-enumeration takes a few seconds. */
         const val REENUMERATE_WAIT_MS = 90_000L
+        /** Long enough to read Android's USB dialog and tap Allow. */
+        const val PERMISSION_WAIT_MS = 30_000L
     }
 }

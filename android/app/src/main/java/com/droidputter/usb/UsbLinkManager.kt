@@ -87,6 +87,11 @@ class UsbLinkManager(
 
     fun openDevice(device: UsbDevice): UsbDeviceConnection? = usbManager.openDevice(device)
 
+    fun hasPermission(device: UsbDevice): Boolean = usbManager.hasPermission(device)
+
+    /** Asks Android for the device; a grant reaches the raw client through [handOverRaw]. */
+    fun requestRawPermission(device: UsbDevice) = requestPermission(device)
+
     private fun handOverRaw(client: RawDeviceClient, device: UsbDevice?) {
         val driver = (device?.let { prober.probeDevice(it) ?: defaultProber.probeDevice(it) }) ?: findDevice() ?: return
         if (!usbManager.hasPermission(driver.device)) { requestPermission(driver.device); return }

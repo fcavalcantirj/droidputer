@@ -105,6 +105,13 @@ private const val PROBE_INTERVAL_MS = 1_000L
 private const val PROBE_ATTEMPTS = 30
 private const val RECONNECT_DELAY_MS = 1_500L
 private const val OBSERVE_AFTER_FLASH_MS = 20_000L
+
+/** "blocked" = the flash never had a chance (no board, no permission, wrong chip); only "failed" is a flash going wrong. */
+private fun flashResultName(result: Result<*>): String {
+    if (result.isSuccess) return "ok"
+    val kind = (result.exceptionOrNull() as? com.droidputter.core.esptool.EspFlashException)?.kind
+    return if (kind in com.droidputter.core.esptool.BLOCKED_KINDS) "blocked" else "failed"
+}
 // esptool SYNC (cmd 0x08, 36 B: 07 07 12 20 + 32 x 0x55), SLIP-framed. Answered only by the ROM bootloader.
 private val ESPTOOL_SYNC: ByteArray = byteArrayOf(0xC0.toByte(), 0x00, 0x08, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x07, 0x12, 0x20) + ByteArray(32) { 0x55 } + byteArrayOf(0xC0.toByte())
 
@@ -614,7 +621,8 @@ class MainActivity : ComponentActivity() {
             val result = phoneFlasher.flash(entry)
             flashing = false
             Telemetry.capture("flash_finished", mapOf(
-                "app" to entry.name, "env" to entry.env, "source" to entry.source, "result" to if (result.isSuccess) "ok" else "failed",
+                "app" to entry.name, "env" to entry.env, "source" to entry.source, "result" to flashResultName(result),
+                "reason" to (result.exceptionOrNull() as? com.droidputter.core.esptool.EspFlashException)?.kind,
                 "error" to result.exceptionOrNull()?.message?.take(160), "seconds" to (System.currentTimeMillis() - startedAt) / 1000,
             ))
             // success = the sha256 of the firmware part that was written; verdicts for hash-less entries use it

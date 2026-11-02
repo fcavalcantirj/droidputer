@@ -30,6 +30,24 @@ object RomProtocol {
     const val CHIP_DETECT_MAGIC_REG = 0x40001000L
     const val ESP32S3_CHIP_MAGIC = 0x9L
 
+    /** Chip detect values from esptool's targets; only names what the error message tells the user. */
+    private val CHIP_NAMES = mapOf(
+        0xFFF0C101L to "an ESP8266",
+        0x00F01D83L to "an ESP32",
+        0x000007C6L to "an ESP32-S2",
+        0x6921506FL to "an ESP32-C3",
+        0x1B31506FL to "an ESP32-C3",
+        0x4881606FL to "an ESP32-C3",
+        0x4361606FL to "an ESP32-C3",
+        0x6F51306FL to "an ESP32-C2",
+        0x7C41A06FL to "an ESP32-C2",
+        0x2CE0806FL to "an ESP32-C6",
+        0xD7B73E80L to "an ESP32-H2",
+        0x30E1706FL to "an ESP32-C5",
+    )
+
+    fun chipName(magic: Long): String? = CHIP_NAMES[magic]
+
     const val CHECKSUM_SEED = 0xEF
 
     fun checksum(data: ByteArray, from: Int = 0, to: Int = data.size): Int {
