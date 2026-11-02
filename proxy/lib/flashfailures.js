@@ -33,7 +33,7 @@ export async function queryFailures(config, fetchImpl, { sleep = (ms) => new Pro
       toString(properties.source) AS source, toString(properties.error) AS error,
       coalesce(properties.$device_model, '?') AS model, toString(properties.$app_version) AS version
     FROM events
-    WHERE event = 'flash_finished' AND properties.result != 'ok' AND properties.$lib = 'posthog-android'
+    WHERE event = 'flash_finished' AND properties.result = 'failed' AND properties.$lib = 'posthog-android'
       AND NOT (coalesce(properties.$device_model, '') LIKE 'sdk_gphone%') AND timestamp > now() - ${WINDOW}
     ORDER BY timestamp LIMIT 2000`;
   // PostHog answers 429 while the project's 3 concurrent queries are taken (the stats site runs 7 per refresh) and 5xx

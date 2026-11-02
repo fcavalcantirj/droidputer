@@ -35,7 +35,8 @@ const QUERIES = {
       countIf(event IN ${BUILD_REQUEST_EVENTS}) AS build_requests,
       countIf(event = 'build_dispatched') AS builds_dispatched,
       countIf(event = 'flash_finished' AND properties.result = 'ok' AND ${APP}) AS flashes,
-      countIf(event = 'flash_finished' AND properties.result != 'ok' AND ${APP}) AS failed_flashes,
+      countIf(event = 'flash_finished' AND properties.result = 'failed' AND ${APP}) AS failed_flashes,
+      countIf(event = 'flash_finished' AND properties.result = 'blocked' AND ${APP}) AS blocked_flashes,
       countIf(event = 'link_up' AND ${APP}) AS links,
       round(sumIf(toFloat(properties.seconds), event = 'mirror_session' AND ${APP}) / 60, 1) AS mirror_minutes
     FROM events WHERE timestamp > now() - INTERVAL 30 DAY AND ${SINCE}
@@ -66,10 +67,10 @@ const QUERIES = {
     SELECT toString(properties.result) AS result,
       replaceRegexpAll(toString(properties.error), '[0-9]+', 'N') AS error,
       coalesce(properties.$device_model, '?') AS model, toString(properties.$app_version) AS version,
-      toString(properties.source) AS source, toDate(timestamp) AS day,
+      toString(properties.source) AS source, toString(properties.reason) AS reason, toDate(timestamp) AS day,
       count() AS n, uniq(distinct_id) AS devices, round(avg(toFloat(properties.seconds)), 1) AS avg_seconds
     FROM events WHERE event = 'flash_finished' AND ${APP} AND timestamp > now() - INTERVAL 30 DAY AND ${SINCE}
-    GROUP BY result, error, model, version, source, day ORDER BY day DESC, n DESC LIMIT 400`,
+    GROUP BY result, error, model, version, source, reason, day ORDER BY day DESC, n DESC LIMIT 400`,
   health: `
     SELECT event, coalesce(toString(properties.app), '') AS app, count() AS n
     FROM events WHERE timestamp > now() - INTERVAL 30 DAY AND ${SINCE} AND event IN ('$exception', 'esp_panic') AND ${APP}
@@ -80,7 +81,8 @@ const QUERIES = {
       uniqIf(distinct_id, ${APP} AND timestamp > now() - INTERVAL 1 DAY) AS devices_24h,
       countIf(event IN ${BUILD_REQUEST_EVENTS}) AS build_requests,
       countIf(event = 'flash_finished' AND properties.result = 'ok' AND ${APP}) AS flashes,
-      countIf(event = 'flash_finished' AND properties.result != 'ok' AND ${APP}) AS failed_flashes,
+      countIf(event = 'flash_finished' AND properties.result = 'failed' AND ${APP}) AS failed_flashes,
+      countIf(event = 'flash_finished' AND properties.result = 'blocked' AND ${APP}) AS blocked_flashes,
       round(sumIf(toFloat(properties.seconds), event = 'mirror_session' AND ${APP}) / 60, 1) AS mirror_minutes,
       min(timestamp) AS first_event
     FROM events WHERE ${SINCE}`,

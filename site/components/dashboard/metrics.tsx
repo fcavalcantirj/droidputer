@@ -106,6 +106,7 @@ export function Metrics({ data }: { data: Stats }) {
   const recentDays = data.posthog.daily ?? [];
   const recentOk = recentDays.reduce((sum, day) => sum + (day.flashes ?? 0), 0);
   const recentFailed = recentDays.reduce((sum, day) => sum + (day.failed_flashes ?? 0), 0);
+  const recentBlocked = recentDays.reduce((sum, day) => sum + (day.blocked_flashes ?? 0), 0);
   let running = 0;
   const burnCurve = (burns?.by_day ?? []).map((day) => (running += day.burns));
   return (
@@ -118,7 +119,8 @@ export function Metrics({ data }: { data: Stats }) {
           burns
             ? `${formatNumber(burns.by_app?.length)} different apps` +
               (recentDays.length
-                ? `. Last 30 days: ${formatNumber(recentOk)} succeeded, ${formatNumber(recentFailed)} failed`
+                ? `. Last 30 days: ${formatNumber(recentOk)} succeeded, ${formatNumber(recentFailed)} failed` +
+                  (recentBlocked ? `, ${formatNumber(recentBlocked)} could not start` : "")
                 : "") +
               (data.posthog.totals?.[0]?.failed_flashes != null
                 ? `. All-time failed: ${formatNumber(data.posthog.totals[0].failed_flashes)}`

@@ -16,6 +16,7 @@ export type DailyActivity = {
   builds_dispatched?: number;
   flashes: number;
   failed_flashes?: number;
+  blocked_flashes?: number;
   links: number;
   mirror_minutes: number | null;
 };
