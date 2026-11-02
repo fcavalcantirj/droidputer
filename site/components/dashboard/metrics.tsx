@@ -103,6 +103,9 @@ export function Metrics({ data }: { data: Stats }) {
     : 0;
   const burns = data.burns?.ok ? data.burns : undefined;
   const burned = useCountUp(burns?.total);
+  const recentDays = data.posthog.daily ?? [];
+  const recentOk = recentDays.reduce((sum, day) => sum + (day.flashes ?? 0), 0);
+  const recentFailed = recentDays.reduce((sum, day) => sum + (day.failed_flashes ?? 0), 0);
   let running = 0;
   const burnCurve = (burns?.by_day ?? []).map((day) => (running += day.burns));
   return (
@@ -113,9 +116,12 @@ export function Metrics({ data }: { data: Stats }) {
         value={formatNumber(burned)}
         note={
           burns
-            ? `${formatNumber(burns.by_app?.length)} different apps, flashed from phones` +
+            ? `${formatNumber(burns.by_app?.length)} different apps` +
+              (recentDays.length
+                ? `. Last 30 days: ${formatNumber(recentOk)} succeeded, ${formatNumber(recentFailed)} failed`
+                : "") +
               (data.posthog.totals?.[0]?.failed_flashes != null
-                ? ` · ${formatNumber(data.posthog.totals[0].failed_flashes)} failed, tracked as GitHub issues`
+                ? `. All-time failed: ${formatNumber(data.posthog.totals[0].failed_flashes)}`
                 : "")
             : "Flashes from the app, all time"
         }
@@ -124,7 +130,7 @@ export function Metrics({ data }: { data: Stats }) {
         points={burnCurve}
       />
       <Metric
-        title="App installs reporting"
+        title="Phones that sent a verdict"
         value={formatNumber(verdicts?.reporters)}
         note={
           behaviour

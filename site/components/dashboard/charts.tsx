@@ -220,8 +220,12 @@ export function BuildActivity({
   );
 }
 
+const MIN_RECENT_FLASHES = 5;
+
 export function FlashOutcomes({ data }: { data: Stats }) {
-  const behaviour = data.github.behaviour;
+  const allTime = data.github.behaviour;
+  const isRecent = (allTime?.recent?.flashes_observed ?? 0) >= MIN_RECENT_FLASHES;
+  const behaviour = isRecent ? allTime?.recent : allTime;
   const values = behaviour
     ? [
         {
@@ -256,12 +260,15 @@ export function FlashOutcomes({ data }: { data: Stats }) {
     <Panel
       title="The first 20 seconds"
       description="What happens after a phone flashes an app."
-      action={<Badge variant="outline">All time</Badge>}
+      action={<Badge variant="outline">{isRecent ? "Last 30 days" : "All time"}</Badge>}
       footer={
         <>
           <span className="source-caption">AUTOMATIC FLASH REPORTS</span>
           <span className="text-muted-foreground text-xs">
             {formatNumber(behaviour?.flashes_observed)} observed
+            {isRecent && allTime
+              ? ` · all time ${Math.round((allTime.mirror_up / allTime.flashes_observed) * 100)}% of ${formatNumber(allTime.flashes_observed)}`
+              : ""}
           </span>
         </>
       }

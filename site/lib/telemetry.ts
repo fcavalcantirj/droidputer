@@ -15,6 +15,7 @@ export type DailyActivity = {
   build_requests: number;
   builds_dispatched?: number;
   flashes: number;
+  failed_flashes?: number;
   links: number;
   mirror_minutes: number | null;
 };
@@ -43,6 +44,12 @@ export type Stats = {
     releases?:
       { tag: string; published: string; apk_downloads: number }[] | null;
     behaviour?: {
+      recent?: {
+        flashes_observed: number;
+        mirror_up: number;
+        no_hello: number;
+        hello_no_frames: number;
+      };
       phones_that_flashed: number;
       flashes_observed: number;
       mirror_up: number;

@@ -37,3 +37,16 @@ test("builds run = GitHub's own total of build-app runs", () => {
   assert.equal(buildsRunTotal({}), null);
   assert.equal(buildsRunTotal(null), null);
 });
+
+test("the mirror outcomes separate the last 30 days from all time", () => {
+  const note = (hello, linked) => (linked ? "auto: linked, 300 frames in 20 s" : `auto: boots=0 hello=${hello} frames=0`);
+  const v = [
+    { name: "a", env: "e", result: "broken", note: note(false), date: "2026-09-19", reporter: "device-1" },
+    { name: "a", env: "e", result: "works", note: note(true, true), date: "2026-10-30", reporter: "device-1" },
+    { name: "a", env: "e", result: "broken", note: note(true), date: "2026-10-31", reporter: "device-2" },
+  ];
+  const b = verdictStats(v, new Date("2026-11-02T12:00:00Z")).behaviour;
+  assert.equal(b.flashes_observed, 3);
+  assert.equal(b.no_hello, 1);
+  assert.deepEqual(b.recent, { flashes_observed: 2, mirror_up: 1, no_hello: 0, hello_no_frames: 1 });
+});

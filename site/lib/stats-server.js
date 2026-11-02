@@ -27,13 +27,15 @@ const SINCE = "timestamp > toDateTime('2026-10-09 19:00:00')";
 const APP = "(properties.$lib = 'posthog-android' AND NOT (coalesce(properties.$device_model, '') LIKE 'sdk_gphone%'))";
 
 // Every query is aggregate-only; `device` is the anonymous per-install id (opt-in), never returned.
-export const QUERIES = {
+export const RECENT_DAYS = 30;
+const QUERIES = {
   daily: `
     SELECT toDate(timestamp) AS day,
       uniqIf(distinct_id, ${APP}) AS devices,
       countIf(event IN ${BUILD_REQUEST_EVENTS}) AS build_requests,
       countIf(event = 'build_dispatched') AS builds_dispatched,
       countIf(event = 'flash_finished' AND properties.result = 'ok' AND ${APP}) AS flashes,
+      countIf(event = 'flash_finished' AND properties.result != 'ok' AND ${APP}) AS failed_flashes,
       countIf(event = 'link_up' AND ${APP}) AS links,
       round(sumIf(toFloat(properties.seconds), event = 'mirror_session' AND ${APP}) / 60, 1) AS mirror_minutes
     FROM events WHERE timestamp > now() - INTERVAL 30 DAY AND ${SINCE}
@@ -121,7 +123,7 @@ async function posthog() {
 export const isInstall = (r) => /^device-[0-9a-f]{8}$/.test(String(r || ""));
 
 /** apps/verdicts.json -> the verdict, behaviour and automatic-report aggregates (pure; ids never leave). */
-export function verdictStats(v) {
+export function verdictStats(v, now = new Date()) {
   const byApp = new Map();
   for (const x of v) {
     const a = byApp.get(x.name) || { app: x.name, works: 0, broken: 0 };
@@ -149,7 +151,16 @@ export function verdictStats(v) {
   for (const s of perPhone.values()) appsPerPhone[bucket(s.size)] = (appsPerPhone[bucket(s.size)] || 0) + 1;
   const flashedBy = new Map();
   for (const x of auto) if (isInstall(x.reporter)) flashedBy.set(x.name, (flashedBy.get(x.name) || new Set()).add(x.reporter));
+  // The all-time mix is dominated by September, before the shim fixes: the site leads with the last 30 days.
+  const outcomes = (rows) => ({
+    flashes_observed: rows.length,
+    mirror_up: rows.filter((x) => /linked/.test(x.note)).length,
+    no_hello: rows.filter((x) => /hello=false/.test(x.note)).length,
+    hello_no_frames: rows.filter((x) => /hello=true/.test(x.note) && !/linked/.test(x.note)).length,
+  });
+  const cutoff = new Date(now.getTime() - RECENT_DAYS * 86_400_000).toISOString().slice(0, 10);
   const behaviour = {
+    recent: outcomes(auto.filter((x) => String(x.date) >= cutoff)),
     flashes_observed: auto.length,
     phones_that_flashed: new Set(auto.map((x) => x.reporter).filter(isInstall)).size,
     mirror_up: auto.filter((x) => /linked/.test(x.note)).length,
