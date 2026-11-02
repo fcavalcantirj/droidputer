@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://droidputer.vercel.app"),
   title: "Droidputer — Small hardware. Big possibilities.",
   description:
-    "An Android phone. An ESP32-S3. A whole new computer. Explore real, public telemetry from the open-source Droidputer ecosystem: builds, apps, mirrors, and device health.",
+    "Run open-source Cardputer and ESP32-S3 apps on an Android phone over USB-OTG: the phone is the screen, keyboard, GPS and flasher. Open source, with real public usage data from the Droidputer ecosystem: builds, apps, mirrors, and device health.",
   applicationName: "Droidputer",
   icons: {
     icon: [

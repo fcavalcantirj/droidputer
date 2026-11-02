@@ -19,6 +19,7 @@ The ESP32-S3 runs the app; the phone adds screen, keys, location and a flasher. 
 <a href="#tested-boards-and-phones">Tested boards</a> ·
 <a href="https://play.google.com/store/apps/details?id=com.droidputter">Google Play</a> ·
 <a href="https://droidputer.vercel.app">Live stats</a> ·
+<a href="https://esp-atlas.com/firmware/droidputter">esp-atlas</a> ·
 <a href="https://github.com/fcavalcantirj/droidputer/releases">Releases</a>
 </p>
 

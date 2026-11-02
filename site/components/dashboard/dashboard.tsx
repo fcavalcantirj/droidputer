@@ -375,6 +375,8 @@ export function Dashboard({
               </span>
               <span className="footer-divider">/</span>
               <span>Made for the curious.</span>
+              <span className="footer-divider">/</span>
+              <a href="https://esp-atlas.com/firmware/droidputter">Droidputter on esp-atlas</a>
             </div>
             <a href={PRIVACY_URL}>
               Privacy & transparency <ArrowUpRight size={12} />
