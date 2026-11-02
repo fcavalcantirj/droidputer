@@ -36,6 +36,10 @@ Never paste the app's own function, feature or menu names from its logs or sourc
 Solvr or the docs. Fix at the build level (overlay, toolchain, include paths), never by reading the app's
 features.
 
+## Roadmap
+
+Current cross-project order of work (flash fix, failure emails, Flipper app catalog): `~/dev/lilygo/ROADMAP.md` on Felipe's machine.
+
 ## Read first
 
 `AGENTS.md` (layout, golden rules, gates), `docs/GROUND_RULES.md`, `progress.txt` (append-only journal),
