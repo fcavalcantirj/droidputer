@@ -1328,5 +1328,16 @@
     "note": "auto: linked, 4 frames in 20 s",
     "date": "2026-11-03",
     "reporter": "device-ca030da3"
+  },
+  {
+    "name": "pigtail",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "2f380718a7006a73f372d276fb8c20762059a19515b1663a9e6e02782684ea68",
+    "shim_commit": "7e5303d",
+    "board": "s3-f8",
+    "result": "works",
+    "note": "",
+    "date": "2026-11-09",
+    "reporter": "device-b41f71d2"
   }
 ]
