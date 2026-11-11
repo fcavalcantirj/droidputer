@@ -1404,5 +1404,16 @@
     "note": "",
     "date": "2026-11-11",
     "reporter": "device-e25b12ed"
+  },
+  {
+    "name": "m5cardputer_webradio",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "65dc8114bda79d87783b894252cbba619ce9207dfc2fd6eb8eb2dea55553c164",
+    "shim_commit": "7e5303d",
+    "board": "s3-f16",
+    "result": "works",
+    "note": "",
+    "date": "2026-11-11",
+    "reporter": "device-e25b12ed"
   }
 ]
