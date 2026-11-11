@@ -1458,5 +1458,16 @@
     "note": "auto: linked, 401 frames in 20 s",
     "date": "2026-11-11",
     "reporter": "device-f1d306e3"
+  },
+  {
+    "name": "esp32marauder",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "4e038061e8c50af7b76f36acc41647e1043a6911c89ea397b013ad3a92d39a6a",
+    "shim_commit": "5d7970a",
+    "board": "s3-f8",
+    "result": "broken",
+    "note": "auto: boots=0 hello=false frames=0",
+    "date": "2026-11-11",
+    "reporter": "device-f1d306e3"
   }
 ]
