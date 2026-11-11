@@ -1371,5 +1371,16 @@
     "note": "auto: boots=0 hello=false frames=0",
     "date": "2026-11-11",
     "reporter": "device-e25b12ed"
+  },
+  {
+    "name": "cardputer-system-monitor",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "e7b0537ade462677a86f36f7d4579867e5c1bb5cd03b90ba119b0b8bd5d790a1",
+    "shim_commit": "7e5303d",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-11-11",
+    "reporter": "device-e25b12ed"
   }
 ]
