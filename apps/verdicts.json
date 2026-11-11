@@ -1382,5 +1382,16 @@
     "note": "",
     "date": "2026-11-11",
     "reporter": "device-e25b12ed"
+  },
+  {
+    "name": "m5cardputer-audio-stream-server",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "5f8b5d29037de5c87d6e0528445c1ee00aa45d136ee7d6145e410cd8e1aa1bd2",
+    "shim_commit": "7e5303d",
+    "board": "s3-f16",
+    "result": "works",
+    "note": "",
+    "date": "2026-11-11",
+    "reporter": "device-e25b12ed"
   }
 ]
