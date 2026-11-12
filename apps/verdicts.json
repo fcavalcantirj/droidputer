@@ -1469,5 +1469,15 @@
     "note": "auto: boots=0 hello=false frames=0",
     "date": "2026-11-11",
     "reporter": "device-f1d306e3"
+  },
+  {
+    "name": "VGM (video game music) player for Cardputer",
+    "env": "launcherhub",
+    "firmware_sha256": "2146f878b5024b6fd6e43fde410d8fd6ae40f0f52b01c13248c0631bc7bdc59f",
+    "board": "unknown",
+    "result": "broken",
+    "note": "",
+    "date": "2026-11-12",
+    "reporter": "device-4f0d88e0"
   }
 ]
