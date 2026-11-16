@@ -1512,5 +1512,16 @@
     "note": "",
     "date": "2026-11-16",
     "reporter": "device-24328796"
+  },
+  {
+    "name": "stellar-map",
+    "env": "m5cardputer",
+    "firmware_sha256": "6b7bf4903f4b1edffd6fbb8085ad9ad454691459bae27294cda65ecd02258e71",
+    "shim_commit": "7e5303d",
+    "board": "unknown",
+    "result": "broken",
+    "note": "auto: boots=0 hello=false frames=0",
+    "date": "2026-11-16",
+    "reporter": "device-b0280f24"
   }
 ]
