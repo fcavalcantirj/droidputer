@@ -1600,5 +1600,15 @@
     "note": "auto: linked, 81 frames in 20 s",
     "date": "2026-11-17",
     "reporter": "device-995fd184"
+  },
+  {
+    "name": "Shark Firmware",
+    "env": "launcherhub",
+    "firmware_sha256": "37cc5be4aacd9a875b9229ad498260262bc2968b67bc6f59eabe1dab5d27244b",
+    "board": "unknown",
+    "result": "broken",
+    "note": "",
+    "date": "2026-11-17",
+    "reporter": "device-895fea16"
   }
 ]
