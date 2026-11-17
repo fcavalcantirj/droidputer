@@ -1567,5 +1567,16 @@
     "note": "auto: linked, 4 frames in 20 s",
     "date": "2026-11-17",
     "reporter": "device-995fd184"
+  },
+  {
+    "name": "cardputer",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "181c27053e056b48ad7372df2b630bea8780332636da2a9d43a4e0548f328269",
+    "shim_commit": "7e5303d",
+    "board": "s3-f16",
+    "result": "works",
+    "note": "auto: linked, 775 frames in 20 s",
+    "date": "2026-11-17",
+    "reporter": "device-995fd184"
   }
 ]
