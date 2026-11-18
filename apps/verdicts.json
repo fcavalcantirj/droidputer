@@ -1632,5 +1632,16 @@
     "note": "auto: linked, 5 frames in 20 s",
     "date": "2026-11-18",
     "reporter": "device-995fd184"
+  },
+  {
+    "name": "m5-example",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "71379a612b54d704fb044e831b4dc4bee6f7b688142aa3c488f99f2acf00caf4",
+    "shim_commit": "7e5303d",
+    "board": "s3-f16",
+    "result": "works",
+    "note": "auto: linked, 25 frames in 20 s",
+    "date": "2026-11-18",
+    "reporter": "device-995fd184"
   }
 ]
