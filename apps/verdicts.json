@@ -1621,5 +1621,16 @@
     "note": "auto: boots=0 hello=false frames=0",
     "date": "2026-11-18",
     "reporter": "device-89094422"
+  },
+  {
+    "name": "bluetooth-keyboard-mouse-emulator",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "e2d7a8cb91afc65c317fdcab2b1697276adb4c66ccaf0222a99d9a7ebfc69b3f",
+    "shim_commit": "7e5303d",
+    "board": "s3-f16",
+    "result": "works",
+    "note": "auto: linked, 5 frames in 20 s",
+    "date": "2026-11-18",
+    "reporter": "device-995fd184"
   }
 ]
