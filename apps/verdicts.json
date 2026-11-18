@@ -1643,5 +1643,16 @@
     "note": "auto: linked, 25 frames in 20 s",
     "date": "2026-11-18",
     "reporter": "device-995fd184"
+  },
+  {
+    "name": "cardputergpsmap",
+    "env": "m5cardputer-virtual",
+    "firmware_sha256": "221eaa14c2e5886305998abfd272294945755b1576a0f88cdd3f6d4c1d6f481a",
+    "shim_commit": "7e5303d",
+    "board": "s3-f16",
+    "result": "works",
+    "note": "auto: linked, 4 frames in 20 s",
+    "date": "2026-11-18",
+    "reporter": "device-995fd184"
   }
 ]
