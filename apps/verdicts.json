@@ -1696,5 +1696,16 @@
     "note": "",
     "date": "2026-11-18",
     "reporter": "device-89094422"
+  },
+  {
+    "name": "m5porkchop",
+    "env": "m5cardputer",
+    "firmware_sha256": "e2c2173dee512d57a8b679405c2efae231927bee118622f21eacfb0b81e27147",
+    "shim_commit": "7e5303d",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-11-19",
+    "reporter": "device-89094422"
   }
 ]
