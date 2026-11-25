@@ -1769,5 +1769,15 @@
     "note": "",
     "date": "2026-11-25",
     "reporter": "device-00e07d01"
+  },
+  {
+    "name": "M5Launcher Cardputer & ADV",
+    "env": "launcherhub",
+    "firmware_sha256": "de1f3f285f9873e4cc083c6e11281e610acfed4049e9b8381b2c752a4dc4adee",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-11-25",
+    "reporter": "device-00e07d01"
   }
 ]
