@@ -1759,5 +1759,15 @@
     "note": "",
     "date": "2026-11-23",
     "reporter": "device-46f88c8a"
+  },
+  {
+    "name": "USB/Bluetooth Mouse & Keyboard - Cardputer & ADV",
+    "env": "launcherhub",
+    "firmware_sha256": "8ef49b4bf74bbd8bb85cbe382a008b3089d718fee53b2903cc4358147d0d5459",
+    "board": "unknown",
+    "result": "works",
+    "note": "",
+    "date": "2026-11-25",
+    "reporter": "device-00e07d01"
   }
 ]
